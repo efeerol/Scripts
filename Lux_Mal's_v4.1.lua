@@ -3,9 +3,9 @@ require 'spell_damage'
 print=printtext
 printtext("\nOh Lux\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 4.0\n")
+printtext("\nVersion 4.1\n")
 				print("\n Team "..myHero.team .. "\n")
-local target
+--local target
 local escapetarget
 local shieldally
 local ignitedamage
@@ -25,18 +25,22 @@ LuxConfig:addParam("combo", "Q Stun Combo", SCRIPT_PARAM_ONKEYDOWN, false, 81)
 LuxConfig:addParam("escape", "Escape Walking", SCRIPT_PARAM_ONKEYDOWN, false, 65)
 LuxConfig:addParam("comboBB", "Burst Combo", SCRIPT_PARAM_ONKEYDOWN, false, 84)
 LuxConfig:addParam("pq4m", "Predict Q4 Me", SCRIPT_PARAM_ONKEYTOGGLE, true, 55)
+LuxConfig:addParam("pe4m", "Auto E Pop", SCRIPT_PARAM_ONKEYTOGGLE, true, 48)
 LuxConfig:addParam("ultFinish", "Use Ult with Burst to Finish Only", SCRIPT_PARAM_ONKEYTOGGLE, false, 56)
 LuxConfig:addParam("shield", "AutoShield", SCRIPT_PARAM_ONKEYTOGGLE, true, 57)
 LuxConfig:addParam("igniteks", " Ignite KillSteal", SCRIPT_PARAM_ONKEYTOGGLE, true, 118)
 LuxConfig:addParam("ks", " KillSteal", SCRIPT_PARAM_ONKEYTOGGLE, true, 119)
+LuxConfig:addParam("nm", " NearMouse Targetting", SCRIPT_PARAM_ONOFF, true)
 LuxConfig:addParam('choosejungle', "Jungle Ult Killstealing", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,1,5,1)
 LuxConfig:addParam('s', "Speed of Burst Combo", SCRIPT_PARAM_NUMERICUPDOWN, 0.05, 117,0,1,0.05)
 
 LuxConfig:permaShow("comboBB")
 LuxConfig:permaShow("pq4m")
+LuxConfig:permaShow("pe4m")
 LuxConfig:permaShow("ultFinish")
 LuxConfig:permaShow("shield")
 LuxConfig:permaShow("ks")
+LuxConfig:permaShow("nm")
 LuxConfig:permaShow("igniteks")
 
 local cc = 0
@@ -53,6 +57,11 @@ local show_allies=0
  
 local autoE=false
 
+--------Spell Stuff
+local QRDY=0
+local WRDY=0
+local ERDY=0
+local RRDY=0
 
 local cast=false
 local modu=0
@@ -162,50 +171,52 @@ function Run()
 		index=5 
 	end
 
-	if LuxConfig.shield and CanCastSpell('W') then
+	if LuxConfig.shield and WRDY==1 then
                 autoE=true
         else
                 autoE=false
         end
-
-target = GetWeakEnemy("MAGIC", 1300)
-targetcombo = GetWeakEnemy("MAGIC", 1300,"NEARMOUSE")
+	if LuxConfig.nm then
+		targetcombo = GetWeakEnemy("MAGIC", 1300,"NEARMOUSE")
+	elseif not LuxConfig.nm then
+		targetcombo = GetWeakEnemy("MAGIC", 1300)
+	end
 targetult = GetWeakEnemy("MAGIC", 3000)
 target600 = GetWeakEnemy("TRUE", 600)
 
 	if IsChatOpen() == 0 and LuxConfig.escape then
 	------------------------------
 		for i=1, objManager:GetMaxHeroes(), 1 do
-		hero = objManager:GetHero(i)
-		if hero~=nil and hero.dead~=1 and hero.team~=myHero.team and GetD(hero)<1100 and escapetarget==nil then
+		local hero = objManager:GetHero(i)
+		if hero~=nil and hero.dead~=1 and hero.visible==1 and hero.team~=myHero.team and GetD(hero)<1100 and escapetarget==nil then
 			escapetarget=hero
-		elseif hero~=nil and hero.dead~=1 and hero.team~=myHero.team and GetD(hero)<1100 and (escapetarget.dead==1 or GetD(hero)<GetD(escapetarget)) then
+		elseif hero~=nil and hero.dead~=1 and hero.team~=myHero.team and GetD(hero)<1100 and (escapetarget.dead==1 or hero.visible==0 or  GetD(hero)<GetD(escapetarget)) then
 			escapetarget=hero
 		end
-		if hero~=nil and hero.dead~=1 and hero.team==myHero.team and GetD(hero)<1000 and allyshield==nil then
+		if hero~=nil and hero.dead~=1 and hero.visible==1 and hero.team==myHero.team and GetD(hero)<1000 and allyshield==nil then
 			allyshield=hero
-		elseif hero~=nil and hero.dead~=1 and hero.team==myHero.team and GetD(hero)<1000 and (allyshield.dead==1 or hero.health<allyshield.health) then
+		elseif hero~=nil and hero.dead~=1 and hero.team==myHero.team and GetD(hero)<1000 and (allyshield.dead==1 or hero.visible==0 or hero.health<allyshield.health) then
 			allyshield=hero
 		end
 		end
 	-----------------------------------	
 		
-		if allyshield~=nil and CanUseSpell('W')==1 then
-			CastSpellXYZ('W',GetFireahead(allyshield,2,14))
-		elseif CanUseSpell('W')==1 and escapetarget~=nil then
-			CastSpelltarget('W',escapetarget)
+		if allyshield~=nil and WRDY==1 then
+			CastSpellXYZ('W',GetFireahead(allyshield,1,14))
+		elseif escapetarget~=nil and WRDY==1 then
+			CastSpelltarget('W',GetFireahead(escapetarget,1,14))
 		end
 		
 		if escapetarget~=nil then
-			if CanUseSpell('Q') then CastSpellXYZ('Q',GetFireahead(escapetarget,4,12)) end
+			if QRDY==1 then CastSpellXYZ('Q',GetFireahead(escapetarget,2.5,12)) end
 			if EObjecttimer==0 then
-				if CanUseSpell('E') then CastSpellXYZ('E',GetFireahead(escapetarget,5,13)) end
+				if ERDY==1 then CastSpellXYZ('E',GetFireahead(escapetarget,3.5,13)) end
 			elseif EObjecttimer~=0 and EObjecttimer+3<os.clock() then
-				if CanUseSpell('E') then CastSpellXYZ('E',GetFireahead(escapetarget,5,13)) end
+				if ERDY==1 then CastSpellXYZ('E',GetFireahead(escapetarget,3.5,13)) end
 			end
 		end
 		--if escapetarget~=nil and EObject~=nil and GetD(escapetarget,EObject)>330 then
-		--	if CanUseSpell('E') then CastSpellXYZ('E',GetFireahead(escapetarget,5,12)) end
+		--	if ERDY then CastSpellXYZ('E',GetFireahead(escapetarget,5,12)) end
 		--end
 		MoveToMouse()
 	end	
@@ -214,7 +225,7 @@ target600 = GetWeakEnemy("TRUE", 600)
 	
 	if IsChatOpen() == 0 and LuxConfig.combo then
                 if targetcombo ~= nil then
-                    if CanUseSpell("Q")==1 and GetD(targetcombo) < 1100 then
+                    if QRDY==1 and GetD(targetcombo) < 1100 then
                         CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
                     end
 					if myHero.SpellNameE=="luxlightstriketoggle" and (eTimer<os.clock() or (EObject~=nil and GetD(EObject,targetcombo)>250)) then						
@@ -229,10 +240,10 @@ target600 = GetWeakEnemy("TRUE", 600)
 		
 	if LuxConfig.ks then 
 		if targetult~=nil then
-			local tufax,tufay,tufaz=GetFireahead(targetult,5,0)
+			local tufax,tufay,tufaz=GetFireahead(targetult,6.5,0)
 			local tufa={x=tufax,y=tufay,z=tufaz}
-			if GetD(tufa)<3000 and targetult.health<getDmg('R',targetult,myHero)*CanUseSpell('R') then
-				CastSpellXYZ('R',GetFireahead(targetult,5,0))
+			if GetD(tufa)<3000 and targetult.health<getDmg('R',targetult,myHero)*RRDY then
+				CastSpellXYZ('R',GetFireahead(targetult,6.5,0))
 			end
 		end
 	end
@@ -257,22 +268,26 @@ target600 = GetWeakEnemy("TRUE", 600)
 	
 	
 	
-	
+	if LuxConfig.pe4m and ERDY==1 and myHero.SpellNameE=="luxlightstriketoggle" then 
+		if (EObject~=nil and GetD(EObject,targetcombo)>250) then
+			CastSpellTarget("E",targetcombo)
+		end
+	end
 	------------------------------------------------------------T COMBO
 	
 	if IsChatOpen() == 0 and LuxConfig.comboBB then
 		if targetcombo~=nil then
-			local tcx,tcy,tcz = GetFireahead(targetcombo,4,12)
+			local tcx,tcy,tcz = GetFireahead(targetcombo,2.5,12)
 			local tc={x=tcx,y=tcy,z=tcz}
-			if CanUseSpell('Q')==1 and (os.clock()>Atimer) and LuxConfig.pq4m and GetD(tc)<1200 then
-				CastSpellXYZ("Q",GetFireahead(targetcombo,4,12))
-			elseif CanUseSpell('Q')==1 and (os.clock()>Atimer) and not LuxConfig.pq4m then
+			if QRDY==1 and (os.clock()>Atimer) and LuxConfig.pq4m and GetD(tc)<1200 then
+				CastSpellXYZ("Q",GetFireahead(targetcombo,2.5,12))
+			elseif QRDY==1 and (os.clock()>Atimer) and not LuxConfig.pq4m then
 				CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
-			elseif CanUseSpell('E')==1 and myHero.SpellNameE=="LuxLightStrikeKugel" then
-				CastSpellXYZ("E",GetFireahead(targetcombo,5,13))
-			elseif not LuxConfig.ultFinish and CanUseSpell('R')==1 and targetcombo.dead~=1 then
-				CastSpellXYZ("R",GetFireahead(target,5,0))
-			elseif CanUseSpell('E')==1 and myHero.SpellNameE=="luxlightstriketoggle" and (os.clock()>Atimer or (EObject~=nil and GetD(EObject,targetcombo)>250)) then	
+			elseif ERDY==1 and myHero.SpellNameE=="LuxLightStrikeKugel" then
+				CastSpellXYZ("E",GetFireahead(targetcombo,3.5,13))
+			elseif not LuxConfig.ultFinish and RRDY==1 and targetcombo.dead~=1 then
+				CastSpellXYZ("R",GetFireahead(targetcombo,6.5,0))
+			elseif ERDY==1 and myHero.SpellNameE=="luxlightstriketoggle" and (os.clock()>Atimer or (EObject~=nil and GetD(EObject,targetcombo)>250)) then	
                 CastSpellTarget("E",targetcombo)
 			else
 				if GetD(targetcombo)<400 then
@@ -288,7 +303,23 @@ target600 = GetWeakEnemy("TRUE", 600)
 		else
 			MoveToMouse()
 		end
-		
+			------------
+        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+                QRDY = 1
+                else QRDY = 0
+        end
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+                WRDY = 1
+                else WRDY = 0
+        end
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+                ERDY = 1
+                else ERDY = 0
+        end
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+                RRDY = 1
+        else RRDY = 0 end
+        --------------------------
 		
 		
 	end
@@ -299,20 +330,20 @@ function OnCreateObj(obj)
 	
 	if LuxConfig.combo and targetcombo ~= nil then
         
-                if string.find(obj.charName,"LuxLightBinding") and GetD(targetcombo, obj) < 10 and GetD(myHero, target) < 1300 and os.clock() > eTimer then
+                if string.find(obj.charName,"LuxLightBinding") and GetD(targetcombo, obj) < 10 and GetD(myHero, targetcombo) < 1300 and os.clock() > eTimer then
                         AttackTarget(targetcombo)
                         CastSpellTarget("E",targetcombo)
                         eTimer = os.clock() + 5
                         AttackTarget(targetcombo)
                 end
-                if  string.find(obj.charName,"LuxLightstrike") and CanUseSpell("R")==1 then
+                if  string.find(obj.charName,"LuxLightstrike") and RRDY==1 then
                         CastSpellXYZ("R",targetcombo.x,0,targetcombo.z)
                         AttackTarget(targetcombo)
                 end
                 --if string.find(obj.charName,"Global_Silence") then
                        
                 --end
-                if string.find(obj.charName,"LuxMaliceCannon") and CanUseSpell("E")==1 then
+                if string.find(obj.charName,"LuxMaliceCannon") and ERDY==1 then
                         AttackTarget(targetcombo)
                         CastSpellTarget("E",targetcombo)
                         AttackTarget(targetcombo)
@@ -1073,7 +1104,7 @@ function UpdatejungleTable1()
 				end
 				for k, x in ipairs(JPKS) do
 					if object.name == x.name then 
-						if GetD(object,x.location) < 1000 then
+						if GetD(object,x.location) < 600 then
 						local name = object.name
 						local team = x.team
 						 CheckCreep1(name,team) 
@@ -1108,7 +1139,7 @@ function KS1()
 					if getDmg("R",creep.hero,myHero) > creep.hero.health then 				
 					--cfa={x=creep
 					CustomCircle(100,20,5,creep.hero)
-					CastSpellXYZ('R',GetFireahead(creep.hero,6,99))
+					CastSpellXYZ('R',GetFireahead(creep.hero,6.5,0))
 					else
 					CustomCircle(100,20,3,creep.hero)
 					end
@@ -1132,7 +1163,7 @@ function UpdatejungleTable2()
 			if object ~= nil then
 				for k, x in ipairs(junglePositionERed) do
 					if object.name == x.name then 
-						if GetD(object,x.location) < 1000 then
+						if GetD(object,x.location) < 600 then
 						local name = object.name
 						local team = x.team
 						CheckCreep2(name,team) 
@@ -1166,7 +1197,7 @@ function KS2()
 					
 					if getDmg("R",creep.hero,myHero) > creep.hero.health then 				
 					CustomCircle(100,20,5,creep.hero)
-					CastSpellXYZ('R',GetFireahead(creep.hero,6,99))
+					CastSpellXYZ('R',GetFireahead(creep.hero,6.5,0))
 					else
 					CustomCircle(100,20,3,creep.hero)
 					end
@@ -1190,7 +1221,7 @@ function UpdatejungleTable3()
 			if object ~= nil then
 				for k, x in ipairs(junglePositionBBlue) do
 					if object.name == x.name then 
-						if GetD(object,x.location) < 1000 then
+						if GetD(object,x.location) < 600 then
 						local name = object.name
 						local team = x.team
 						CheckCreep3(name,team) 
@@ -1224,7 +1255,7 @@ function KS3()
 				if creep.hero.dead == 0 and creep.hero.visible==1 and GetD(creep.hero) < 3000 then --and creep.team ~= myteam
 					if getDmg("R",creep.hero,myHero) > creep.hero.health then 				
 					CustomCircle(100,20,5,creep.hero)
-					CastSpellXYZ('R',GetFireahead(creep.hero,6,99))
+					CastSpellXYZ('R',GetFireahead(creep.hero,6.5,0))
 					else
 					CustomCircle(100,20,3,creep.hero)
 					end
@@ -1248,7 +1279,7 @@ function UpdatejungleTable4()
 			if object ~= nil then
 				for k, x in ipairs(junglePositionALL) do
 					if object.name == x.name then 
-						if GetD(object,x.location) < 1000 then
+						if GetD(object,x.location) < 600 then
 						local name = object.name
 						local team = x.team
 						
@@ -1283,7 +1314,7 @@ function KS4()
 				if creep.hero.dead == 0 and creep.hero.visible==1 and GetD(creep.hero) < 3000 then --and creep.team ~= myteam
 					if getDmg("R",creep.hero,myHero) > creep.hero.health then 				
 					CustomCircle(100,20,5,creep.hero)
-					CastSpellXYZ('R',GetFireahead(creep.hero,6,99))
+					CastSpellXYZ('R',GetFireahead(creep.hero,6,0))
 					else
 					CustomCircle(100,20,3,creep.hero)
 					end
@@ -1313,8 +1344,11 @@ function OnDraw()
 				DrawText("Jungle Ult KS: ".. junglewho[i] .. "", 100, positionText*i, Color.White)
 			end
 		end
-		if target~=nil then
-			CustomCircle(150,3,2,target)
+		if targetcombo~=nil then
+			CustomCircle(150,3,2,targetcombo)
+		end
+		if targetult~=nil then
+			CustomCircle(150,10,2,targetult)
 		end
 	end
 end

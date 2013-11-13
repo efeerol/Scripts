@@ -1,4 +1,4 @@
---[[	DEADLY JINX V1.0 BY CCONN BASED ON DEADLY CASSIOPEIA V1.6
+--[[	DEADLY JINX V1.1 BY CCONN BASED ON DEADLY CASSIOPEIA V1.6
 
 		Follow me on Facebook! I post info on all new scripts and updates there
 		CCONN's Facebook: https://www.facebook.com/CCONN81
@@ -206,7 +206,7 @@ function DeadlyJinx()
 		if CfgPotions.CCONN_Potions_ONOFF then CCONN_Potions() end
 		if CfgSettings.Draw_ONOFF then Draw() end
 		if CfgSummonerSpells.Auto_Summoner_Spells_ONOFF then SummonerSpells() end
-		if CfgSettings.Auto_Kill_Steal_ONOFF then KillSteal() end
+		--if CfgSettings.Auto_Kill_Steal_ONOFF then KillSteal() end
 		if CfgControls.Combo then Combo() end
 		if CfgControls.Combo then CCONN_Items() end
 		if CfgControls.Harass then Harass() end
@@ -236,7 +236,12 @@ function Auto_Switcharoo()
 	if target ~= nil then
 		if GetDistance(myHero,target) <= 525 and myHero.range > 525 then
 			Q()
-		elseif GetDistance(myHero,target) > 525 and myHero.range == 525 then
+		elseif GetDistance(myHero,target) > 525 and GetDistance(myHero,target) <= fishboneRange and myHero.range == 525 then
+			Q()
+		end
+	end
+	--[[if target ~= nil then
+		if myHero.range > 525 and GetDistance(myHero,target) > fishboneRange then
 			Q()
 		end
 	end
@@ -244,7 +249,7 @@ function Auto_Switcharoo()
 		if myHero.range > 525 then
 			Q()
 		end
-	end
+	end]]
 end
 
 for i = 1, objManager:GetMaxHeroes(), 1 do
@@ -855,7 +860,7 @@ end
 ----------[[End of Summoner Spell Functions]]
 
 ----------[[Kill Steal Functions]]
-
+--[[
 function KillSteal()
     for i = 1, objManager:GetMaxHeroes()  do
     	local enemy = objManager:GetHero(i)
@@ -888,14 +893,15 @@ function KillSteal()
 				if edmg > enemy.health and myHero.SpellTimeE > 1.0 and GetDistance(myHero,enemy) <= 600 then
         		    CastSpellTarget("E",enemy)
         		end
-				--[[if qdmg + wdmg > enemy.health and myHero.SpellTimeQ > 1.0 and myHero.SpellTimeW > 1.0 and GetDistance(myHero,enemy) <= 850 then
+				if qdmg + wdmg > enemy.health and myHero.SpellTimeQ > 1.0 and myHero.SpellTimeW > 1.0 and GetDistance(myHero,enemy) <= 850 then
 					CastSpellXYZ("Q",GetFireahead(enemy,6,0))
 					CastSpellXYZ("W",GetFireahead(enemy,2.65,25))
-				end]]
+				end
 			end
 		end
 	end
 end
+]]
 ----------[[End of Kill Steal Functions]]
 
 ----------[[CCONN Potions Based of RED ELIXIR]]

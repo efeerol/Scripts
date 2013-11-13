@@ -1,4 +1,17 @@
---[[	DEADLY RYZE V1.2 BY CCONN BASED ON DEADLY CASSIOPEIA V1.6
+--[[	
+ _______   _______     ___       _______   __      ____    ____   .______     ____    ____  ________   _______    ____    ____  __      ____   
+|       \ |   ____|   /   \     |       \ |  |     \   \  /   /   |   _  \    \   \  /   / |       /  |   ____|   \   \  /   / /_ |    |___ \  
+|  .--.  ||  |__     /  ^  \    |  .--.  ||  |      \   \/   /    |  |_)  |    \   \/   /  `---/  /   |  |__       \   \/   /   | |      __) | 
+|  |  |  ||   __|   /  /_\  \   |  |  |  ||  |       \_    _/     |      /      \_    _/      /  /    |   __|       \      /    | |     |__ <  
+|  '--'  ||  |____ /  _____  \  |  '--'  ||  `----.    |  |       |  |\  \----.   |  |       /  /----.|  |____       \    /     | |  __ ___) | 
+|_______/ |_______/__/     \__\ |_______/ |_______|    |__|       | _| `._____|   |__|      /________||_______|       \__/      |_| (__)____/  
+.______   ____    ____     ______   ______   ______   .__   __. .__   __.                                                                      
+|   _  \  \   \  /   /    /      | /      | /  __  \  |  \ |  | |  \ |  |                                                                      
+|  |_)  |  \   \/   /    |  ,----'|  ,----'|  |  |  | |   \|  | |   \|  |                                                                      
+|   _  <    \_    _/     |  |     |  |     |  |  |  | |  . `  | |  . `  |                                                                      
+|  |_)  |     |  |       |  `----.|  `----.|  `--'  | |  |\   | |  |\   |                                                                      
+|______/      |__|        \______| \______| \______/  |__| \__| |__| \__|                                                                      
+                                                                                                                                               
 
 		Follow me on Facebook! I post info on all new scripts and updates there
 		CCONN's Facebook: https://www.facebook.com/CCONN81
@@ -117,6 +130,7 @@ menu.keydown('PushLane', 'Lane Clear', Keys.V)
 
 CfgSettings, menu = uiconfig.add_menu('2. Ryze Settings', 200)
 menu.checkbutton('AutoCarry_ONOFF', 'Enable Auto Carry', true)
+menu.checkbutton('Reduced_AC_Range', 'Reduced Auto Carry Range', true)
 menu.checkbutton('Auto_Harass_ONOFF', 'Auto Harass', true)
 menu.checkbutton('DMG_Predict_Farm_ONOFF', 'Use Damage Prediction Farming', true)
 menu.checkbutton('Auto_Kill_Steal_ONOFF', 'Kill Steal', true)
@@ -130,6 +144,7 @@ menu.checkbutton('MoveToMouse', 'Move To Mouse', true)
 menu.checkbutton('LC_Q_ONOFF', 'Lane Clear with Q', true)
 menu.checkbutton('LC_W_ONOFF', 'Lane Clear with W', true)
 menu.checkbutton('LC_E_ONOFF', 'Lane Clear with E', true)
+menu.slider('Reduced_AC_Range_Value', 'Auto Carry Range', 100, 550, 425, nil, true)
 menu.slider('QRNG', 'Q Range', 100, 600, 600, nil, true)
 menu.slider('WRNG', 'W Range', 100, 600, 600, nil, true)
 menu.slider('ERNG', 'E Range', 100, 600, 600, nil, true)
@@ -193,6 +208,7 @@ function DeadlyRyze()
 		target = GetWeakEnemy('MAGIC', 600)
 		targetHero = GetWeakEnemy('MAGIC', 600)
 		Mastery_Damage()
+		AutoCarryRangeAdjust()
 		if CfgPotions.CCONN_Potions_ONOFF then CCONN_Potions() end
 		if CfgSettings.Draw_ONOFF then Draw() end
 		if CfgSummonerSpells.Auto_Summoner_Spells_ONOFF then SummonerSpells() end
@@ -372,6 +388,16 @@ function Mastery_Damage()
 		ExecutionerDamage = .05
 	end
 	True_Attack_Damage_Against_Minions = (myHero.baseDamage + myHero.addDamage + Mast_BruteForceDMG + Mast_SpellswordDMG)+((myHero.baseDamage + myHero.addDamage + Mast_BruteForceDMG + Mast_SpellswordDMG)*(HavocDamage + ExecutionerDamage))
+end
+
+function AutoCarryRangeAdjust()
+	if CfgSettings.Reduced_AC_Range then
+		Range = CfgSettings.Reduced_AC_Range_Value
+		range = CfgSettings.Reduced_AC_Range_Value
+	else
+		Range = myHero.range + GetDistance(GetMinBBox(myHero))
+		range = myHero.range + GetDistance(GetMinBBox(myHero))
+	end
 end
 ----------[[End of Utility Functions]]
 

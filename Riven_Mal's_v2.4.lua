@@ -3,9 +3,11 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 2.0\n")
+printtext("\nBeta 2.4\n")
 
 local target
+local stuntarget
+local targetult
 local ignitedamage
 local Ractive=false
 local Rtimer=os.clock()
@@ -20,11 +22,17 @@ local ufax,ufay,ufaz
 local ufa2
 local ufa2x,ufa2y,ufa2z
 local delay=0.001
+local Q2ETimer=0
 --------Spell Stuff
 local QRDY=0
 local WRDY=0
 local ERDY=0
 local RRDY=0
+local Qmod=0
+local QmodReset=0
+local Qspot=nil
+local QLayoutSpot=0
+
 
 local cc = 0
 local skillshotArray = { 
@@ -40,14 +48,15 @@ local show_allies=0
 
 local autoE=false
 
-
      
 RivConfig = scriptConfig("Riven", "Riven Config")
 RivConfig:addParam("h", "Harass QWQQ EscapeE", SCRIPT_PARAM_ONKEYDOWN, false, 65)
 RivConfig:addParam("teamfight", "Teamfight", SCRIPT_PARAM_ONKEYDOWN, false, 84)
+RivConfig:addParam("tf2", "EQQWQ Combo", SCRIPT_PARAM_ONKEYDOWN, false, 89)
 RivConfig:addParam("c", "Combo No Ult", SCRIPT_PARAM_ONKEYDOWN, false, 88)
-RivConfig:addParam("g", "Glitch Escape Attempt", SCRIPT_PARAM_ONKEYDOWN, false, 90)
+RivConfig:addParam("g", "Escape QQQE", SCRIPT_PARAM_ONKEYDOWN, false, 90)
 RivConfig:addParam("shield", "AutoShield", SCRIPT_PARAM_ONKEYTOGGLE, true, 117)
+RivConfig:addParam("stun", "AutoStun", SCRIPT_PARAM_ONKEYTOGGLE, false, 48)
 RivConfig:addParam("ks", " KillSteal", SCRIPT_PARAM_ONOFF, true)
 RivConfig:addParam("smite", "Smitesteal", SCRIPT_PARAM_ONKEYTOGGLE, false, 119)
 RivConfig:addParam('s', "Speed of Combo and TFight", SCRIPT_PARAM_NUMERICUPDOWN, 0.4, 118,0,1,0.05)
@@ -55,31 +64,17 @@ RivConfig:permaShow("teamfight")
 RivConfig:permaShow("ks")
 RivConfig:permaShow("smite")
 RivConfig:permaShow("shield")
+RivConfig:permaShow("stun")
      
      
 function Run()
-	        ------------
-        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
-                QRDY = 1
-                else QRDY = 0
-        end
-        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
-                WRDY = 1
-                else WRDY = 0
-        end
-        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
-                ERDY = 1
-                else ERDY = 0
-        end
-        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
-                RRDY = 1
-        else RRDY = 0 end
-        --------------------------
+
 		
 		delay=RivConfig.s
 
 	targetult = GetWeakEnemy("PHYS", 1000)
 	target = GetWeakEnemy("PHYS", 500)
+	stuntarget = GetWeakEnemy("PHYS", 265)
 	if target~=nil then
 		ufax,ufay,ufaz = GetFireahead(target,5,22)
 		ufa={x=ufax,y=ufay,z=ufaz}
@@ -143,7 +138,7 @@ function Run()
 			elseif RRDY==1 and Ractive==false and target.dead~=1 and (os.clock()>Atimer) then
 				CastSpellXYZ("R",ufa.x,0,ufa.z)
 				Ractive=true
-			elseif Ractive==true and target.dead~=1 and (target.health<Rdamage  or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
+			elseif Ractive==true and target.dead~=1 and (target.health<Rdamage or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
 				CastSpellXYZ("R",ufa.x,0,ufa.z)
 				Ractive=false
 			else
@@ -172,7 +167,9 @@ function Run()
 			MoveToMouse()
 		end
 	end
-
+	if IsChatOpen() == 0 and RivConfig.tf2 then
+		TF2()
+	end
 
 	if IsChatOpen() == 0 and RivConfig.h then
 		harass()
@@ -183,13 +180,36 @@ function Run()
 		combo()
 	end
 	if IsChatOpen() == 0 and RivConfig.g then
-		CastSpellXYZ("Q",GetCursorWorldX(),0,GetCursorWorldZ())
-		CastSpellXYZ("E",GetCursorWorldX(),0,GetCursorWorldZ())
-		if QRDY==0 and ERDY==0 then
-			MoveToMouse()
-		end
+		Escape()
 	end
-        
+        	        
+	if RivConfig.stun and WRDY==1 and stuntarget~=nil and (IsChatOpen() == 1 or IsChatOpen() == 0 and not RivConfig.teamfight and not RivConfig.tf2 and not RivConfig.h and not RivConfig.c and not RivConfig.g)then
+		CastSpellTarget('W',myHero)
+	end
+	------------
+        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+                QRDY = 1
+                else QRDY = 0
+        end
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+                WRDY = 1
+                else WRDY = 0
+        end
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+                ERDY = 1
+                else ERDY = 0
+        end
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+                RRDY = 1
+        else RRDY = 0 end
+        --------------------------
+		if Qmod~=0 and QmodReset<os.clock() then
+			Qmod=0
+			Qspot=nil
+		end
+		if Qspot~=nil and Qmod~=2 then
+			Qspot=nil
+		end
 end
      
 
@@ -199,7 +219,9 @@ function OnProcessSpell(unit,spell)
 
 	if (RivConfig.teamfight or RivConfig.combo) and unit.name==myHero.name and unit.team==myHero.team then  
 		if string.find(spell.name,"RivenTriCleave") ~= nil then
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Qmod=(Qmod+1)%3
+			QmodReset=os.clock()+3.5
+			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed			
 		elseif string.find(spell.name,"RivenMartyr") ~= nil then
 			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
 
@@ -478,6 +500,112 @@ function OnProcessSpell(unit,spell)
 	
 end
 
+function TF2()
+	if target~=nil then
+		if ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
+			CastSpellXYZ("E",ufa.x,0,ufa.z)
+		elseif QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) and Qmod<2 then
+			CastSpellXYZ("Q",ufa.x,0,ufa.z)
+
+			if RRDY==1 and Ractive==false then
+				CastSpellXYZ("R",myHero.x,0,myHero.z)
+				Ractive=true
+			end
+		elseif WRDY==1 and (os.clock()>Atimer) and GetD(target,myHero)<275 then
+		
+			if not runningAway(target) then
+				local tx,tz=0,0
+				local qx,qy,qz=GetFireahead(target,2,0)
+				Qspot={x=qx,y=qy,z=qz}
+				local dist=GetD(Qspot,target)
+				if target.x==Qspot.x then
+						tx = Qspot.x
+						if target.z>Qspot.z then
+								tz = target.z+dist
+						else
+								tz = target.z-dist
+						end
+			   
+				elseif Qspot.z==target.z then
+						tz = target.z
+						if target.x>Qspot.x then
+								tx = target.x+(dist)
+						else
+								tx = target.x-(dist)
+						end
+			   
+				elseif target.x>Qspot.x then
+						angle = math.asin((target.x+Qspot.x)/dist)
+						zs = (dist)*math.cos(angle)
+						xs = (dist)*math.sin(angle)
+						if target.z>Qspot.z then
+								tx = target.x+xs
+								tz = target.z+zs
+						elseif target.z<Qspot.z then
+								tx = target.x+xs
+								tz = target.z-zs
+						end
+			   
+				elseif target.x<Qspot.x then
+						angle = math.asin((Qspot.x+target.x)/dist)
+						zs = (dist)*math.cos(angle)
+						xs = (dist)*math.sin(angle)
+						if target.z>Qspot.z then
+								tx = target.x-xs
+								tz = target.z+zs
+						elseif target.z<Qspot.z then
+								tx = target.x-xs
+								tz = target.z-zs
+						end 
+				end
+				Qspot={x=tx,y=qy,z=tz}
+			else
+				local qx,qy,qz=GetFireahead(target,2,0)
+				Qspot={x=qx,y=qy,z=qz}
+			end
+			
+			CastSpellXYZ("W",myHero.x,0,myHero.z)
+		elseif RRDY==1 and Ractive==false and target.dead~=1 then
+			CastSpellXYZ("R",ufa.x,0,ufa.z)
+			Ractive=true
+		elseif Ractive==true and target.dead~=1 and (target.health<Rdamage  or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
+			CastSpellXYZ("R",ufa.x,0,ufa.z)
+			Ractive=false
+		else
+			if GetD(target)<400 then
+				CastSummonerExhaust(target)
+				UseAllItems(target)
+			elseif GetD(target)<600 then
+				CastSummonerExhaust(target)
+				UseTargetItems(target)
+			end
+			if Qmod==2 and Qspot==nil then				
+				AttackTarget(target)
+			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)>30 then
+				MoveToXYZ(Qspot.x,0,Qspot.z)
+			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)<=30 then
+				CastSpellXYZ("Q",ufa.x,0,ufa.z)
+			else
+			AttackTarget(target)
+			end
+		end
+
+
+	elseif targetult~=nil and Ractive==true and GetD(targetult)>600 and GetD(ufa2)<900 then
+		if ERDY==1 then
+			CastSpellXYZ("E",ufa2.x,0,ufa2.z)
+		elseif targetult.dead~=1 then
+			CastSpellXYZ("R",ufa2.x,0,ufa2.z)
+		end
+	elseif targetult~=nil then
+		CastSpellXYZ("E",ufa2.x,0,ufa2.z)
+		AttackTarget(targetult)
+	else
+		MoveToMouse()
+	end
+
+end
+
 function combo()
 if target~=nil then
 if QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
@@ -513,14 +641,14 @@ function harass()
 	if targetult~=nil then
 	local mx,my=0,0
 		if QRDY==1 and GetD(ufa2)<600 then
-			
+			Q2ETimer=os.clock()+1
 			
 			ClickSpellXYZ("Q",ufa2.x,0,ufa2.z,0)
 			CastSpellXYZ("Q",ufa2.x,0,ufa2.z)
 		elseif WRDY==1 and GetD(targetult)<275 then
 			
 			CastSpellTarget("W",myHero)
-		elseif QRDY==0 and ERDY==1 then
+		elseif QRDY==0 and ERDY==1 and Q2ETimer<os.clock() then
 			local xspot=0
 			local zspot=0
 			local xdist=0
@@ -545,6 +673,18 @@ function harass()
 
 end
 
+
+function Escape()
+	if ERDY==1  then
+		print('\nE  '..myHero.SpellTimeE..'  '..myHero.SpellNameE)
+		CastSpellXYZ("E",mousePos.x,0,mousePos.z)
+	elseif ERDY==0 and QRDY==1 then
+		print('\n'..myHero.SpellTimeQ..'  '..myHero.SpellNameQ)
+		CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
+	else
+		MoveToMouse()
+	end  
+end
 
 function smitesteal()
 if myHero.SummonerD == "SummonerSmite" then
@@ -610,7 +750,16 @@ function OnDraw()
 	end
 end
 
-
+function runningAway(slowtarget)
+   local d1 = GetD(slowtarget)
+   local x, y, z = GetFireahead(slowtarget,2,0)
+   local d2 = GetD({x=x, y=y, z=z})
+   local d3 = GetD({x=x, y=y, z=z},slowtarget)
+   local angle = math.acos((d2*d2-d3*d3-d1*d1)/(-2*d3*d1))
+   
+   return angle%(2*math.pi)>math.pi/2 and angle%(2*math.pi)<math.pi*3/2
+ 
+end
 
 function dodgeaoe(pos1, pos2, radius)
     local calc = (math.floor(math.sqrt((pos2.x-myHero.x)^2 + (pos2.z-myHero.z)^2)))

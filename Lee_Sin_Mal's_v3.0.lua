@@ -2,9 +2,9 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 2.8")
+print("\nVersion 3.0")
 
-local version = '2.8'
+local version = '3.0'
 local target
 local targeti
 local target2
@@ -33,6 +33,7 @@ local eye={unit=nil,x=nil,y=nil,z=nil}
 	local enemies={}
 	local enemyIndex=2
 	local wardFound=false
+	local TITimer=0
 local www=nil
 local wUsedAt = 0
 local vUsedAt = 0
@@ -43,8 +44,6 @@ local WRDY=0
 local ERDY=0
 local RRDY=0
 local targetR=nil
-local QDelay=2.4
-local QSpeed=16
 
 	LeeConfig = scriptConfig("LeeSin", "LeeSin Hotkeys")
 LeeConfig:addParam("Combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))--T
@@ -58,6 +57,8 @@ LeeConfig:addParam("ultC", "Stylish Ult in Combo", SCRIPT_PARAM_ONKEYTOGGLE, fal
 LeeConfig:addParam("PU", "Prioritize InSec", SCRIPT_PARAM_NUMERICUPDOWN, 1,189,1,objManager:GetMaxHeroes()/2+1,1)-- "-" objManager:GetMaxHeroes()/2+1
 LeeConfig:addParam("iskey", "What to Insec To", SCRIPT_PARAM_DOMAINUPDOWN, 1, 187, {"Inventory Wards","Minions & Placed Wards","Both"})
 LeeConfig:addParam("wardH", "Harass Can Use Ward", SCRIPT_PARAM_ONOFF, false) 
+LeeConfig:addParam("wardF", "Ward Farthest", SCRIPT_PARAM_ONOFF, true)
+LeeConfig:addParam("mqi", "Manual Q Insec", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("pots", "Auto Potions", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("ignite", "Ignite KS", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("movement", "movement", SCRIPT_PARAM_ONOFF, true)
@@ -138,7 +139,28 @@ function LeeRun()
     if IsChatOpen()==0 and LeeConfig.Combo then Combo() end    
     if IsChatOpen()==0 and LeeConfig.harass then Harass() end    
     if IsChatOpen()==0 and LeeConfig.initiate then initiate() end  
-    if IsChatOpen()==0 and LeeConfig.ward then ward() end    
+    if IsChatOpen()==0 and LeeConfig.ward and LeeConfig.wardF then ward(mousePos.x,mousePos.y,mousePos.z) 
+    elseif IsChatOpen()==0 and LeeConfig.ward and LeeConfig.wardF==false then ward() end  
+	if LeeConfig.mqi then 
+		if (TI==nil or TI.dead==1 or TITimer<os.clock()) and eye~=nil and eye.x~=nil and myHero.SpellNameQ == "blindmonkqtwo" and targeti~=nil then
+			local TIHolder=nil
+			for i = 1, objManager:GetMaxHeroes()  do
+            local enemy = objManager:GetHero(i)
+				if enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and (TIHolder==nil or TIHolder.dead==1 or TIHolder.visible==0) and eye~=nil and GetD(enemy)<2000 then
+					TIHolder=enemy
+				elseif enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and TIHolder~=nil and TIHolder.dead==0 and TIHolder.visible==1 and eye~=nil and GetD(enemy,eye)<GetD(TIHolder,eye) then
+					TIHolder=enemy				
+				end
+			end
+			if TIHolder~=nil then 
+				TI=TIHolder
+				TITimer=os.clock()+5
+				startCombo=false
+				wardFound=false
+				success=false
+			end
+		end
+	end  
     if LeeConfig.smite then Smite() end
 	if LeeConfig.ignite then ignite() end
 	if LeeConfig.ultLow then ultSave() end
@@ -274,7 +296,7 @@ function ward(hx,hy,hz)
 			success=false
 			--wx,wy,wz=GetFireahead(myHero,5,0)
 			if www~=nil and os.clock() > lastWardJump then
-				UseItemLocation(www, getWardSpot(mousePos.x,mousePos.y,mousePos.z))
+				UseItemLocation(www, mousePos.x,mousePos.y,mousePos.z)
 				lastWardJump=os.clock()+3
 				success=true
 			end	
@@ -447,6 +469,7 @@ function initiate()
 			--CastSpellXYZ('Q',GetFireahead(targeti,1.6,18)) 
 			--CastSpellXYZ('Q',mousePos.x,mousePos.y,mousePos.z) 
 			printtext("\nQ1") 
+			TITimer=os.clock()+5
 		end
 		if TI~=nil and TI.x~=nil and myHero.SpellNameQ == "blindmonkqtwo" and QRDY==1 and startCombo==false and eye~=nil and eye.unit~=nil and eye.unit.x~=nil then
 			print("\nQ2") 

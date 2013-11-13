@@ -2,7 +2,7 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 1.4")
+print("\nVersion 1.5")
 
 local target
 local targetrange
@@ -642,7 +642,7 @@ function farm()
         CustomCircle(range,2,4,myHero)
         if GetLowestHealthEnemyMinion(range) ~= nil then
         targetminion = GetLowestHealthEnemyMinion(range) end
-        if targetminion ~= nil then
+        if targetminion ~= nil and targetminion.dead==0 then
                         if getDmg("Q",targetminion,myHero)*CanUseSpell('Q')>=targetminion.health then
                                 Action2(targetminion)
                         end
@@ -665,7 +665,7 @@ function farm2()
                 Action(targetrange)
         else targetminion = GetLowestHealthEnemyMinion(range)
         end
-        if targetminion ~= nil then
+        if targetminion ~= nil and targetminion.dead==0 then
 				if getDmg("Q",targetminion,myHero)*CanUseSpell('Q')>=targetminion.health then
 						Action2(targetminion)
 				end
