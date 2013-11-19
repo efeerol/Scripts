@@ -1,5 +1,83 @@
---[[	DEADLY CASSIOPEIA V1.7 BY CCONN
-
+--[[
+                                                                    dddddddd                                                                             
+DDDDDDDDDDDDD                                                       d::::::dlllllll                                                                      
+D::::::::::::DDD                                                    d::::::dl:::::l                                                                      
+D:::::::::::::::DD                                                  d::::::dl:::::l                                                                      
+DDD:::::DDDDD:::::D                                                 d:::::d l:::::l                                                                      
+  D:::::D    D:::::D     eeeeeeeeeeee    aaaaaaaaaaaaa      ddddddddd:::::d  l::::lyyyyyyy           yyyyyyy                                             
+  D:::::D     D:::::D  ee::::::::::::ee  a::::::::::::a   dd::::::::::::::d  l::::l y:::::y         y:::::y                                              
+  D:::::D     D:::::D e::::::eeeee:::::eeaaaaaaaaa:::::a d::::::::::::::::d  l::::l  y:::::y       y:::::y                                               
+  D:::::D     D:::::De::::::e     e:::::e         a::::ad:::::::ddddd:::::d  l::::l   y:::::y     y:::::y                                                
+  D:::::D     D:::::De:::::::eeeee::::::e  aaaaaaa:::::ad::::::d    d:::::d  l::::l    y:::::y   y:::::y                                                 
+  D:::::D     D:::::De:::::::::::::::::e aa::::::::::::ad:::::d     d:::::d  l::::l     y:::::y y:::::y                                                  
+  D:::::D     D:::::De::::::eeeeeeeeeee a::::aaaa::::::ad:::::d     d:::::d  l::::l      y:::::y:::::y                                                   
+  D:::::D    D:::::D e:::::::e         a::::a    a:::::ad:::::d     d:::::d  l::::l       y:::::::::y                                                    
+DDD:::::DDDDD:::::D  e::::::::e        a::::a    a:::::ad::::::ddddd::::::ddl::::::l       y:::::::y                                                     
+D:::::::::::::::DD    e::::::::eeeeeeeea:::::aaaa::::::a d:::::::::::::::::dl::::::l        y:::::y                                                      
+D::::::::::::DDD       ee:::::::::::::e a::::::::::aa:::a d:::::::::ddd::::dl::::::l       y:::::y                                                       
+DDDDDDDDDDDDD            eeeeeeeeeeeeee  aaaaaaaaaa  aaaa  ddddddddd   dddddllllllll      y:::::y                                                        
+                                                                                         y:::::y                                                         
+                                                                                        y:::::y                                                          
+                                                                                       y:::::y                                                           
+                                                                                      y:::::y                                                            
+                                                                                     yyyyyyy                                                             
+        CCCCCCCCCCCCC               AAA                 SSSSSSSSSSSSSSS   SSSSSSSSSSSSSSS IIIIIIIIII     OOOOOOOOO                                       
+     CCC::::::::::::C              A:::A              SS:::::::::::::::SSS:::::::::::::::SI::::::::I   OO:::::::::OO                                     
+   CC:::::::::::::::C             A:::::A            S:::::SSSSSS::::::S:::::SSSSSS::::::SI::::::::I OO:::::::::::::OO                                   
+  C:::::CCCCCCCC::::C            A:::::::A           S:::::S     SSSSSSS:::::S     SSSSSSSII::::::IIO:::::::OOO:::::::O                                  
+ C:::::C       CCCCCC           A:::::::::A          S:::::S           S:::::S              I::::I  O::::::O   O::::::O                                  
+C:::::C                        A:::::A:::::A         S:::::S           S:::::S              I::::I  O:::::O     O:::::O                                  
+C:::::C                       A:::::A A:::::A         S::::SSSS         S::::SSSS           I::::I  O:::::O     O:::::O                                  
+C:::::C                      A:::::A   A:::::A         SS::::::SSSSS     SS::::::SSSSS      I::::I  O:::::O     O:::::O                                  
+C:::::C                     A:::::A     A:::::A          SSS::::::::SS     SSS::::::::SS    I::::I  O:::::O     O:::::O                                  
+C:::::C                    A:::::AAAAAAAAA:::::A            SSSSSS::::S       SSSSSS::::S   I::::I  O:::::O     O:::::O                                  
+C:::::C                   A:::::::::::::::::::::A                S:::::S           S:::::S  I::::I  O:::::O     O:::::O                                  
+ C:::::C       CCCCCC    A:::::AAAAAAAAAAAAA:::::A               S:::::S           S:::::S  I::::I  O::::::O   O::::::O                                  
+  C:::::CCCCCCCC::::C   A:::::A             A:::::A  SSSSSSS     S:::::SSSSSSS     S:::::SII::::::IIO:::::::OOO:::::::O                                  
+   CC:::::::::::::::C  A:::::A               A:::::A S::::::SSSSSS:::::S::::::SSSSSS:::::SI::::::::I OO:::::::::::::OO                                   
+     CCC::::::::::::C A:::::A                 A:::::AS:::::::::::::::SSS:::::::::::::::SS I::::::::I   OO:::::::::OO                                     
+bbbbbbbbCCCCCCCCCCCCCAAAAAAA                   AAAAAAASSSSSSSSSSSSSSS   SSSSSSSSSSSSSSS   IIIIIIIIII     OOOOOOOOO                                       
+b::::::b                                               CCCCCCCCCCCCC      CCCCCCCCCCCCC     OOOOOOOOO     NNNNNNNN        NNNNNNNNNNNNNNN        NNNNNNNN
+b::::::b                                            CCC::::::::::::C   CCC::::::::::::C   OO:::::::::OO   N:::::::N       N::::::N:::::::N       N::::::N
+b::::::b                                          CC:::::::::::::::C CC:::::::::::::::C OO:::::::::::::OO N::::::::N      N::::::N::::::::N      N::::::N
+ b:::::b                                         C:::::CCCCCCCC::::CC:::::CCCCCCCC::::CO:::::::OOO:::::::ON:::::::::N     N::::::N:::::::::N     N::::::N
+ b:::::bbbbbbbbb yyyyyyy           yyyyyyy      C:::::C       CCCCCC:::::C       CCCCCCO::::::O   O::::::ON::::::::::N    N::::::N::::::::::N    N::::::N
+ b::::::::::::::bby:::::y         y:::::y      C:::::C            C:::::C              O:::::O     O:::::ON:::::::::::N   N::::::N:::::::::::N   N::::::N
+ b::::::::::::::::by:::::y       y:::::y       C:::::C            C:::::C              O:::::O     O:::::ON:::::::N::::N  N::::::N:::::::N::::N  N::::::N
+ b:::::bbbbb:::::::by:::::y     y:::::y        C:::::C            C:::::C              O:::::O     O:::::ON::::::N N::::N N::::::N::::::N N::::N N::::::N
+ b:::::b    b::::::b y:::::y   y:::::y         C:::::C            C:::::C              O:::::O     O:::::ON::::::N  N::::N:::::::N::::::N  N::::N:::::::N
+ b:::::b     b:::::b  y:::::y y:::::y          C:::::C            C:::::C              O:::::O     O:::::ON::::::N   N:::::::::::N::::::N   N:::::::::::N
+ b:::::b     b:::::b   y:::::y:::::y           C:::::C            C:::::C              O:::::O     O:::::ON::::::N    N::::::::::N::::::N    N::::::::::N
+ b:::::b     b:::::b    y:::::::::y             C:::::C       CCCCCC:::::C       CCCCCCO::::::O   O::::::ON::::::N     N:::::::::N::::::N     N:::::::::N
+ b:::::bbbbbb::::::b     y:::::::y               C:::::CCCCCCCC::::CC:::::CCCCCCCC::::CO:::::::OOO:::::::ON::::::N      N::::::::N::::::N      N::::::::N
+ b::::::::::::::::b       y:::::y                 CC:::::::::::::::C CC:::::::::::::::C OO:::::::::::::OO N::::::N       N:::::::N::::::N       N:::::::N
+ b:::::::::::::::b       y:::::y                    CCC::::::::::::C   CCC::::::::::::C   OO:::::::::OO   N::::::N        N::::::N::::::N        N::::::N
+ bbbbbbbbbbbbbbbb       y:::::y                        CCCCCCCCCCCCC      CCCCCCCCCCCCC     OOOOOOOOO     NNNNNNNN         NNNNNNNNNNNNNN         NNNNNNN
+                       y:::::y                                                                                                                           
+                      y:::::y                                                                                                                            
+                     y:::::y                                                                                                                             
+                    y:::::y                                                                                                                              
+                   yyyyyyy                                                                                                                               
+VVVVVVVV           VVVVVVVV              1111111                888888888                                                                                
+V::::::V           V::::::V             1::::::1              88:::::::::88                                                                              
+V::::::V           V::::::V            1:::::::1            88:::::::::::::88                                                                            
+V::::::V           V::::::V            111:::::1           8::::::88888::::::8                                                                           
+ V:::::V           V:::::V                1::::1           8:::::8     8:::::8                                                                           
+  V:::::V         V:::::V                 1::::1           8:::::8     8:::::8                                                                           
+   V:::::V       V:::::V                  1::::1            8:::::88888:::::8                                                                            
+    V:::::V     V:::::V                   1::::l             8:::::::::::::8                                                                             
+     V:::::V   V:::::V                    1::::l            8:::::88888:::::8                                                                            
+      V:::::V V:::::V                     1::::l           8:::::8     8:::::8                                                                           
+       V:::::V:::::V                      1::::l           8:::::8     8:::::8                                                                           
+        V:::::::::V                       1::::l           8:::::8     8:::::8                                                                           
+         V:::::::V                     111::::::111        8::::::88888::::::8                                                                           
+          V:::::V           ......     1::::::::::1 ......  88:::::::::::::88                                                                            
+           V:::V            .::::.     1::::::::::1 .::::.    88:::::::::88                                                                              
+            VVV             ......     111111111111 ......      888888888                                                                                
+                                                                                                                                                         
+                                                                                                                                                         
+                                                                                                                                                         
+                                                                                                                                                         
 		Follow me on Facebook! I post info on all new scripts and updates there
 		CCONN's Facebook: https://www.facebook.com/CCONN81
 		
@@ -9,6 +87,8 @@
 		Like the script? +Rep my profile. My signature has a list of all my released scripts and current projects
 		CCONN's Leaguebot Profile: http://leaguebot.net/forum/Upload/member.php?action=profile&uid=814
 ]]
+
+
 require 'Utils'
 require 'spell_damage'
 require 'uiconfig'
@@ -31,8 +111,8 @@ local HavocDamage = 0
 local ExecutionerDamage = 0
 local True_Attack_Damage_Against_Minions = 0
 local Range = myHero.range + GetDistance(GetMinBBox(myHero))
-local SORT_CUSTOM = function(a, b) return a.maxHealth and b.maxHealth and a.maxHealth < b.maxHealth end
 local UltPOS
+local SORT_CUSTOM = function(a, b) return a.maxHealth and b.maxHealth and a.maxHealth < b.maxHealth end
 ----------[[End of Deadly Cassio Variables]]
 
 ----------[[Farming Variables]]
@@ -93,21 +173,6 @@ local Enemies = {}
 local EnemyIndex = 1
 ----------[[End of Roam Helper Variables]]
 
-----------[[AutoCarry 3.0.1 Variables]]
-local target
-local target2
-local targetHero
-local tlow
-local thigh
-local startAttackSpeed
-local projSpeed = 1.22
-local lastAttack = GetTickCount()
-local shotFired = false
-local attackDelayOffset = 275
-local isMoving = false
-local startAttackSpeed = 0.644 
-----------[[End of AutoCarry 3.0.1 Variables]]
-
 ----------[[Script Config Menu]]
 CfgControls, menu = uiconfig.add_menu('1. Cassio Controls', 200)
 menu.keydown('Combo', 'Combo', Keys.Space)
@@ -124,7 +189,7 @@ menu.keydown('Cast_Ult', 'Cast Ultimate', Keys.A)
 	menu.permashow('Cast_Ult')
 
 CfgSettings, menu = uiconfig.add_menu('2. Cassio Settings', 200)
-menu.checkbutton('AutoCarry_ONOFF', 'Enable Auto Carry', true)
+--menu.checkbutton('AutoCarry_ONOFF', 'Orbwalk in Combo', true)
 menu.checkbutton('Auto_Q_ONOFF', 'Auto Q', true)
 menu.checkbutton('Auto_W_ONOFF', 'Auto W', true)
 menu.checkbutton('Auto_E_ONOFF', 'Auto E', true)
@@ -132,8 +197,6 @@ menu.checkbutton('Auto_Harass_ONOFF', 'Auto Harass', true)
 menu.checkbutton('Auto_Ult_ONOFF', 'Auto Ultimate', true)
 menu.checkbutton('Low_HP_Ult_ONOFF', 'Low HP Auto Ult', true)
 menu.checkbutton('DMG_Predict_Farm_ONOFF', 'Use Damage Prediction Farming', true)
---menu.checkbutton('FarmQ', 'Farm with Q', true)
---menu.checkbutton('FarmE', 'Farm with E', true)
 menu.checkbutton('Lane_Clear_With_W', 'Lane Clear with Miasma', true)
 menu.checkbutton('Auto_Kill_Steal_ONOFF', 'Kill Steal', true)
 menu.checkbutton('AutoLevelSpells_ONOFF', 'Auto Level Spells', true)
@@ -144,6 +207,7 @@ menu.checkbutton('Combo_Circles_ONOFF', 'Combo Circles', true)
 menu.checkbutton('Draw_ONOFF', 'Range Circles', true)
 menu.checkbutton('MoveToMouse', 'Move To Mouse', true)
 menu.slider('ComboType', 'Choose Combo Type', 1, 3, 1, {"W First","Q First", "CCONN"})
+menu.slider('RTYPE', 'Manual R Type', 1, 2, 1, {"No Facing Detection","Facing Detection"})
 menu.slider('QRNG', 'Q Range', 100, 850, 850, nil, true)
 menu.slider('WRNG', 'W Range', 100, 850, 850, nil, true)
 menu.slider('RRNG', 'R Range', 100, 850, 750, nil, true)
@@ -225,10 +289,16 @@ function DeadlyCassio()
 			Hybrid()
 		else end
 		if CfgControls.PushLane then LaneClear() end
-		if CfgSettings.Auto_Ult_ONOFF then AutoR() end
+		if CfgControls.Cast_Ult then
+			if CfgSettings.RTYPE == 1 then
+				R_No_Facing_Detection()
+			elseif CfgSettings.RTYPE == 2 then
+				R()
+			end
+		end
 		if CfgSettings.Low_HP_Ult_ONOFF then Low_HP_Ult() end
 		--if CfgSettings.Auto_GetMEC_Ult_ONOFF then AutoGetMecULT() end
-		if CfgControls.Cast_Ult then R_No_Facing_Detection() end
+		if CfgControls.Cast_Ult then R() end
 		if CfgSettings.Auto_Harass_ONOFF then Auto_Harass() end
 	end
 end
@@ -266,7 +336,19 @@ function Draw()
 				local QDMG = getDmg('Q', Hero, myHero)+(getDmg('Q',Hero,myHero)*(HavocDamage + ExecutionerDamage))
 				local WDMG = getDmg('W', Hero, myHero)+(getDmg('W',Hero,myHero)*(HavocDamage + ExecutionerDamage))
 				local EDMG = getDmg('E', Hero, myHero)+(getDmg('E',Hero,myHero)*(HavocDamage + ExecutionerDamage))
-				local Damage = Round(QDMG + WDMG + EDMG * 3, 0)
+				local RDMG = getDmg('R', Hero, myHero)+(getDmg('R',Hero,myHero)*(HavocDamage + ExecutionerDamage))
+				local Current_Burst
+				local Damage
+				if myHero.selflevel >= 6 and myHero.SpellTimeR > 1.0 then
+					Current_Burst = Round(QDMG + WDMG + EDMG * 3 + RDMG, 0) --Show damage of QWEEER combo if Ult is available
+				else
+					Current_Burst = Round(QDMG + WDMG + EDMG * 3, 0) --Show damage of QWEEE combo if Ult is not available
+				end
+				if myHero.SummonerD == 'SummonerDot' and myHero.SpellTimeD > 1.0 or myHero.SummonerF == 'SummonerDot' and myHero.SpellTimeF > 1.0 then
+					Current_Burst = Current_Burst + ((myHero.selflevel*20)+50) --If Ignite detected and is not on cooldown add ignite damage to combo damage
+				end
+
+				Damage = Current_Burst
 			
 				DrawText("Champion: "..Hero.name, PositionX, ((15/900) * GetScreenY()) * Enemy.Number + ((53/90) * GetScreenY()), Color.SkyBlue)
 			
@@ -347,16 +429,22 @@ function useZhonyas()
 	UseItemOnTarget(3157,myHero)
 end
 function useHextechGunblade()
-	GetInventorySlot(3146)
-	UseItemOnTarget(3146,target)
+	if target ~= nil then
+		GetInventorySlot(3146)
+		UseItemOnTarget(3146,target)
+	end
 end
 function useDeathfireGrasp()
-	GetInventorySlot(3128)
-	UseItemOnTarget(3128,target)
+	if target ~= nil then
+		GetInventorySlot(3128)
+		UseItemOnTarget(3128,target)
+	end
 end
 function useTwinShadows()
-	GetInventorySlot(3023)
-	UseItemOnTarget(3023,target)
+	if target ~= nil then
+		GetInventorySlot(3023)
+		UseItemOnTarget(3023,target)
+	end
 end
 function useWoogletsWitchcap()
 	GetInventorySlot(3090)
@@ -371,8 +459,10 @@ function useSeraphsEmbrace()
 	UseItemOnTarget(3040,myHero)
 end
 function useBlackfireTorch()
-	GetInventorySlot(3188)
-	UseItemOnTarget(3188,target)
+	if target ~= nil then
+		GetInventorySlot(3188)
+		UseItemOnTarget(3188,target)
+	end
 end
 
 function Mastery_Damage()
@@ -440,17 +530,9 @@ function Farm()
 			if Minion.dead == 0 and Minion.health - PredictedDamage <= True_Attack_Damage_Against_Minions and Minion.health - PredictedDamage > 0 and GetDistance(Minion, myHero) < Range then
 				if os.clock() > TimeToAA then AttackTarget(Minion)
 				CustomCircle(100, 1, 2, Minion)
+--[[				elseif target ~= nil then
+					Harass()]]
 				end
-			--[[elseif CfgSettings.FarmE then
-				if Minion.dead == 0 and Minion.health - PredictedDamage <= getDmg("E",Minion,myHero)+(getDmg("E",Minion,myHero)*(HavocDamage + ExecutionerDamage)) and DetectPoison() then
-					E()
-				end
-			elseif CfgSettings.FarmQ then
-				if Minion.dead == 0 and Minion.health - PredictedDamage >= getDmg("E",Minion,myHero)+(getDmg("E",Minion,myHero)*(HavocDamage + ExecutionerDamage)) then
-					Q()
-				end]]
-			elseif target ~= nil then
-					Harass()
 			end
 		end
 	end
@@ -517,7 +599,7 @@ function Hybrid()		-----> Hybrid function changed to prioritze last hits over ch
     end
 	if CfgSettings.MoveToMouse then MoveToMouse() end
 end
-
+	
 function LaneClear()
     local tlow=GetLowestHealthEnemyMinion(range) 
     local thigh=GetHighestHealthEnemyMinion(range)
@@ -544,12 +626,12 @@ function LaneClear()
 
     if target ~= nil and target.visible == 1 and target.dead == 0 then 
         if True_Attack_Damage_Against_Minions >= target.health then
-				Action()
-				--AttackTarget(target)
+				AttackTarget(target)
 		elseif
 			getDmg("E",target,myHero)+(getDmg("E",target,myHero)*(HavocDamage + ExecutionerDamage)) >= target.health and DetectPoison() then
 					E()
 		else
+		CastHotkey('AUTO 100,0 ATTACK:WEAKMINION PATROLSTRAFE')
 			if CfgSettings.Lane_Clear_With_W then
 				if target == thigh then
 					local WPos = GetMEC(175, 850, target)
@@ -571,70 +653,12 @@ function LaneClear()
 				qTimer = os.time()
 			end
 		end
-		if CfgSettings.AutoCarry_ONOFF then Action() end
+		--Action()
     else
     if CfgSettings.MoveToMouse then MoveToMouse() end
     end
 	if CfgSettings.MoveToMouse then MoveToMouse() end
 end
-	
---[[function LaneClear()
-    local tlow=GetLowestHealthEnemyMinion(range) 
-    local thigh=GetHighestHealthEnemyMinion(range)
-	targetHero = GetWeakEnemy("MAGIC",range)
-
-    if target2 ~= nil  and target2.visible == 1 and target2.dead == 0 then 
-        target = target2 
-    end
-
-    if tlow~= nil then 
-		if True_Attack_Damage_Against_Minions >= tlow.health then
-			target = tlow
-			CustomCircle(100,20,1,target)
-		elseif getDmg("E",tlow,myHero)+(getDmg("E",tlow,myHero)*(HavocDamage + ExecutionerDamage)) >= tlow.health then
-			target = tlow
-			CustomCircle(100,20,1,target)			
-		elseif targetHero ~= nil then
-			target = targetHero
-		elseif thigh ~= nil then
-			target = thigh
-			CustomCircle(110,10,5,target)
-		else end
-	end
-
-    if target ~= nil and target.visible == 1 and target.dead == 0 then 
-        if True_Attack_Damage_Against_Minions >= target.health then
-				Action()
-				--AttackTarget(target)
-		elseif
-			myHero.SpellTimeE > 1.0 and getDmg("E",target,myHero)+(getDmg("E",target,myHero)*(HavocDamage + ExecutionerDamage)) >= target.health and DetectPoison() then
-					E()
-		elseif CfgSettings.Lane_Clear_With_W and myHero.SpellTimeW > 1.0 then
-			if target == thigh then
-				local WPos = GetMEC(175, 850, target)
-				if WPos then
-					CastSpellXYZ("W", WPos.x, 0, WPos.z)
-					wTimer = os.time()
-				else
-					CastSpellXYZ("W",GetFireahead(target,2.65,25))
-					wTimer = os.time()
-				end
-			end
-		end
-		local QPos = GetMEC(75, 850, target)
-		if myHero.SpellTimeQ > 1.0 and QPos then
-			CastSpellXYZ("Q", QPos.x, 0, QPos.z)
-			qTimer = os.time()
-		elseif myHero.SpellTimeQ > 1.0 then
-			CastSpellXYZ("Q",GetFireahead(target,6,0))
-			qTimer = os.time()
-		end
-	end
-    else
-	if CfgSettings.AutoCarry_ONOFF then Action() elseif CfgSettings.MoveToMouse then MoveToMouse() end
-	end
-	if CfgSettings.AutoCarry_ONOFF then Action() elseif CfgSettings.MoveToMouse then MoveToMouse() end
-end]]
 ----------[[End of Farming Functions]]
 
 ----------[[Combo Functions]]
@@ -653,9 +677,9 @@ function Combo()
 				if CfgSummonerSpells.Auto_Ignite_COMBO_ONOFF then SummonerIgniteCombo() end
 				if CfgSummonerSpells.Auto_Exhaust_COMBO_ONOFF then SummonerExhaustCombo() end
 			end
-			if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
+			--[[if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
 				AutoCarry()
-			end
+			end]]
 			if CfgSettings.MoveToMouse then MoveToMouse() end
 		else 
 			if CfgSettings.MoveToMouse then MoveToMouse() end
@@ -675,9 +699,9 @@ function Combo()
 				if CfgSummonerSpells.Auto_Ignite_COMBO_ONOFF then SummonerIgniteCombo() end
 				if CfgSummonerSpells.Auto_Exhaust_COMBO_ONOFF then SummonerExhaustCombo() end
 			end
-			if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
+			--[[if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
 				AutoCarry()
-			end
+			end]]
 			if CfgSettings.MoveToMouse then MoveToMouse() end
 		else 
 			if CfgSettings.MoveToMouse then MoveToMouse() end
@@ -685,22 +709,22 @@ function Combo()
 	end
 	if CfgSettings.ComboType == 3 then
 		if target ~= nil then
-			if CfgSettings.Auto_E_ONOFF and DetectPoison() and myHero.SpellTimeE > 1.0 and GetDistance(myHero, target) <= 700 then
+			if DetectPoison() and myHero.SpellTimeE > 1.0 and GetDistance(myHero, target) <= 700 then
 				E()
-			elseif CfgSettings.Auto_W_ONOFF and not DetectPoison() or os.time() > qTimer + 2 or os.time() > wTimer + 2 and myHero.SpellTimeW > 1.0 and GetDistance(myHero, target) <= 850 then
+			elseif not DetectPoison() and myHero.SpellTimeW > 1.0 and GetDistance(myHero, target) <= 850 then
 				W()
-			elseif CfgSettings.Auto_Q_ONOFF and not DetectPoison() or os.time() > qTimer + 2 or os.time() > wTimer + 2 and myHero.SpellTimeQ > 1.0 and GetDistance(myHero, target) <= 850 then
+			elseif not DetectPoison() and myHero.SpellTimeQ > 1.0 and GetDistance(myHero, target) <= 850 then
 				Q()
 			elseif CfgControls.ComboR and myHero.SpellTimeR > 1.0 and GetDistance(myHero, target) <= 700 then
 				R()
-			end
-			if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
-				AutoCarry()
 			end
 			if GetDistance(target) <= 600 then
 				if CfgSummonerSpells.Auto_Ignite_COMBO_ONOFF then SummonerIgniteCombo() end
 				if CfgSummonerSpells.Auto_Exhaust_COMBO_ONOFF then SummonerExhaustCombo() end
 			end
+			--[[if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and GetDistance(myHero, target) <= range then
+				AutoCarry()
+			end]]
 			if CfgSettings.MoveToMouse then MoveToMouse() end
 		else 
 			if CfgSettings.MoveToMouse then MoveToMouse() end
@@ -718,9 +742,6 @@ function Harass()
 			if GetDistance(target) <= 700 then
 				if CfgSettings.Auto_E_ONOFF then E() end
 			end
-			if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and myHero.SpellTimeW < 1.0 and GetDistance(myHero, target) <= range then
-				AutoCarry()
-			end
 			if CfgSettings.MoveToMouse then MoveToMouse() end
 		else 
 			if CfgSettings.MoveToMouse then MoveToMouse() end
@@ -734,9 +755,6 @@ function Harass()
 			end
 			if GetDistance(target) <= 700 then
 				if CfgSettings.Auto_E_ONOFF then E() end
-			end
-			if CfgSettings.AutoCarry_ONOFF and myHero.SpellTimeE < 1.0 and myHero.SpellTimeQ < 1.0 and myHero.SpellTimeW < 1.0 and GetDistance(myHero, target) <= range then
-				AutoCarry()
 			end
 			if CfgSettings.MoveToMouse then MoveToMouse() end
 		else 
@@ -769,11 +787,11 @@ function E()
 	if target ~= nil then
 		if DetectPoison() then
 			if CfgSettings.Auto_Q_ONOFF and CfgSettings.Auto_W_ONOFF then
-				if os.time() < qTimer + 3 or os.time() < wTimer + 2 then
+				--if os.time() < qTimer + 3 or os.time() < wTimer + 2 then
 					if GetDistance(target) <= 700 then
 						CastSpellTarget("E",target)
 					end
-				end
+				--end
 			else
 				if GetDistance(target) <= 700 then
 					CastSpellTarget("E",target)
@@ -785,7 +803,7 @@ end
 
 function R()
 	if target2 ~= nil and myHero.selflevel >= 6 then
-		if myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
+		if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
 			if GetDistance(myHero, target2) <= CfgSettings.RRNG and GetTargetDirection(target2) == CHASING then
 				ultPos = GetMEC(230, 800, target2)
 				if ultPos then
@@ -800,7 +818,7 @@ end
 
 function R_No_Facing_Detection()
 	if target2 ~= nil and myHero.selflevel >= 6 then
-		if myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
+		if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
 			if GetDistance(myHero, target2) <= CfgSettings.RRNG then
 				ultPos = GetMEC(230, CfgSettings.RRNG, target2)
 				if ultPos then
@@ -817,7 +835,7 @@ function AutoR()
 	if target2 ~= nil and target2.health < (target2.maxHealth*(CfgSettings.Auto_Ult_Value / 100)) then
 		if CfgSettings.Auto_Ult_ONOFF then
 			if myHero.selflevel >= 6 then
-				if myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
+				if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
 					if GetDistance(target2) <= CfgSettings.RRNG and GetTargetDirection(target2) == CHASING then
 						ultPos = GetMEC(230, CfgSettings.RRNG, target2)
 						if ultPos then
@@ -864,7 +882,7 @@ function Low_HP_Ult()
 	if target2 ~= nil and GetDistance(myHero,target) <= 400 then
 		if myHero.selflevel >= 6 then
 			if myHero.health < myHero.maxHealth*(CfgSettings.Low_HP_Ult_Value / 100) then
-				if myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
+				if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
 					if GetDistance(target2) <= CfgSettings.RRNG and GetTargetDirection(target2) == CHASING then
 						ultPos = GetMEC(230, CfgSettings.RRNG, target2)
 						if ultPos then
@@ -1839,242 +1857,6 @@ end
 
 SetTimerCallback('Main')
 ----------[[End of Auto Dodge Skillshots]]
-
-----------[[Auto Carry 3.0.1]]
-
-function OnLoad()
-    if GetAAData()[myHero.name] ~= nil then
-        if GetAAData()[myHero.name].projSpeed ~= nil then
-            projSpeed = GetAAData()[myHero.name].projSpeed
-        end
-    end
-    if GetAAData()[myHero.name] ~= nil then
-        if GetAAData()[myHero.name].startAttackSpeed ~= nil then
-            startAttackSpeed = GetAAData()[myHero.name].startAttackSpeed
-        end
-    end
-end
-
-function trueRange()
-local trueRangeValue
-        if target ~= nil and GetDistance(target) < range then
-                trueRangeValue = range -(range-GetDistance(target))
-        else
-                trueRangeValue = range
-        end
-        return trueRangeValue
-end
-
-function targetReset()
-        if not target and not target2 and not targetHero then
-        target = nil
-        target2 = nil
-        targetHero = nil
-        end
-end
-
-function Action()
-	if timeToShoot() then
-		if target ~= nil then
-			attackEnemy(target)
-			CustomCircle(100,10,1,target)
-		end
-	else
-		if target ~= nil then
-			CustomCircle(100,5,2,target)
-		end
-		if heroCanMove() then moveToCursor() end
-    end
-end
-
-function attackEnemy(target)
-        if ValidTarget(target) then
-        AttackTarget(target)
-        shotFired = True
-        end
-end
-
-function GetNextAttackTime()
-    return lastAttack + attackDelayOffset / GetAttackSpeed()
-end
-
-function GetAttackSpeed()
-    return myHero.attackspeed/(1/startAttackSpeed)
-end
-
-function timeToShoot()
-    if GetTickCount() > GetNextAttackTime() then
-    return true
-    end
-    return false
-end
-
-function heroCanMove()
-    if shotFired == false or timeToShoot() then
-        return true
-    end
-    return false
-end
-
-function moveToCursor() -- Removes derping when mouse is in one position instead of myHero:MoveTo mousePos
-    isMoving = true
-    local moveSqr = math.sqrt((mousePos.x - myHero.x)^2+(mousePos.z - myHero.z)^2)
-    local moveX = myHero.x + 300*((mousePos.x - myHero.x)/moveSqr)
-    local moveZ = myHero.z + 300*((mousePos.z - myHero.z)/moveSqr)
-    MoveToXYZ(moveX,0,moveZ)
-end
-
-function OnCreateObj(object)
-    if GetAAData()[myHero.name] ~= nil then
-        for _, v in pairs(GetAAData()[myHero.name].aaParticles) do
-            if string.find(object.charName,v) then
-                shotFired = false
-                lastAttack = GetTickCount()
-            end
-        end
-    end
-end
-
-function OnProcessSpell(obj,spell)
-    if obj ~= nil and obj.name == myHero.name then
-        if string.find(spell.name,"attack") then                       
-            lastAttack = GetTickCount()
-        end
-    end
-end
-
-function GetAAData()
-    return {  
-        Cassiopeia   = { projSpeed = 1.22, aaParticles = {"CassBasicAttack_mis"}, aaSpellName = {"cassiopeiabasicattack"}, startAttackSpeed = "0.644" },
-    }
-end
-
-function getAdditionalDamage() 
-    if myHero.name == "Thresh" then
-        local attacku = 0.01
-        local ticky
-        ticky=GetTickCount()
-            if GetSpellLevel("E") > 0 then
-                if (ticky - lastAttack) > 10000 then
-                    attacku = 1
-                else
-                    attacku = (ticky - lastAttack)/10001
-                end
-            return
-                math.round((((GetSpellLevel("E")*30)+50)/100)*(myHero.addDamage+myHero.baseDamage)*attacku+(myHero.ap))
-            end
-    end
-
-    if myHero.name == "Orianna" then
-        if myHero.selflevel > 15 then
-        return math.round( 50 + (myHero.ap * 0.15) )
-        elseif myHero.selflevel > 12 then
-        return math.round( 42 + (myHero.ap * 0.15) )
-        elseif myHero.selflevel > 9 then
-        return math.round( 34 + (myHero.ap * 0.15) )
-        elseif myHero.selflevel > 6 then
-        return math.round( 26 + (myHero.ap * 0.15) )
-        elseif myHero.selflevel > 3 then
-        return math.round( 18 + (myHero.ap * 0.15) )
-        elseif myHero.selflevel > 0 then
-        return math.round( 10 + (myHero.ap * 0.15) )
-        end
-    end
-    return 0
-end
-
-function AutoCarry()
-    CustomCircle(range,2,4,myHero)
-    if target2 ~= nil then 
-        target = target2 
-    else 
-        target = GetWeakEnemy("PHYS",range) 
-    end
-    
-    if target ~= nil then
-        Action()
-    else
-        moveToCursor()
-    end
-end
-
-function Hybrid()		-----> Hybrid function changed to prioritze last hits over champions
-    CustomCircle(range,2,4,myHero)
-    targetHero = GetWeakEnemy("PHYS",range)
-	tlow = GetLowestHealthEnemyMinion(range)
-    
-	if tlow ~= nil and tlow.health <= getDmg('AD',tlow,myHero) then
-		target = tlow
-		Action()
-	elseif targetHero ~= nil then
-        target = targetHero
-		Action()
-    else 
-        target = GetLowestHealthEnemyMinion(range) 
-    end
-        
-    if target ~= nil then
-        if ( getDmg("AD",target,myHero) + getAdditionalDamage() ) >= target.health then
-            Action()
-        end
-    else
-        moveToCursor()
-    end
-end
-
---[[function Farm()        -----> Farm function not used by Deadly KogMaw
-    CustomCircle(range,2,4,myHero)
-    
-    if target2 ~= nil then 
-        target = target2 
-    end
-	
-    if GetLowestHealthEnemyMinion(range) ~= nil then 
-        target = GetLowestHealthEnemyMinion(range) 
-    end
-    
-    if target ~= nil then
-        if ( getDmg("AD",target,myHero) + getAdditionalDamage() ) >= target.health then
-            Action()
-        end
-    else
-        moveToCursor()
-    end
-end]]
-
---[[function LaneClear()
-    CustomCircle(range,2,4,myHero)
-    local tlow=GetLowestHealthEnemyMinion(range) 
-    local thigh=GetHighestHealthEnemyMinion(range)
-	targetHero = GetWeakEnemy("PHYS",range)
-
-    if target2 ~= nil  and target2.visible == 1 and target2.dead == 0 then 
-        target = target2 
-    end
-
-    if tlow~= nil then 
-		if getDmg('AD', tlow, myHero) >= tlow.health then
-			target = tlow
-			CustomCircle(100,20,1,target)
-		elseif targetHero ~= nil then
-			target = targetHero
-		elseif thigh ~= nil then
-			target = thigh
-			CustomCircle(110,10,5,target)
-		else end
-	end
-
-    if target ~= nil and target.visible == 1 and target.dead == 0 then 
-        Action()
-    
-    else
-    moveToCursor()
-    end
-end]]
-
-OnLoad()
-
-----------[[End of Auto Carry 3.0.1]]
 
 ----------[[GETMECS]]
 --COMING SOON
