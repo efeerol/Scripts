@@ -1,5 +1,5 @@
  --[[
-	Spell Damage Library 1.28
+	Spell Damage Library 1.31
 		by eXtragoZ
 		
 		If there is a mistake, error, value has changed, bug, or you have an idea 
@@ -10,10 +10,7 @@
            
     -------------------------------------------------------
             Usage:
-     
-                    require "spellDmg"
-     
-                    local player = GetMyHero()
+                             
                     local target = heroManager:getHero(i) -- i = ?
 					local damage, TypeDmg = getDmg("R",target,player,3)     
     -------------------------------------------------------
@@ -76,25 +73,23 @@
 		-With some skills returns a percentage of increased damage
 		-Many skills are shown per second, hit and other
 		-Use spelllvl only if you want to specify the level of skill
-		
 ]]
-
 
 do
   spellDmg = {
-	Aatrox = {
+Aatrox = {
 		QDmgP = "45*Qlvl+25+.6*bad",
 		WDmgP = "(35*Wlvl+25+bad)*(stagedmg1+stagedmg3)",
 		WType = 2,
-		EDmgM = "45*Elvl+30+.6*ap+.6*bad",
+		EDmgM = "35*Elvl+40+.6*ap+.6*bad",
 		RDmgM = "100*Rlvl+100+ap",
 	},
 	Ahri = {
-		QDmgM = "25*Qlvl+15+.33*ap",
-		QDmgT = "25*Qlvl+15+.33*ap",
-		WDmgM = "math.max(25*Wlvl+15+.4*ap,(25*Wlvl+15+.4*ap)*2*stagedmg3)", -- xfox-fires , Additional fox-fires that hit the same target will deal 50% damage. stage3: Max damage
-		EDmgM = "30*Elvl+30+.35*ap",
-		RDmgM = "math.max(40*Rlvl+45+.35*ap)", -- xbolt (3 bolts)
+		QDmgM = "(25*Qlvl+15+.33*ap)*(stagedmg1+stagedmg3)", --stage1:Initial. stage3:total.
+		QDmgT = "(25*Qlvl+15+.33*ap)*(stagedmg2+stagedmg3)", --stage2:way back
+		WDmgM = "math.max(25*Wlvl+15+.4*ap,(25*Wlvl+15+.4*ap)*1.6*stagedmg3)", -- xfox-fires ,  30% damage from each additional fox-fire beyond the first. stage3: Max damage
+		EDmgM = "30*Elvl+30+.35*ap",--Enemies hit by Charm take 20% increased damage from Ahri for 6 seconds
+		RDmgM = "40*Rlvl+30+.3*ap", -- xbolt (3 bolts)
 	},
 	Akali = {
 		PDmgM = "(6+.1666667*ap)*ad/100",
@@ -170,7 +165,7 @@ do
 		QDmgM = "50*Qlvl+30+.5*ap",
 		WDmgM = "30*Wlvl+30+.4*ap", --xsec (2.5 sec)
 		EDmgP = "12*Elvl+8+.4*bad", --xsec (4 sec)
-		RDmgM = "math.max(70*Rlvl+50+.3*ap+.2*ad,(70*Rlvl+50+.3*ap+.2*ad)*1.5*stagedmg3)", --150% the big one. stage3: Max damage
+		RDmgM = "math.max(70*Rlvl+50+.3*ap+(.1*Rlvl+.1)*ad,(70*Rlvl+50+.3*ap+(.1*Rlvl+.1)*ad)*1.5*stagedmg3)", --150% the big one. stage3: Max damage
 	},
 	Darius = {
 		PDmgM = "(-.75)*((-1)^lvl-2*lvl-13)+.3*bad", --xstack
@@ -229,7 +224,7 @@ do
 	Fizz = {
 		QDmgM = "30*Qlvl-20+.6*ap", -- (bonus)
 		QType = 2,
-		WDmgM = "math.max(((15*Wlvl+25+.7*ap)+(Wlvl+3)*(tmhp-thp)/100)*stagedmg1,((10*Wlvl+20+.35*ap)+(Wlvl+3)*(tmhp-thp)/100)*stagedmg2,((15*Wlvl+25+.7*ap)+(Wlvl+3)*(tmhp-thp)/100)*stagedmg3)", --stage1:when its active. stage2:Passive. stage3:when its active
+		WDmgM = "math.max(((15*Wlvl+25+.5*ap)+(Wlvl+3)*(tmhp-thp)/100)*(stagedmg1+stagedmg3),((10*Wlvl+20+.35*ap)+(Wlvl+3)*(tmhp-thp)/100)*stagedmg2)", --stage1:when its active. stage2:Passive. stage3:when its active
 		WType = 2,
 		EDmgM = "50*Elvl+20+.75*ap",
 		RDmgM = "125*Rlvl+75+ap",
@@ -254,7 +249,7 @@ do
 	},
 	Gragas = {
 		QDmgM = "50*Qlvl+35+.9*ap",
-		EDmgM = "40*Elvl+40+.5*ap+.66*ad", --Damage is split amongst targets hit, "25*Elvl+25+.5*ap" Minimal Damage
+		EDmgM = "40*Elvl+40+.5*ap+.66*ad",
 		RDmgM = "125*Rlvl+75+ap",
 	},
 	Graves = {
@@ -269,9 +264,10 @@ do
 		RDmgM = "100*Rlvl+50+ap",
 	},
 	Heimerdinger = {
-		QDmgM = "8*Qlvl+22+.2*ap", --x Turrets attack
-		WDmgM = "50*Wlvl+35+.55*ap",
-		EDmgM = "55*Elvl+25+.6*ap",
+		QDmgM = "math.max((math.min(7*Qlvl+8,42)+.15*ap)*stagedmg1,(25*Qlvl+25+.5*ap)*stagedmg2,(75*Rlvl+150+.8*ap)*stagedmg3)",--stage1:x Turrets attack. stage2:Energy Blast. stage3:UPGRADE Energy Blast
+		WDmgM = "30*Wlvl+30+.45*ap",--x Rocket, 20% magic damage for each rocket beyond the first
+		EDmgM = "40*Elvl+20+.6*ap",
+		RDmgM = "math.max((20*Rlvl+70+.33*ap)*stagedmg1,(45*Rlvl+90+.45*ap)*stagedmg2,(50*Rlvl+100+.6*ap)*stagedmg3)",--stage1:x Turrets attack. stage2:x Rocket, 20% magic damage for each rocket beyond the first. stage3:x Bounce
 	},
 	Irelia = {
 		QDmgP = "30*Qlvl-10",-- (bonus)
@@ -282,8 +278,8 @@ do
 		RDmgP = "40*Rlvl+40+.5*ap+.6*bad", --xblade
 	},
 	Janna = {
-		QDmgM = "math.max((25*Qlvl+35+.75*ap)*stagedmg1,math.max(25,10*Qlvl+10)*stagedmg2,(25*Qlvl+35+.75*ap+math.max(25,10*Qlvl+10)*3)*stagedmg3)", --stage1:Initial. stage2:Additional Damage xsec (3 sec). stage3:Max damage
-		WDmgM = "55*Wlvl+5+.6*ap",
+		QDmgM = "math.max((25*Qlvl+35+.35*ap)*stagedmg1,(5*Qlvl+10+.1*ap)*stagedmg2,(25*Qlvl+35+.35*ap+(5*Qlvl+10+.1*ap)*3)*stagedmg3)", --stage1:Initial. stage2:Additional Damage xsec (3 sec). stage3:Max damage
+		WDmgM = "55*Wlvl+5+.5*ap",
 	},
 	JarvanIV = {
 		PDmgP = "math.min((6+2*(math.floor((lvl-1)/6)))*tmhp/100,400)",
@@ -308,13 +304,13 @@ do
 		RDmgM = "40*Rlvl-20",
 		RType = 2,
 	},
-    Jinx = {
-        QDmgP = ".1*ad",
-        QType = 2,
-        WDmgP = "45*Wlvl-15+1.4*ad",
-        EDmgM = "50*Elvl+50+ap",-- per Chomper
-        RDmgP = "math.max(((50*Rlvl+75+.5*bad)*2+(0.05*Rlvl+0.2)*(tmhp-thp))*stagedmg1,(50*Rlvl+75+.5*bad)*stagedmg2,(0.05*Rlvl+0.2)*(tmhp-thp)*stagedmg3)", --stage1:Maximum (after 1500 units)+Additional Damage. stage2:Minimum Base (Maximum = x2). stage3: Additional Damage
-    },
+	Jinx = {
+		QDmgP = ".1*ad",
+		QType = 2,
+		WDmgP = "50*Wlvl-40+1.4*ad",
+		EDmgM = "50*Elvl+50+ap",-- per Chomper
+		RDmgP = "math.max(((50*Rlvl+75+.5*bad)*2+(0.05*Rlvl+0.2)*(tmhp-thp))*stagedmg1,(50*Rlvl+75+.5*bad)*stagedmg2,(0.05*Rlvl+0.2)*(tmhp-thp)*stagedmg3)", --stage1:Maximum (after 1500 units)+Additional Damage. stage2:Minimum Base (Maximum = x2). stage3: Additional Damage
+	},
 	Karma = {
 		QDmgM = "math.max((45*Qlvl+35+.6*ap)*stagedmg1,(50*Rlvl-25+.3*ap)*stagedmg2,(100*Rlvl-50+.6*ap)*stagedmg3)", --stage1:Initial. stage2:Bonus (R). stage3: Detonation (R)
 		WDmgM = "math.max((50*Wlvl+10+.6*ap)*(stagedmg1+stagedmg3),(75*Rlvl+.6*ap)*stagedmg2)", --stage1:Initial. stage2:Bonus (R).
@@ -326,17 +322,17 @@ do
 		RDmgM = "150*Rlvl+100+.6*ap",
 	},
 	Kassadin = {
-		QDmgM = "50*Qlvl+30+.7*ap",
+		QDmgM = "35*Qlvl+45+.7*ap",
 		WDmgM = "15*Wlvl+15+.3*ap",
 		WType = 2,
-		EDmgM = "50*Elvl+30+.6*ap",
-		RDmgM = "math.max((10*Rlvl+50+.8*ap)*stagedmg1,(10*Rlvl+50)*stagedmg2,(10*Rlvl+50+.8*ap+(10*Rlvl+50)*10)*stagedmg3)", --stage1:Initial. stage2:additional dmg xstack (10 stack). stage3: Max damage
+		EDmgM = "50*Elvl+30+.7*ap",
+		RDmgM = "math.max((20*Rlvl+60+.8*ap)*(stagedmg1+stagedmg3),(5*Rlvl+45+.1*ap)*stagedmg2)", --stage1:Initial. stage2:additional dmg xstack (10 stack). stage3: Initial
 	},
 	Katarina = {
 		QDmgM = "math.max((25*Qlvl+35+.45*ap)*stagedmg1,(15*Qlvl+.15*ap)*stagedmg2,(40*Qlvl+35+.6*ap)*stagedmg3)", --stage1:Dagger, Each subsequent hit deals 10% less damage. stage2:On-hit. stage3: Max damage
 		WDmgM = "35*Wlvl+5+.25*ap+.6*bad",
 		EDmgM = "25*Elvl+35+.4*ap",
-		RDmgM = "math.max(17.5*Rlvl+22.5+.25*ap+.37.5*bad,(17.5*Rlvl+22.5+.25*ap+.37.5*bad)*10*stagedmg3)", --xdagger (champion can be hit by a maximum of 10 daggers (2 sec)). stage3: Max damage
+		RDmgM = "math.max(17.5*Rlvl+22.5+.25*ap+.375*bad,(17.5*Rlvl+22.5+.25*ap+.375*bad)*10*stagedmg3)", --xdagger (champion can be hit by a maximum of 10 daggers (2 sec)). stage3: Max damage
 	},
 	Kayle = {
 		QDmgM = "50*Qlvl+10+ap+bad",
@@ -398,10 +394,10 @@ do
 		RDmgP = "10*Rlvl+30+.1*ap+.3*bad",--per shot
 	},
 	Lulu = {
-		PDmgM = "math.max((2*lvl+(-1)*(-1)^lvl),(2*lvl+(-1)*(-1)^lvl)*3*stagedmg3)", --xbolt (3 bolts). stage3: Max damage
+		PDmgM = "math.max(3*math.floor(lvl/2+.5)+.15*ap,(3*math.floor(lvl/2+.5)+.15*ap)*3*stagedmg3)", --xbolt (3 bolts). stage3: Max damage
 		--PType = 2,
 		QDmgM = "45*Qlvl+35+.5*ap",
-		EDmgM = "50*Elvl+30+.6*ap",
+		EDmgM = "50*Elvl+30+.4*ap",
 	},
 	Lux = {
 		PDmgM = "10+10*lvl",
@@ -448,15 +444,15 @@ do
 	},
 	Morgana = {
 		QDmgM = "55*Qlvl+25+.6*ap",
-		WDmgM = "math.max(15*Wlvl+10+.2*ap,(15*Wlvl+10+.2*ap)*5*stagedmg3)", --xsec (5 sec). stage3: Max damage
+		WDmgM = "(7*Wlvl+5+.11*ap)*(1+.5*(1-thp/tmhp))", --x 1/2 sec (5 sec)
 		RDmgM = "math.max(75*Rlvl+100+.7*ap,(75*Rlvl+100+.7*ap)*2*stagedmg3)", --x2 If the target stay in range for the full duration. stage3: Max damage
 	},
 	Nami = {
-		QDmgM = "55*Qlvl+20+.65*ap",
-		WDmgM = "40*Wlvl+30+.5*ap",
+		QDmgM = "55*Qlvl+20+.5*ap",
+		WDmgM = "40*Wlvl+30+.5*ap",--The percentage power of later bounces now scales. Each bounce gains 0.75% more power per 10 AP
 		EDmgM = "15*Elvl+10+.2*ap",--xhit (max 3 hits)
 		EType = 2,
-		RDmgM = "100*Rlvl+50+.7*ap",
+		RDmgM = "100*Rlvl+50+.6*ap",
 	},
 	Nasus = {
 		QDmgP = "20*Qlvl+10", --+3 per enemy killed by Siphoning Strike (bonus)
@@ -474,7 +470,7 @@ do
 		RDmgM = "125*Rlvl+75+.8*ap",
 	},
 	Nidalee = {
-		QDmgM = "math.max(43.75*Qlvl+11.25+.65*ap,(43.75*Qlvl+11.25+.65*ap)*2.5*stagedmg3)", --deals up to 250% damage the further away the target is. stage3: Max damage
+		QDmgM = "43.75*Qlvl+11.25+.65*ap", --deals up to 250% damage the further away the target is, gains damage from distance traveled until it exceeds Nidalee's human auto attack range
 		WDmgM = "45*Wlvl+35+.4*ap",
 		QMDmgP = "(30*Rlvl+10+ad)*(1+2*(tmhp-thp)/tmhp)", --(total attack damage + 40/70/100) * (1 + ( 2 * %missing health / 100 ))
 		--Q onhit
@@ -594,8 +590,8 @@ do
 		WDmgM = "50*Wlvl+50+.9*ap",
 	},
 	Sivir = {
-		QDmgP = "45*Qlvl+15+.5*ap+1.1*bad", --x2 , 20% reduced damage to each subsequent target
-		WDmgP = "15*Wlvl+5", --20% less damage with each bounce
+		QDmgP = "20*Qlvl+5+.5*ap+(.1*Qlvl+.6)*ad", --x2 , 10% reduced damage to each subsequent target
+		WDmgP = "(.05*Wlvl+.45)*ad*stagedmg2", --stage1:bonus to attack target. stage2: Bounce Damage
 		WType = 2,
 	},
 	Skarner = {
@@ -605,14 +601,14 @@ do
 		RDmgM = "100*Rlvl+100+ap",
 	},
 	Sona = {
-		PDmgM = "math.max(math.max(7*lvl+6,8*lvl+3,9*lvl-2,10*lvl-8,15*lvl-78)*2*stagedmg1,math.max(7*lvl+6,8*lvl+3,9*lvl-2,10*lvl-8,15*lvl-78)*(stagedmg2+stagedmg3))", --stage1: (x2) with Staccato
+		PDmgM = "math.max((math.max(7*lvl+6,8*lvl+3,9*lvl-2,10*lvl-8,15*lvl-78)*2+.2*ap)*stagedmg1,math.max(7*lvl+6,8*lvl+3,9*lvl-2,10*lvl-8,15*lvl-78)*(stagedmg2+stagedmg3))", --stage1: Staccato , stage2:Diminuendo or Tempo
 		PType = 2,
-		QDmgM = "50*Qlvl+.7*ap",
-		RDmgM = "100*Rlvl+50+.8*ap",
+		QDmgM = "50*Qlvl+.5*ap",
+		RDmgM = "100*Rlvl+50+.5*ap",
 	},
 	Soraka = {
 		QDmgM = "25*Qlvl+35+.4*ap",
-		EDmgM = "50*Elvl+.6*ap",
+		EDmgM = "30*Elvl+10+.4*ap+.05*mmana",
 	},
 	Swain = {
 		QDmgM = "math.max(15*Qlvl+10+.3*ap,(15*Qlvl+10+.3*ap)*3*stagedmg3)", --xsec (3 sec). stage3: Max damage
@@ -635,11 +631,11 @@ do
 		RDmgP = "math.max(50*Rlvl+70+.75*bad,(50*Rlvl+70+.75*bad)*2*stagedmg3)", --x2 if the target is hit twice. stage3: Max damage
 	},
 	Taric = {
-		PDmgM = ".04*mmana", --(bonus)
+		PDmgM = ".3*ar", --(bonus)
 		PType = 2,
-		WDmgM = "40*Wlvl+10+.6*ap+.2*ar",
-		EDmgM = "math.max(30*Elvl+10+.4*ap,(30*Elvl+10+.4*ap)*2*stagedmg3)", --min (lower damage the farther the target is)  up to 200%
-		RDmgM = "100*Rlvl+50+.7*ap",
+		WDmgM = "40*Wlvl+.3*ar",
+		EDmgM = "math.max(30*Elvl+10+.2*ap,(30*Elvl+10+.2*ap)*2*stagedmg3)", --min (lower damage the farther the target is)  up to 200%
+		RDmgM = "100*Rlvl+50+.5*ap",
 	},
 	Teemo = {
 		QDmgM = "45*Qlvl+35+.8*ap",
@@ -771,12 +767,12 @@ do
 		PDmgM = "(6+2*(math.floor((lvl-1)/6)))*tmhp/100",
 		PType = 2,
 		QDmgP = "math.max((40*Qlvl+35+bad)*stagedmg1,(40*Qlvl+35+bad)*.6*stagedmg2,(40*Qlvl+35+bad)*1.5*stagedmg3)",  --stage1:multiple shurikens deal 50% damage. stage2:Secondary Targets. stage3: Max damage
-		EDmgP = "30*Elvl+30+.8*bad",
+		WDmgP = "30*Wlvl+30+.8*bad",
 		RDmgP = "math.max(ad*stagedmg1,ad*stagedmg3)", --stage1:100% of Zed attack damage. stage3: stage1
 		RDmgT = "(15*Rlvl+5)*stagedmg2", --stage2:% of damage dealt.
 	},
 	Ziggs = {
-		PDmgM = "13+7*lvl+.35*ap",
+		PDmgM = "math.max(7*lvl+13,8*lvl+8,9*lvl-3,10*lvl-20)+.35*ap",
 		PType = 2,
 		QDmgM = "45*Qlvl+30+.65*ap",
 		WDmgM = "35*Wlvl+35+.35*ap",
@@ -788,38 +784,34 @@ do
 	},
 	Zyra = {
 		PDmgT = "80+20*lvl",
-		QDmgM = "40*Qlvl+35+.6*ap",
-		WDmgM = "26+6*lvl+.2*ap", --xstrike Extra plants striking the same target deal 50% less damage
+		QDmgM = "35*Qlvl+35+.65*ap",
+		WDmgM = "23+6.5*lvl+.2*ap", --xstrike Extra plants striking the same target deal 50% less damage
 		EDmgM = "35*Elvl+25+.5*ap",
 		RDmgM = "85*Rlvl+95+.7*ap",
 	},
 }
            
-            function getDmg(spellname,SDLtarget,SDLplayer,stagedmg,spelllvl)
+function getDmg(spellname,SDLtarget,SDLplayer,stagedmg,spelllvl)
                     local name = SDLplayer.name
-                    lvl = SDLplayer.selflevel
-                    ap = SDLplayer.ap
-                    ad = SDLplayer.baseDamage + SDLplayer.addDamage
-                    bad = SDLplayer.addDamage
-                    ar = SDLplayer.armor
-                    mmana = SDLplayer.maxMana
-                    mana = SDLplayer.mana
-                    mhp = SDLplayer.maxHealth
-                    tap = SDLtarget.ap
-                    thp = SDLtarget.health
-                    tmhp = SDLtarget.maxHealth
+                    local lvl = SDLplayer.selflevel
+                    local ap = SDLplayer.ap
+                    local ad = SDLplayer.baseDamage + SDLplayer.addDamage
+                    local bad = SDLplayer.addDamage
+                    local ar = SDLplayer.armor
+                    local mmana = SDLplayer.maxMana
+                    local mana = SDLplayer.mana
+                    local mhp = SDLplayer.maxHealth
+                    local tap = SDLtarget.ap
+                    local thp = SDLtarget.health
+                    local tmhp = SDLtarget.maxHealth
+					local Qlvl = GetSpellLevel('Q')
+					local Wlvl = GetSpellLevel('W')
+					local Elvl = GetSpellLevel('E')
+					local Rlvl = GetSpellLevel('R')
 					stagedmg1,stagedmg2,stagedmg3 = 1,0,0
-                    if spelllvl ~= nil then
-                            Qlvl,Wlvl,Elvl,Rlvl = spelllvl,spelllvl,spelllvl,spelllvl
-                    else
-                            Qlvl = GetSpellLevel('Q')
-                            Wlvl = GetSpellLevel('W')
-                            Elvl = GetSpellLevel('E')
-                            Rlvl = GetSpellLevel('R')
-                    end
+                    if spelllvl ~= nil then Qlvl,Wlvl,Elvl,Rlvl = spelllvl,spelllvl,spelllvl,spelllvl end
                     if stagedmg ~= nil and stagedmg == 2 then stagedmg1,stagedmg2,stagedmg3 = 0,1,0
-                    elseif stagedmg ~= nil and stagedmg == 3 then stagedmg1,stagedmg2,stagedmg3 = 0,0,1
-                    else stagedmg1,stagedmg2,stagedmg3 = 1,0,0 end
+                    elseif stagedmg ~= nil and stagedmg == 3 then stagedmg1,stagedmg2,stagedmg3 = 0,0,1 end
                     local TrueDmg = 0
 					local TypeDmg = 1 --1 ability/normal--2 bonus to attack
                     local XM = false
@@ -830,9 +822,16 @@ do
                             local dmgtxtm = spellDmg[name][spellname.."DmgM"]
                             local dmgtxtp = spellDmg[name][spellname.."DmgP"]
                             local dmgtxtt = spellDmg[name][spellname.."DmgT"]
-                            local dmgm = dmgtxtm and loadstring("return "..dmgtxtm)() or 0
-                            local dmgp = dmgtxtp and loadstring("return "..dmgtxtp)() or 0
-                            local dmgt = dmgtxtt and loadstring("return "..dmgtxtt)() or 0
+							local replacetext = {"stagedmg1", "stagedmg2", "stagedmg3", "tap", "thp", "tmhp", "ap", "bad", "ad", "ar", "mmana", "mana", "mhp", "Qlvl", "Wlvl", "Elvl", "Rlvl", "lvl"}
+							local replaceto = {stagedmg1, stagedmg2, stagedmg3, tap, thp, tmhp, ap, bad, ad, ar, mmana, mana, mhp, Qlvl, Wlvl, Elvl, Rlvl, lvl}
+								for i=1, #replacetext do
+								dmgtxtm = dmgtxtm and dmgtxtm:gsub(replacetext[i], replaceto[i]) or dmgtxtm
+								dmgtxtp = dmgtxtp and dmgtxtp:gsub(replacetext[i], replaceto[i]) or dmgtxtp
+								dmgtxtt = dmgtxtt and dmgtxtt:gsub(replacetext[i], replaceto[i]) or dmgtxtt
+								end
+                            local dmgm = dmgtxtm and load("return "..dmgtxtm)() or 0
+                            local dmgp = dmgtxtp and load("return "..dmgtxtp)() or 0
+                            local dmgt = dmgtxtt and load("return "..dmgtxtt)() or 0
                             if dmgm > 0 then dmgm = CalcMagicDamage(SDLtarget,dmgm) end
                             if dmgp > 0 then dmgp = CalcDamage(SDLtarget,dmgp) end
                             TrueDmg = dmgm+dmgp+dmgt
