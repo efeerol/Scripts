@@ -1,5 +1,5 @@
  --[[
-	Spell Damage Library 1.31
+	Spell Damage Library 1.35
 		by eXtragoZ
 		
 		If there is a mistake, error, value has changed, bug, or you have an idea 
@@ -756,6 +756,12 @@ Aatrox = {
 		QType = 2,
 		WDmgM = "35*Wlvl+25+ap",
 		EDmgM = "30*Elvl+25+bad",
+	},
+	Yasuo = {
+		QDmgP = "20*Qlvl+1*ad",
+		QType = 2,
+		EDmgM = "50+20*Elvl+.6*ap",
+		RDmgP = "100+100*Rlvl+1.5*bad",
 	},
 	Zac = {
 		QDmgM = "40*Qlvl+30+.5*ap",
