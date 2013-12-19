@@ -9,7 +9,7 @@ local metakey = SKeys.Control
 print=printtext
 printtext("\nVIctory\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.3\n")
+printtext("\nVersion 1.4\n")
 
 local QRDY=0
 local WRDY=0
@@ -34,6 +34,7 @@ local wUsedAt = 0
 local vUsedAt = 0
 local timerP=0
 local bluePill = nil
+local _registry = {}
 
 ViConfig = scriptConfig("Vi", "Vi Config")
 ViConfig:addParam("qe", "Q Escape Towards Mouse", SCRIPT_PARAM_ONKEYDOWN, false, 90)
@@ -108,8 +109,8 @@ function ViRun()
 		Range = 450
 	end
 	if IsChatOpen()==0 and ViConfig.qe then
-		Q()
 		moveToCursor()
+		Q()
 	end
 	if IsChatOpen()==0 and ViConfig.q then harass() end
 	if IsChatOpen()==0 and ViConfig.teamfight then teamfight() end
@@ -133,6 +134,9 @@ end
 
 function OnProcessSpell(unit,spell)
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
+	--if GetD(obj)< 300 then
+		--print('\nOBJNAME '..spell.name)
+	--end
 		if string.find(spell.name, "ttack") and target ~= nil and spell.target and ERDY == 1 then
 			RangeAttackE = true
 		end
@@ -144,20 +148,21 @@ end
 
 function OnCreateObj(obj)
 	if obj ~= nil then
-	--if GetD(obj)< 400 then
+	--if GetD(obj)< 300 then
 	--	print('\nOBJNAME '..obj.charName)
 	--end
+		if string.find(obj.charName,'Vi_Q_Channel_L') ~= nil then
+			--print("HERE")
+			timer = GetClock()
+		end
 		if RangeAttackE == true then
 		if string.find(obj.charName,"Vi_ArmorShred_Hit_1") ~= nil or string.find(obj.charName,"Vi_ArmorShred_Hit_2") or string.find(obj.charName,"Vi_ArmorShred_hold") ~= nil or string.find(obj.charName,"Vi_ArmorShred") ~= nil and GetD(myHero, object) < 225 then
             attacked = true
         end
 		end
-		if string.find(obj.charName,'Vi_Q_Channel_L') ~= nil and GetD(obj, myHero) < 100 then
-			timer = GetClock()
-		end
-		if (string.find(obj.charName,'Vi_q_mis') ~= nil or string.find(obj.charName,'Vi_Q_Expire') ~= nil) and GetD(obj, myHero) < 100 then
-			timer = 0
-		end
+		--if (string.find(obj.charName,'Vi_q_mis') ~= nil or string.find(obj.charName,'Vi_Q_Expire') ~= nil) and GetD(obj, myHero) < 100 then
+		--	timer = 0
+		--end
 		if (string.find(obj.charName,'Vi_Passive_Buff') ~= nil) and GetD(obj)< 100 then
 			Passive=false
 		end--Vi_Passive_Buff_DeActivate
@@ -488,28 +493,36 @@ function Q(enemy)
 			
 			if GetD(enemy)<900 and timer==0 then
 			--print("\nH5")
-				send.key_press(0x74)
+				send.key_down(0x74)
+				
 			--print("\nH5")
 			elseif GetD(enemy)<900 and GetD(enemy)<=math.min(900,450+ ((GetClock() - timer)  * 0.36)) then
 			
 			--print("\nH6")
-				ClickSpellXYZ('Q',enemy.x,enemy.y,enemy.z,0)
-				send.key_press(0x74)
+				ClickSpellXYZ('M',enemy.x,enemy.y,enemy.z,0)
+				send.key_up(0x74)
 			end
 		
 		elseif enemy==nil and QRDY==1 then
 			if timer==0 then
-			--print("\nH5")
-				send.key_press(0x74)
+			--print("\nH5 "..myHero.SpellTimeQ)
+			send.key_up(0x74)
+				send.key_down(0x74)
+				--send.wait(200)
 			elseif timer+1250  <=GetClock() then
 			
-			--print("\nH7")
+			--print("\nH7 "..myHero.SpellTimeQ)
 				ClickSpellXYZ('M',GetCursorWorldX(),GetCursorWorldY(),GetCursorWorldZ(),0)
-				send.key_press(0x74)
+				send.key_up(0x74)
 			end
 		end
 		
 	 send.tick() 
+	end
+	
+	
+	function keypress()
+		send.key_press(0x74)
 	end
 
 function Espell(target)
@@ -802,6 +815,75 @@ end
 else
 return 99999
 end
+end
+
+function run_every(interval, fn, ...)
+    return internal_run({fn=fn, interval=interval}, ...)
+end
+
+function internal_run(t, ...)    
+    local fn = t.fn
+    local key = t.key or fn
+    
+    local now = os.clock()
+    local data = _registry[key]
+       
+    if data == nil or t.reset then
+        local args = {}
+        local n = select('#', ...)
+        local v
+        for i=1,n do
+            v = select(i, ...)
+            table.insert(args, v)
+        end   
+        -- the first t and args are stored in registry        
+        data = {count=0, last=0, complete=false, t=t, args=args}
+        _registry[key] = data
+    end
+        
+    --assert(data~=nil, 'data==nil')
+    --assert(data.count~=nil, 'data.count==nil')
+    --assert(now~=nil, 'now==nil')
+    --assert(data.t~=nil, 'data.t==nil')
+    --assert(data.t.start~=nil, 'data.t.start==nil')
+    --assert(data.last~=nil, 'data.last==nil')
+    -- run
+    local countCheck = (t.count==nil or data.count < t.count)
+    local startCheck = (data.t.start==nil or now >= data.t.start)
+    local intervalCheck = (t.interval==nil or now-data.last >= t.interval)
+    --print('', 'countCheck', tostring(countCheck))
+    --print('', 'startCheck', tostring(startCheck))
+    --print('', 'intervalCheck', tostring(intervalCheck))
+    --print('')
+    if not data.complete and countCheck and startCheck and intervalCheck then                
+        if t.count ~= nil then -- only increment count if count matters
+            data.count = data.count + 1
+        end
+        data.last = now        
+        
+        if t._while==nil and t._until==nil then
+            return fn(...)
+        else
+            -- while/until handling
+            local signal = t._until ~= nil
+            local checker = t._while or t._until
+            local result
+            if fn == checker then            
+                result = fn(...)
+                if result == signal then
+                    data.complete = true
+                end
+                return result
+            else
+                result = checker(...)
+                if result == signal then
+                    data.complete = true
+                else
+                    return fn(...)
+                end
+            end            
+        end
+    end    
 end
 
 SetTimerCallback("ViRun")

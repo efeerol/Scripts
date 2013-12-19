@@ -11,7 +11,6 @@ local lastAttempt = 0
 
 local skillingOrder = {
     ----------------1 2 3 4 5 6 7 8 9 101112131415161718
-    Aatrox       = {W,Q,E,W,W,R,W,E,E,W,R,E,E,Q,Q,R,Q,Q},
     Ahri         = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,W,E,E,R,W,W},
     Akali        = {Q,W,Q,E,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Alistar      = {Q,E,W,Q,E,R,Q,E,Q,E,R,Q,E,W,W,R,W,W},
@@ -25,7 +24,6 @@ local skillingOrder = {
     Cassiopeia   = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Chogath      = {Q,E,W,W,W,R,W,E,W,E,R,E,E,Q,Q,R,Q,Q},
     Corki        = {Q,W,Q,E,Q,R,Q,E,Q,E,R,E,W,E,W,R,W,W},
-    Darius       = {Q,W,E,Q,Q,R,Q,W,Q,W,R,W,W,E,E,E,E,E},
     Diana        = {W,Q,W,E,Q,R,Q,Q,Q,W,R,W,W,E,E,R,E,E},
     DrMundo      = {W,Q,E,W,W,R,W,E,W,E,R,E,E,Q,Q,R,Q,Q},
     Elise        = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
@@ -45,7 +43,6 @@ local skillingOrder = {
     JarvanIV     = {Q,E,Q,W,Q,R,Q,E,W,Q,R,E,E,E,W,R,W,W},
     Jax          = {E,W,Q,W,W,R,W,E,W,E,R,Q,E,Q,Q,R,E,Q},
     Jayce        = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
-    JinX	     = {Q,E,W,Q,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
     Karma        = {Q,E,Q,W,E,Q,E,Q,E,Q,E,Q,E,W,W,W,W,W},
     Karthus      = {Q,E,W,Q,Q,R,Q,Q,E,E,R,E,E,W,W,R,W,W},
     Kassadin     = {Q,W,Q,E,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
@@ -58,7 +55,6 @@ local skillingOrder = {
     LeeSin       = {E,Q,W,Q,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
     Leona        = {Q,E,W,W,W,R,W,E,W,E,R,E,E,Q,Q,R,Q,Q},
     Lissandra    = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
-    Lucian       = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
     Lulu         = {E,W,Q,E,E,R,E,W,E,W,R,W,W,Q,Q,R,Q,Q},
     Lux          = {E,Q,E,W,E,R,E,Q,E,Q,R,Q,Q,W,W,R,W,W},
     Malphite     = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,W,E,W,R,W,W},
@@ -144,10 +140,7 @@ end
 
 function OnTick()
     if IGERsLvlSpells.autoLevelSpells and IsLolActive() and IsChatOpen() == 0 then
-        if myHero.name == 'Karma' or myHero.name == 'Jayce' then
-            spellLevelSum = (GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R))-1
-        else spellLevelSum = GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R)
-        end
+        local spellLevelSum = GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R)
         if attempts <= 10 or (attempts > 10 and GetTickCount() > lastAttempt+1500) then
             if spellLevelSum < myHero.selflevel then
                 if lastSpellLevelSum ~= spellLevelSum then attempts = 0 end

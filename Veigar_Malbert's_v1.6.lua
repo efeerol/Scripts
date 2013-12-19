@@ -2,7 +2,7 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 1.5")
+print("\nVersion 1.6")
 
 local target
 local targetrange
@@ -36,6 +36,10 @@ local dodgeskillshot = false
 local playerradius = 150
 local skillshotcharexist = false
 local show_allies=0
+local QRDY=0
+local WRDY=0
+local ERDY=0
+local RRDY=0
 
 VeigConfig = scriptConfig("Veigar", "Vinegar Hotkeys")
 VeigConfig:addParam("e", "Stun and Run", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))--Z
@@ -44,7 +48,7 @@ VeigConfig:addParam("Combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte
 VeigConfig:addParam("f", "Farm", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))--C
 VeigConfig:addParam("pf", "Protect when Farming", SCRIPT_PARAM_ONKEYTOGGLE, true,55)
 VeigConfig:addParam("nm", "NEARMOUSE Targetting", SCRIPT_PARAM_ONKEYTOGGLE, false,56)
-VeigConfig:addParam("OS", "Always W Combo", SCRIPT_PARAM_ONKEYTOGGLE, true,57)
+VeigConfig:addParam("OS", "Always W Combo", SCRIPT_PARAM_ONKEYTOGGLE, false,57)
 VeigConfig:addParam('spm', "Stun Placement", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,0.8,1.5,0.01)
 VeigConfig:addParam("ult", "Ult On/Off", SCRIPT_PARAM_ONOFF, false)
 VeigConfig:addParam('zh', 'Zhonyas', SCRIPT_PARAM_ONOFF, true)
@@ -111,7 +115,26 @@ function VeigRun()
                 moveX = myHero.x + 300*((mousePos.x - myHero.x)/moveSqr)
                 moveZ = myHero.z + 300*((mousePos.z - myHero.z)/moveSqr)
         end
+		
+			------------
+	if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+                QRDY = 1
+                else QRDY = 0
+        end
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+                WRDY = 1
+                else WRDY = 0
+        end
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+                ERDY = 1
+                else ERDY = 0
+        end
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+                RRDY = 1
+        else RRDY = 0 end
+	--------------------------
 end
+
 
 
 function OnProcessSpell(unit, spell)
@@ -490,29 +513,30 @@ end
 
 function C()
 	if target~=nil then
-		if GetD(target)<650 and CanCastSpell('R') and VeigConfig.ks and target.health<getDmg('R',target,myHero)*CanUseSpell('R') and target.health>=getDmg('AD',target,myHero) and target.health>=getDmg('Q',target,myHero)*CanUseSpell('Q') then
+		if GetD(target)<650 and RRDY==1 and VeigConfig.ks and target.health<getDmg('R',target,myHero)*RRDY and target.health>=getDmg('AD',target,myHero) and target.health>=getDmg('Q',target,myHero)*QRDY then
 			CastSpellTarget('R',target)
 		end
-		if GetD(target)<850 and CanCastSpell('E') and CanCastSpell('W') then
+		
+		if GetD(target)<850 and ERDY==1 then
+			E(target)
+		elseif GetD(target)<850 and ERDY==1 and WRDY==1 then
 			local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
 				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,1,0))
+				CastSpellXYZ('W',GetFireahead(target,0.1,0))
 			end
-		elseif GetD(target)<850 and CanCastSpell('E') then
-			E(target)
 		end
-		if GetD(target)<650 and CanCastSpell('Q') then
+		if GetD(target)<650 and QRDY==1 then
 			CastSpellTarget('Q',target)
-		elseif GetD(target)<650 and CanCastSpell('R') and VeigConfig.ult then
+		elseif GetD(target)<650 and RRDY==1 and VeigConfig.ult then
 			CastSpellTarget('R',target)
 		end
-		if GetD(twfa)<900 and CanCastSpell('W') and VeigConfig.OS then
-			CastSpellXYZ("W",twfx,0,twfz)
-		else
+		--if GetD(twfa)<900 and WRDY==1 and VeigConfig.OS then
+			--CastSpellXYZ("W",twfx,0,twfz)
+		--else
 			AttackTarget(target)
-		end
+		--end
 		if GetD(target)<400 then
 			UseAllItems(target)
 			CastSummonerExhaust(target)
@@ -617,7 +641,7 @@ function Harass()
 	CustomCircle(range,2,4,myHero)
 	if target~=nil then
 		
-		if GetD(target)<850 and CanCastSpell('E') and CanCastSpell('W') then
+		if GetD(target)<850 and ERDY==1 and WRDY==1 then
 		local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
 			CastSpellXYZ('W',pos.x,0,pos.z)
@@ -625,7 +649,7 @@ function Harass()
 			CastSpellXYZ('W',GetFireahead(target,1,0))
 			end
 		end
-		if GetD(target)<850 and CanCastSpell('E') then
+		if GetD(target)<850 and ERDY==1 then
 			E(target)
 		end
                 Action2(target)
@@ -643,7 +667,7 @@ function farm()
         if GetLowestHealthEnemyMinion(range) ~= nil then
         targetminion = GetLowestHealthEnemyMinion(range) end
         if targetminion ~= nil and targetminion.dead==0 then
-                        if getDmg("Q",targetminion,myHero)*CanUseSpell('Q')>=targetminion.health then
+                        if getDmg("Q",targetminion,myHero)*QRDY>=targetminion.health then
                                 Action2(targetminion)
                         end
                         if getDmg("AD",targetminion,myHero)>=targetminion.health then
@@ -661,12 +685,12 @@ function farm2()
         CustomCircle(range,2,4,myHero)
                        
         if targetrange ~= nil then
-				if CanCastSpell('Q') then CastSpellTarget('Q',targetrange) end
+				if QRDY==1 then CastSpellTarget('Q',targetrange) end
                 Action(targetrange)
         else targetminion = GetLowestHealthEnemyMinion(range)
         end
         if targetminion ~= nil and targetminion.dead==0 then
-				if getDmg("Q",targetminion,myHero)*CanUseSpell('Q')>=targetminion.health then
+				if getDmg("Q",targetminion,myHero)*QRDY>=targetminion.health then
 						Action2(targetminion)
 				end
 				if getDmg("AD",targetminion,myHero)>=targetminion.health then
@@ -727,7 +751,7 @@ end
 
 
 function Action2(ttt)
-        if CanCastSpell('Q') then
+        if QRDY==1 then
             attackEnemy2(ttt)
                         CustomCircle(100,10,1,ttt)
         else
@@ -744,7 +768,7 @@ function attackEnemy2(yyy)
 end
  
 function heroCanMove2()
-    if shotFired2 == false or CanCastSpell('Q') then
+    if shotFired2 == false or QRDY==1 then
         return true
     end
     return false
@@ -764,15 +788,15 @@ end
 
 function killsteal()
 	if targetrange~=nil then
-		local RR=getDmg("R",targetrange,myHero)*CanUseSpell('R')
-		local QQ=getDmg("Q",targetrange,myHero)*CanUseSpell('Q')
-		local WW=getDmg("W",targetrange,myHero)*CanUseSpell('W')
+		local RR=getDmg("R",targetrange,myHero)*RRDY
+		local QQ=getDmg("Q",targetrange,myHero)*QRDY
+		local WW=getDmg("W",targetrange,myHero)*WRDY
 		
 		
 		if targetrange.health<QQ then
 			CastSpellTarget("Q",targetrange)
 		
-		elseif targetrange.health<(QQ+WW)*CanUseSpell('E') then
+		elseif targetrange.health<(QQ+WW)*ERDY then
 			local pos=GetMEC(110,900,targetrange)
 			if pos~=nil and pos.x~=nil then
 			CastSpellXYZ('W',pos.x,0,pos.z)
@@ -811,16 +835,16 @@ end
 
 function OnDraw()
 	if myHero.dead~=1 then
-		if CanCastSpell('Q')  then
+		if QRDY==1  then
 			CustomCircle(645,15,1,myHero)
 		end
-		if  CanCastSpell('E')  then
+		if  ERDY==1  then
 			CustomCircle(650,15,3,myHero)
 		end
-		if CanCastSpell('R') then
+		if RRDY==1 then
 			CustomCircle(655,15,2,myHero)
 		end
-		if CanCastSpell('W') then
+		if WRDY==1 then
 			CustomCircle(1000,15,2,myHero)
 		end
 		

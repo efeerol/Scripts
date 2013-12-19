@@ -2,15 +2,15 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 3.0")
+print("\nVersion 3.1")
 
-local version = '3.0'
+local version = '3.1'
 local target
 local targeti
 local target2
 
 local range = myHero.range + GetDistance(GetMinBBox(myHero))
-local wards = {3154,2044,2050,2043,2049,2045} --Wriggles, Normal Greens, Explorer, Vision, RSStone, Sightstone
+local wards = {3340,3350,3361,3362,3154,2044,2050,2043,2049,2045} --Wriggles, Normal Greens, Explorer, Vision, RSStone, Sightstone
 local eye={unit=nil,x=nil,y=nil,z=nil}
 	
 	local success=false
@@ -22,6 +22,7 @@ local eye={unit=nil,x=nil,y=nil,z=nil}
 	local wardObject=nil
 	local lastWardObject=nil
 	local wrigOnCD=false
+	local lanternOnCD=false
 	local wrigTimer=0
 	local TI
 	local startCombo=false
@@ -113,6 +114,11 @@ function LeeRun()
 			wrigOnCD=false
 		end
 	end
+	        if lanternOnCD==true then
+                if lanternTimer<=os.clock() then
+                        lanternOnCD=false
+                end
+        end
 	www=nil
 		for _, ward in pairs(wards) do
 			if ward~=nil and GetInventorySlot(ward) ~= nil and os.clock() > lastWardJump  then
@@ -120,6 +126,11 @@ function LeeRun()
 					if wrigOnCD==false then
 						www=ward
 						break
+					end
+				elseif tostring(ward)==tostring(3340) or tostring(ward)==tostring(3350) or tostring(ward)==tostring(3361) or tostring(ward)==tostring(3362) then
+					if lanternOnCD==false then
+							www=ward
+							break
 					end
 				else
 					www=ward

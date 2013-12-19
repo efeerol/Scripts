@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nA-Void Me\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.2\n")
+printtext("\nVersion 1.3\n")
 
 local target
 local targetclose
@@ -17,7 +17,8 @@ local RDIST
 local NRDIST
 local enemyIndex=1
 local enemies={}
-
+local heros={}
+local EStacks=0
 
 KassConfig = scriptConfig("Kass", "Kass Config")
 KassConfig:addParam("h", " Harass", SCRIPT_PARAM_ONKEYDOWN, false, 88)
@@ -34,6 +35,13 @@ KassConfig:permaShow('mode')
 KassConfig:permaShow('dokillsteal')
 	
 function Run()
+
+	for i=1, objManager:GetMaxHeroes(), 1 do
+		local hero = objManager:GetHero(i)
+		if hero~=nil and enemies[hero.name]==nil then
+			heros[hero.name]=hero
+		end
+	end
 	
 	if KassConfig.nm==true then
 		target = GetWeakEnemy("MAGIC", 1400,"NEARMOUSE")
@@ -55,7 +63,7 @@ function Run()
 			WRDY = 1
 			else WRDY = 0
 	end
-	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 and EStacks==6 then
 			ERDY = 1
 			else ERDY = 0
 	end
@@ -87,6 +95,17 @@ function Run()
 	
 end
 
+function OnProcessSpell(unit,spell)
+
+	
+	if unit~=nil and heros[unit.name] and GetD(unit)<1750 then  
+		EStacks=math.max(EStacks,(EStacks+1)%7)
+	end
+	if unit~=nil and unit.name==myHero.name and spell~=nil and string.find(spell.name,"Kassadin_ForcePulse") then
+		EStacks=0
+	end
+
+end
 
 function ignite()
 		if myHero.SummonerD == 'SummonerDot' then
