@@ -2,7 +2,7 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 1.6")
+print("\nVersion 1.8")
 
 local target
 local targetrange
@@ -22,6 +22,8 @@ local isMoving = false
 local moveX
 local moveZ
 
+local enemies={}
+
 local twfx,twfy,twfz
 local twfa={x=0,y=0,z=0}
 
@@ -40,6 +42,7 @@ local QRDY=0
 local WRDY=0
 local ERDY=0
 local RRDY=0
+local WTimer=0
 
 VeigConfig = scriptConfig("Veigar", "Vinegar Hotkeys")
 VeigConfig:addParam("e", "Stun and Run", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))--Z
@@ -50,6 +53,7 @@ VeigConfig:addParam("pf", "Protect when Farming", SCRIPT_PARAM_ONKEYTOGGLE, true
 VeigConfig:addParam("nm", "NEARMOUSE Targetting", SCRIPT_PARAM_ONKEYTOGGLE, false,56)
 VeigConfig:addParam("OS", "Always W Combo", SCRIPT_PARAM_ONKEYTOGGLE, false,57)
 VeigConfig:addParam('spm', "Stun Placement", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,0.8,1.5,0.01)
+VeigConfig:addParam('sfa', "Stun Fireahead", SCRIPT_PARAM_NUMERICUPDOWN, 3, 189,1,4,0.1)
 VeigConfig:addParam("ult", "Ult On/Off", SCRIPT_PARAM_ONOFF, false)
 VeigConfig:addParam('zh', 'Zhonyas', SCRIPT_PARAM_ONOFF, true)
 VeigConfig:addParam("ks", "KillSteal", SCRIPT_PARAM_ONOFF, true)
@@ -62,9 +66,9 @@ VeigConfig:permaShow("ks")
 
 function VeigRun()
 	if VeigConfig.nm then
-		target = GetWeakEnemy("MAGIC",1000,"NEARMOUSE")
+		target = GetWeakEnemy("MAGIC",750,"NEARMOUSE")
 	else
-		target = GetWeakEnemy("MAGIC",1000)
+		target = GetWeakEnemy("MAGIC",750)
 	end
 	target600 = GetWeakEnemy("TRUE",600)
 	targetrange=GetWeakEnemy("MAGIC",650)
@@ -77,8 +81,14 @@ function VeigRun()
 		elseif hero~=nil and hero.team~=myHero.team and hero.visible==1 and hero.dead~=1 and GetD(hero)<650 and closestEnemy~=nil and GetD(hero)<GetD(closestEnemy) then
 			closestEnemy=hero
 		end
+		if hero~=nil and hero.team~=myHero.team then
+			if not enemies[hero.name] then
+				enemies[hero.name]={unit=hero,stunned=0,stunTimer=0}
+			elseif enemies[hero.name] and enemies[hero.name].stunned==1 and enemies[hero.name].stunTimer<os.clock() then
+				enemies[hero.name].stunned=0
+			end
+		end
 	end
-	
 	checkDie=false
         if VeigConfig.zh then
                 checkDie=true
@@ -99,7 +109,6 @@ function VeigRun()
 	if IsChatOpen()==0 and VeigConfig.h then Harass() end
 	if IsChatOpen()==0 and VeigConfig.e then Stun() end
 	
-	targetrange=GetWeakEnemy("MAGIC",650)
 	if IsChatOpen() == 0 and VeigConfig.f and VeigConfig.pf then
                 farm2()
         elseif IsChatOpen() == 0 and VeigConfig.f and not VeigConfig.pf then
@@ -135,6 +144,17 @@ function VeigRun()
 	--------------------------
 end
 
+function checkStunned(targ)
+	if WRDY==1 and targ~=nil then
+		if enemies[targ.name]~=nil and enemies[targ.name].unit.dead~=1 and enemies[targ.name].unit.visible==1 and enemies[targ.name].stunned==1 then
+					--print("\n  Checking\n")
+			return true
+			
+		end
+	end
+	return false
+	
+end
 
 
 function OnProcessSpell(unit, spell)
@@ -145,7 +165,9 @@ function OnProcessSpell(unit, spell)
             if string.find(s,"VeigarBalefulStrike") ~= nil then    
 				shotFired2=false
                         end
-                       
+		    if string.find(s,"VeigarDarkMatter") ~= nil then    
+				WTimer=os.clock()
+			end
         end
  
         else
@@ -517,14 +539,19 @@ function C()
 			CastSpellTarget('R',target)
 		end
 		
-		if GetD(target)<850 and ERDY==1 then
+		if GetD(target)<400 then
+			UseAllItems(target)
+		elseif GetD(target)<600 then
+			UseTargetItems(target)
+		end
+		if ERDY==1 and GetD(target)<850 then
 			E(target)
-		elseif GetD(target)<850 and ERDY==1 and WRDY==1 then
+		elseif WRDY==1 and GetD(target)<850 and checkStunned(target)==true then
 			local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
 				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,0.1,0))
+				CastSpellXYZ('W',GetFireahead(target,0.5,0))
 			end
 		end
 		if GetD(target)<650 and QRDY==1 then
@@ -537,13 +564,6 @@ function C()
 		--else
 			AttackTarget(target)
 		--end
-		if GetD(target)<400 then
-			UseAllItems(target)
-			CastSummonerExhaust(target)
-		elseif GetD(target)<600 then
-			UseTargetItems(target)
-			CastSummonerExhaust(target)
-		end
 	else
 		MoveToMouse()
 		
@@ -553,7 +573,8 @@ end
 function E(enemy)
 	if enemy~=nil then
 	local var=VeigConfig.spm
-	local tfx,tfy,tfz=GetFireahead(enemy,1,0)
+	local fa=VeigConfig.sfa
+	local tfx,tfy,tfz=GetFireahead(enemy,fa,0)
 	local targf = {x=tfx,y=tfy,z=tfz}
 	local dist=GetD(targf,myHero)
 			if tfx==myHero.x then
@@ -619,7 +640,7 @@ function multipleStun(self)
 end
 
 function Stun()
-	if closestEnemy~=nil and CanCastSpell("E") then
+	if closestEnemy~=nil and ERDY==1 then
 		if multipleStun(closestEnemy)==true then
 			local pos=GetMEC(212,650,closestEnemy)
 			if pos~=nil and pos.x~=nil then
@@ -642,14 +663,14 @@ function Harass()
 	if target~=nil then
 		
 		if GetD(target)<850 and ERDY==1 and WRDY==1 then
-		local pos=GetMEC(110,900,target)
+			local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
-			CastSpellXYZ('W',pos.x,0,pos.z)
+				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-			CastSpellXYZ('W',GetFireahead(target,1,0))
+				CastSpellXYZ('W',GetFireahead(target,0.5,0))
 			end
 		end
-		if GetD(target)<850 and ERDY==1 then
+		if GetD(target)<850 and ERDY==1 and WTimer+2>os.clock() then
 			E(target)
 		end
                 Action2(target)
@@ -748,7 +769,14 @@ function moveToCursor()
     MoveToXYZ(moveX,0,moveZ)
 end
 
-
+function isMoving(unitM)
+	local mx,my,mz=GetFireahead(unitM,5,0)
+	if math.abs(mx-unitM.x<20) and math.abs(mz-unitM.z<20) then
+		return false
+	else
+		return true
+	end
+end
 
 function Action2(ttt)
         if QRDY==1 then
@@ -799,9 +827,9 @@ function killsteal()
 		elseif targetrange.health<(QQ+WW)*ERDY then
 			local pos=GetMEC(110,900,targetrange)
 			if pos~=nil and pos.x~=nil then
-			CastSpellXYZ('W',pos.x,0,pos.z)
+				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(targetrange,1,0))
+				CastSpellXYZ('W',GetFireahead(targetrange,0.1,0))
 			end
 			E(targetrange)			
 			CastSpellTarget("Q",targetrange)
@@ -811,14 +839,14 @@ function killsteal()
 			CastSpellTarget("R",targetrange)
 			
 		end
-        if target600~=nil and target600.health<ignitedamage then
+        --[[if target600~=nil and target600.health<ignitedamage then
                 if myHero.SummonerD == 'SummonerDot' then
                         if IsSpellReady('D') then CastSpellTarget('D',target600) end
                 end
                 if myHero.SummonerF == 'SummonerDot' then
                         if IsSpellReady('F') then CastSpellTarget('F',target600) end
                 end
-        end 
+        end --]]
 	end
 
 end
@@ -829,6 +857,16 @@ function OnCreateObj(obj)
 			shotFired = false
 			shotFired2 = false
 			lastAttack = GetTickCount()
+	end
+	if obj~=nil and obj.x~=nil and GetD(obj)<900 and (string.find(obj.charName,"LOC_Stun") or string.find(obj.charName,"Stun_glb") or string.find(obj.charName,"Global_Fear") or string.find(obj.charName,"AlZaharNetherGrasp_tar") or string.find(obj.charName,"Global_Taunt") or string.find(obj.charName,"LuxLightBinding_tar") or string.find(obj.charName,"leBlanc_shackle_tar") or string.find(obj.charName,"RunePrison_tar") or string.find(obj.charName,"InfiniteDuress_tar") or string.find(obj.charName,"DarkBinding_tar") or string.find(obj.charName,"Amumu_SadRobot_Ultwrap") or string.find(obj.charName,"Amumu_Ultwrap") or string.find(obj.charName,"maokai_elementalAdvance_root_01") or string.find(obj.charName,"RengarEMax_tar") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit_Lobster") or string.find(obj.charName,"VarusRHitFlash")) then
+		print("\nName "..obj.charName)
+		for i, enemy in pairs(enemies) do
+			if enemy~=nil and enemy.unit~=nil and enemy.unit.dead~=1 and math.abs(enemy.unit.x-obj.x)<50 and math.abs(enemy.unit.z-obj.z)<50 then
+					print("\n  Checking\n")
+					enemy.stunned=1
+					enemy.stunTimer=os.clock()+2
+			end
+		end
 	end
 
 end

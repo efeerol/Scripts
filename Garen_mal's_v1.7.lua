@@ -4,7 +4,7 @@ require 'spell_damage'
 
 printtext("\nMalbert's\n")
 printtext("\nG-Dog\n")
-printtext("\nVersion 1.4\n")
+printtext("\nVersion 1.7\n")
 
 
 local target2
@@ -30,6 +30,11 @@ local playerradius = 150
 local skillshotcharexist = false
 local show_allies=0
 
+
+local QRDY=0
+local WRDY=0
+local ERDY=0
+local RRDY=0
 
 local wUsedAt = 0
 local vUsedAt = 0
@@ -68,20 +73,20 @@ function GDog()
 	
 	if GarenConfig.ks then
 		if target~=nil then
-			local RD=getDmg("R",target,myHero)*CanUseSpell("R")
-			local QD=getDmg("Q",target,myHero)*CanUseSpell("Q")
-			local EE=getDmg("E",target,myHero,1)*CanUseSpell("E")
+			local QD=getDmg("Q",target,myHero)*QRDY
+			local EE=getDmg("E",target,myHero,1)*ERDY
 			local AA=getDmg("AD",target,myHero)
+			local RD=getDmg("R",target,myHero)*RRDY
 			if target.health<EE and myHero.SpellNameE~="garenbladestormleave" and GetD(target)<325 then
 				CastSpellTarget('E',myHero)
 				AttackTarget(target)
-			elseif target.health<QD and (target.health>AA and target.health>EE and (myHero.SpellNameE~="garenbladestormleave" or CanCastSpell('E'))) and GetD(target)<275 then
+			elseif target.health<QD and (target.health>AA and target.health>EE and (myHero.SpellNameE~="garenbladestormleave" or ERDY==1)) and GetD(target)<275 then
 				if myHero.SpellNameE=="garenbladestormleave" then
 					CastSpellTarget('E',myHero)
 				end
 				CastSpellTarget("Q",target)
 				AttackTarget(target)
-			elseif target.health<RD and AnotherR(target)==nil and ((target.health>AA and target.health>QD) or (not surrounded(target) and GetD(target)>250)) then
+			elseif AnotherR(target)==nil and target.invulnerable~=1 and ((target.health>AA and target.health>QD) or (not surrounded(target) and GetD(target)>225)) and target.health<RD then
 				CastSpellTarget("R",target)
 			elseif AnotherR(target)~=nil then
 				CastSpellTarget("R",AnotherR(target))			
@@ -93,7 +98,7 @@ function GDog()
 	
 	if GarenConfig.aq then
 		if target~=nil and GetD(target)<250 then
-			if CanCastSpell('Q') and myHero.SpellNameE~="garenbladestormleave" then
+			if QRDY==1 and myHero.SpellNameE~="garenbladestormleave" then
 				CastSpellTarget('Q',myHero)
 				AttackTarget(target)
 			end
@@ -102,7 +107,7 @@ function GDog()
 	
 	if GarenConfig.ae then
 		if target~=nil and GetD(target)<325 then
-			if CanCastSpell('E') and myHero.SpellNameE~="garenbladestormleave" then
+			if ERDY==1 and myHero.SpellNameE~="garenbladestormleave" then
 				CastSpellTarget('E',myHero)
 				AttackTarget(target)
 			end
@@ -113,11 +118,11 @@ function GDog()
 	end
 	if IsChatOpen()==0 and GarenConfig.teamfight then
 		if target~=nil then
-			if CanCastSpell('Q') and GetD(target)<375 and myHero.SpellNameE~="garenbladestormleave" then
+			if QRDY==1 and GetD(target)<375 and myHero.SpellNameE~="garenbladestormleave" then
 				CastSpellTarget('Q',myHero)
 				AttackTarget(target)
 			end
-			if GetD(target)<325 and CanCastSpell('E') and myHero.SpellNameE~="garenbladestormleave" and (QDone==true) then
+			if GetD(target)<325 and ERDY==1 and myHero.SpellNameE~="garenbladestormleave" and (QDone==true) then
 				CastSpellTarget('E',myHero)
 				AttackTarget(target)
 			end
@@ -135,7 +140,22 @@ function GDog()
 	end
 	
 	if GarenConfig.pots then RedElixir() end
-	
+		if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+			QRDY = 1
+			else QRDY = 0
+	end
+	if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+			WRDY = 1
+			else WRDY = 0
+	end
+	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+			ERDY = 1
+			else ERDY = 0
+	end
+	if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+			RRDY = 1
+			else RRDY = 0 
+	end
 end
 function OnProcessSpell(unit, spell)
         if unit.charName==myHero.charName then
@@ -391,7 +411,7 @@ function OnProcessSpell(unit, spell)
 end
  
 function autoW()
-        if CanCastSpell('W') then
+        if WRDY==1 then
 			CastSpellTarget('W',myHero)
 		end
 end
@@ -501,7 +521,7 @@ end
 function ignite()
 	local damage = (myHero.selflevel*20)+50
 	if target2 ~= nil then
-		local RD=getDmg("R",target2,myHero)*CanUseSpell("R")
+		local RD=getDmg("R",target2,myHero)*RRDY
 		if myHero.SummonerD == "SummonerDot" then
 			if target2.health < damage and (target2.health>RD or GetD(target2)>400) then
 				CastSpellTarget("D",target2)
@@ -568,12 +588,15 @@ function AnotherR(enemy)
 	for i=1, objManager:GetMaxHeroes(), 1 do
 		local hero = objManager:GetHero(i)
 		if hero~=nil and hero.dead~=1 then			
-			RDME=getDmg("R",hero,myHero)*CanUseSpell("R")
+			RDME=getDmg("R",hero,myHero)*RRDY
 		end
-		if enemy~=nil and (RME==nil or RME.dead==1) and hero~=nil and hero.name~=enemy.name and hero.dead~=1 and hero.team~=myHero.team and hero.visible==1 and hero.invulnerable~=1 and GetD(hero)<450 and RDME>hero.health then
+		if enemy~=nil and (RME==nil or RME.dead==1 or getDmg("R",RME,myHero)*RRDY<RME.health) and hero~=nil and hero.name~=enemy.name and hero.dead~=1 and hero.team~=myHero.team and hero.visible==1 and hero.invulnerable~=1 and GetD(hero)<450 and RDME>hero.health and hero.health>enemy.health then
 			RME=hero
 		elseif enemy~=nil and RME~=nil and hero~=nil and hero.dead~=1 and hero.name~=enemy.name and hero.team~=myHero.team and hero.visible==1 and hero.invulnerable~=1 and GetD(hero)<450 and RDME>hero.health and hero.health>RME.health then
 			RME=hero
+		end
+		if RME~=nil and (getDmg("R",RME,myHero)*RRDY<RME.health or RME.visible==0) then
+			RME=nil
 		end
 	end
 	return RME
@@ -637,7 +660,7 @@ end
 
 function OnDraw()
 	if myHero.dead~=1 then
-		if CanCastSpell('Q') then
+		if QRDY==1 then
 			if QTimer<os.clock() then
 				CustomCircle((0.75+0.75*GetSpellLevel('Q'))*myHero.movespeed,10,5,myHero)
 			elseif QTimer>=os.clock() then
@@ -652,15 +675,15 @@ function OnDraw()
 			targetult = objManager:GetHero(i)
 			if targetult~=nil and targetult.dead~=1 and targetult.invulnerable~=1 and targetult.visible~=0 and targetult.team~=myHero.team and GetD(targetult)<1200 then
 			
-				local RD=getDmg("R",targetult,myHero)*CanUseSpell("R")
-				local QD=getDmg("Q",targetult,myHero)*CanUseSpell("Q")
-				local EE=getDmg("E",targetult,myHero,1)*CanUseSpell("E")
+				local RD=getDmg("R",targetult,myHero)*RRDY
+				local QD=getDmg("Q",targetult,myHero)*QRDY
+				local EE=getDmg("E",targetult,myHero,1)*ERDY
 				local AA=getDmg("AD",targetult,myHero)
 				
 				if targetult.health<EE and GetD(targetult)<325 then
 					DrawSphere(40,25,5,targetult.x,targetult.y+300,targetult.z)
 					
-				elseif targetult.health<QD and (targetult.health>AA and targetult.health>EE and (myHero.SpellNameE~="garenbladestormleave" or CanCastSpell('E'))) and GetD(targetult)<275 then
+				elseif targetult.health<QD and (targetult.health>AA and targetult.health>EE and (myHero.SpellNameE~="garenbladestormleave" or ERDY==1)) and GetD(targetult)<275 then
 					DrawSphere(40,25,2,targetult.x,targetult.y+300,targetult.z)
 					
 				elseif targetult.health<RD and ((targetult.health>AA and targetult.health>QD) or (not surrounded(targetult) and GetD(targetult)>250)) then

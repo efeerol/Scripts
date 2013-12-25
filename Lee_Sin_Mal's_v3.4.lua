@@ -1,16 +1,33 @@
 require "Utils"
 require "spell_damage"
+require 'winapi'
+require 'SKeys'
+local send = require 'SendInputScheduled'
+
+local metakey = SKeys.Control
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 3.1")
-
-local version = '3.1'
+print("\nVersion 3.4")
+local version = '3.4'
 local target
 local targeti
 local target2
+local _registry = {}
 
 local range = myHero.range + GetDistance(GetMinBBox(myHero))
-local wards = {3340,3350,3361,3362,3154,2044,2050,2043,2049,2045} --Wriggles, Normal Greens, Explorer, Vision, RSStone, Sightstone
+local wards = {3340, 3350, 3154, 3361, 3361, 3362, 2044, 2043, 2045, 2049}
+--[[
+2043, Vision Ward
+2044, Sight Ward
+2045, Ruby Sightstone
+2049, Sightstone
+2050, Explorer's Ward (Removed)
+3154, Wriggle's Lantern
+3340, Warding Totem (60s/3 max) (lv 0)
+3350, Greater Totem (120s/3 max) (lv 9)
+3361, Greater Stealth Totem (180s/3 max) (lv 9+purchase)
+3362, Graeter Vision Totem (--s/1 max) (lv 9+purchase)
+]]--
 local eye={unit=nil,x=nil,y=nil,z=nil}
 	
 	local success=false
@@ -21,9 +38,6 @@ local eye={unit=nil,x=nil,y=nil,z=nil}
 	local lastWardJump=0
 	local wardObject=nil
 	local lastWardObject=nil
-	local wrigOnCD=false
-	local lanternOnCD=false
-	local wrigTimer=0
 	local TI
 	local startCombo=false
 	local PMod=0
@@ -109,33 +123,14 @@ function LeeRun()
 	if RRDY==1 then
 		findtargeti()
     end
-	if wrigOnCD==true then
-		if wrigTimer<=os.clock() then
-			wrigOnCD=false
-		end
-	end
-	        if lanternOnCD==true then
-                if lanternTimer<=os.clock() then
-                        lanternOnCD=false
-                end
-        end
+
 	www=nil
 		for _, ward in pairs(wards) do
-			if ward~=nil and GetInventorySlot(ward) ~= nil and os.clock() > lastWardJump  then
-				if tostring(ward)==tostring(3154) then
-					if wrigOnCD==false then
-						www=ward
-						break
-					end
-				elseif tostring(ward)==tostring(3340) or tostring(ward)==tostring(3350) or tostring(ward)==tostring(3361) or tostring(ward)==tostring(3362) then
-					if lanternOnCD==false then
-							www=ward
-							break
-					end
-				else
-					www=ward
-					break
-				end
+			if ward~=nil and GetWardSlot(ward) ~= nil and os.clock() > lastWardJump  then
+				
+				www=ward
+				break
+				
 			end
 		end
 		
@@ -231,10 +226,10 @@ function Combo()
 		elseif ERDY==1 and myHero.SpellNameE == "blindmonketwo" and (PMod>2 or PTimer<os.clock() or GetD(target) > 350 ) then 
 			CastSpellXYZ('E',myHero.x,myHero.y,myHero.z) --printtext("\nE") 
 		elseif myHero.SpellNameW == "BlindMonkWOne" and WRDY==1 and GetD(target) < 350 and (PMod>2 or PTimer<os.clock()) then 
-			CastSpellTarget("W",myHero)  
+			run_every(1,WSpell,myHero)  
 		end
-        if myHero.SpellNameW == "blindmonkwtwo" and WRDY==1 and GetD(target) < 350 and (PMod>2 or PTimer<os.clock()) then 
-			CastSpellTarget("W",myHero)  
+		if myHero.SpellNameW == "blindmonkwtwo" and WRDY==1 and GetD(target) < 350 and (PMod>2  or PTimer<os.clock()) then 
+			run_every(1,WSpell,myHero)  
 		end
 		if RRDY==1 then
 			local rdmg = getDmg("R",target,myHero)*RRDY
@@ -261,6 +256,9 @@ function Combo()
 		MoveToMouse()
     end
 end
+function WSpell(tt)
+CastSpellTarget('W',tt)
+end
 
 function ultSave()
 	if RRDY==1 and myHero.health<myHero.maxHealth*0.20 then
@@ -281,6 +279,7 @@ end
 
 function ward(hx,hy,hz)
 	if hx~=nil and hy~=nil and hz~=nil then
+
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and os.clock() > lastWardJump then
 			
 			success=false
@@ -294,7 +293,7 @@ function ward(hx,hy,hz)
 		end
 		
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and success==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-			CastSpellTarget('W', lastWardObject)
+			run_every(1,WSpell, lastWardObject)
 		
 		end
 
@@ -315,7 +314,7 @@ function ward(hx,hy,hz)
 		end
 		
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and success==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-			CastSpellTarget('W', lastWardObject)
+			run_every(1,WSpell, lastWardObject)
 		
 		end
 		if ( WRDY==0 or myHero.SpellNameW=="blindmonkwtwo" or not gotAWard()) then
@@ -345,12 +344,12 @@ function Harass()
 		end
 		if startHarass==true and  QRDY==0 and WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and something~=nil and something.dead~=1 then
 			if ERDY==1 then CastSpellTarget('E',myHero) end
-			CastSpellTarget('W', something)
+			run_every(1,WSpell, something)
 		elseif startHarass==true and  QRDY==0 and WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and (LeeConfig.wardH and gotAWard()) then
 			ward(wardhx,wardhy,wardhz)
 			if ERDY==1 then CastSpellTarget('E',myHero) end
 			if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and success==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-				CastSpellTarget('W', lastWardObject)
+				run_every(1,WSpell, lastWardObject)
 			end
 		end
 		
@@ -408,6 +407,7 @@ function getWardHarassSpot()
 end
 
 function getWardSpot(a,b,c)
+	--print("\n
 		local spot={x=a,y=b,z=c}
 		local dist=GetD(spot,myHero)
 			if myHero.x==spot.x then
@@ -455,6 +455,7 @@ function getWardSpot(a,b,c)
 
 function somethingNear(enemy)
 	local rturn=nil
+	if WRDY==1 and myHero.SpellNameW == "BlindMonkWOne" then
 	if enemy~=nil then
 		for i=1, objManager:GetMaxObjects(), 1 do
 			local object = objManager:GetObject(i)
@@ -465,6 +466,7 @@ function somethingNear(enemy)
 			end
 		end
 		
+	end
 	end
 		return rturn
 end
@@ -522,7 +524,7 @@ function initiate()
 			--end
 		end
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and QRDY==0 and success==true and lastWardJump>os.clock() and wardObject~=nil and GetD(wardObject)<600 then
-			CastSpellTarget('W', wardObject)
+			run_every(1,WSpell, wardObject)
 		end
 		if TI~=nil and TI.x~=nil and RRDY==1 and (myHero.SpellNameW=="blindmonkwtwo" or WRDY==0) then
 			CastSpellTarget('R',TI)
@@ -693,14 +695,8 @@ function gotAWard()
 
 	if myHero.dead~=1 then
 		for _, ward in pairs(wards) do
-				if GetInventorySlot(ward) ~= nil then
-					if tostring(ward)==tostring(3154) then
-						if wrigOnCD==false then
-							return true
-						end
-					else
+				if GetWardSlot(ward) ~= nil then
 						return true
-					end
 				end
 			end
 	end
@@ -752,6 +748,9 @@ function runningAway(slowtarget)
 end
 
 function OnCreateObj(obj)
+	if GetD(obj)<600 then
+	--print("\n obj "..obj.charName)
+	end
 	if string.find(obj.charName,"blindMonk_Q_tar_indicator") and myHero.SpellNameQ == "blindmonkqtwo" then
 		eye.unit=obj
 		eye.x=obj.x
@@ -781,10 +780,8 @@ function OnProcessSpell(unit,spell)
 		--print("\nSP: "..spell.name)
 		--if string.find(spell.name,"BlindMonkRKick") then
 			--success=false
-		if string.find(spell.name,"riggle") then
-			wrigOnCD=true
-			wrigTimer=os.clock()+180
-		elseif string.find(spell.name,"BlindMonkQ") and LeeConfig.Combo then
+
+		if string.find(spell.name,"BlindMonkQ") and LeeConfig.Combo then
 			PTimer=os.clock()+math.min(1.5,2/myHero.attackspeed)
 			PMod=0
 		elseif string.find(spell.name,"BlindMonkW") and LeeConfig.Combo then
@@ -969,6 +966,59 @@ function useElixir()
 	UseItemOnTarget(2037,myHero)
 end
 
+function GetWardSlot(item)
+    if GetInventoryItem(1) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime1 >= 1 then return 1
+                        else return nil end
+                else
+                        return 1
+                end
+    elseif GetInventoryItem(2) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime2 >= 1 then return 2
+                        else return nil end
+                else
+                        return 2
+                end
+    elseif GetInventoryItem(3) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime3 >= 1 then return 3
+                        else return nil end
+                else
+                        return 3
+                end
+    elseif GetInventoryItem(4) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime4 >= 1 then return 4
+                        else return nil end
+                else
+                        return 4
+                end
+    elseif GetInventoryItem(5) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime5 >= 1 then return 5
+                        else return nil end
+                else
+                        return 5
+                end
+    elseif GetInventoryItem(6) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime6 >= 1 then return 6
+                        else return nil end
+                else
+                        return 6
+                end
+    elseif GetInventoryItem(7) == item then
+                if item == 3154 or item == 3340 or item == 3350 or item == 3361 or item == 3362 then
+                        if myHero.SpellTime7 >= 1 then return 7
+                        else return nil end
+                else
+                        return 7
+                end
+    end
+    return nil
+end
 
 function GetD(p1, p2)
 if p2 == nil then p2 = myHero end
@@ -1006,5 +1056,72 @@ else
 return 99999
 end
 end
+function run_every(interval, fn, ...)
+    return internal_run({fn=fn, interval=interval}, ...)
+end
 
+function internal_run(t, ...)    
+    local fn = t.fn
+    local key = t.key or fn
+    
+    local now = os.clock()
+    local data = _registry[key]
+       
+    if data == nil or t.reset then
+        local args = {}
+        local n = select('#', ...)
+        local v
+        for i=1,n do
+            v = select(i, ...)
+            table.insert(args, v)
+        end   
+        -- the first t and args are stored in registry        
+        data = {count=0, last=0, complete=false, t=t, args=args}
+        _registry[key] = data
+    end
+        
+    --assert(data~=nil, 'data==nil')
+    --assert(data.count~=nil, 'data.count==nil')
+    --assert(now~=nil, 'now==nil')
+    --assert(data.t~=nil, 'data.t==nil')
+    --assert(data.t.start~=nil, 'data.t.start==nil')
+    --assert(data.last~=nil, 'data.last==nil')
+    -- run
+    local countCheck = (t.count==nil or data.count < t.count)
+    local startCheck = (data.t.start==nil or now >= data.t.start)
+    local intervalCheck = (t.interval==nil or now-data.last >= t.interval)
+    --print('', 'countCheck', tostring(countCheck))
+    --print('', 'startCheck', tostring(startCheck))
+    --print('', 'intervalCheck', tostring(intervalCheck))
+    --print('')
+    if not data.complete and countCheck and startCheck and intervalCheck then                
+        if t.count ~= nil then -- only increment count if count matters
+            data.count = data.count + 1
+        end
+        data.last = now        
+        
+        if t._while==nil and t._until==nil then
+            return fn(...)
+        else
+            -- while/until handling
+            local signal = t._until ~= nil
+            local checker = t._while or t._until
+            local result
+            if fn == checker then            
+                result = fn(...)
+                if result == signal then
+                    data.complete = true
+                end
+                return result
+            else
+                result = checker(...)
+                if result == signal then
+                    data.complete = true
+                else
+                    return fn(...)
+                end
+            end            
+        end
+    end    
+end
 SetTimerCallback("LeeRun")

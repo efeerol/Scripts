@@ -7,7 +7,7 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.8.5'
+local version = '1.9.3 Hit'
 local MarkTimer = nil
 local target,target2
 local ls = nil
@@ -92,6 +92,14 @@ function Harass()
 		end
 	end
 	MoveToMouse()
+end
+
+function OnCreateObj(obj)
+	if obj~=nil then
+		if obj.charName == 'leBlanc_slide_impact_self.troy' then
+			jump = true
+		end
+	end
 end
 
 function Once_Combo()
@@ -194,6 +202,7 @@ function SetVariables()
 		xE = false
 		xQ = false
 		QWW = false
+		jump = false
 	end
 	
 	if GetInventorySlot(3128)==1 and myHero.SpellTime1 >= 1 then BFT = 1
@@ -807,11 +816,11 @@ function WLspell2()
 end
 
 function Espell()
-	if Ziel~=nil then
+	if Ziel~=nil and jump then
 		if GetDistance(myHero,Ziel)<300 and GetDistance(myHero,Ziel)>50 and CreepBlock(Ziel.x,Ziel.y,Ziel.z) == 0 then
 			SpellXYZ(E,E1RDY,myHero,Ziel,300,Ziel.x,Ziel.z)
-		elseif GetDistance(myHero,Ziel)>300 and GetDistance(myHero,Ziel)<850 then
-			SpellPredSimple(E,E1RDY,myHero,Ziel,850,1.6,(157293/10000),1)
+		elseif GetDistance(myHero,Ziel)>300 and GetDistance(myHero,Ziel)<775 then
+			SpellPredSimple(E,E1RDY,myHero,Ziel,775,1.6,(157293/10000),1)
 		end
 	end
 end
