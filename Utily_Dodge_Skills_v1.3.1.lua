@@ -4,7 +4,7 @@ require 'SKeys'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 
-local version = '1.3'
+local version = '1.3.1'
 local cc = 0
 local skillshotArray = {}
 local colorcyan = 0x0000FFFF
@@ -139,8 +139,8 @@ function dodgeaoe(pos1, pos2, radius)
 	local calc = (math.floor(math.sqrt((pos2.x-myHero.x)^2 + (pos2.z-myHero.z)^2)))
 	local dodgex
 	local dodgez
-	dodgex = pos2.x + ((radius+50)/calc)*(myHero.x-pos2.x)
-	dodgez = pos2.z + ((radius+50)/calc)*(myHero.z-pos2.z)
+	dodgex = pos2.x + ((radius+150)/calc)*(myHero.x-pos2.x)
+	dodgez = pos2.z + ((radius+150)/calc)*(myHero.z-pos2.z)
 	if calc < radius and DodgeConfig.DodgeSkillShotsAOE == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
 		if DodgeConfig.BlockSettingsAOE == 1 then
 			send.block_input(true,DodgeConfig.BlockTime)
@@ -169,8 +169,8 @@ function dodgelinepoint(pos1, pos2, radius)
 	x4 = myHero.x - k * (pos2.z-pos1.z)
 	z4 = myHero.z + k * (pos2.x-pos1.x)
 	calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
-	dodgex = x4 + ((radius+50)/calc3)*(myHero.x-x4)
-	dodgez = z4 + ((radius+50)/calc3)*(myHero.z-z4)
+	dodgex = x4 + ((radius+150)/calc3)*(myHero.x-x4)
+	dodgez = z4 + ((radius+150)/calc3)*(myHero.z-z4)
 	if perpendicular < radius and calc1 < calc4 and calc2 < calc4 and DodgeConfig.DodgeSkillShots == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
 		if DodgeConfig.BlockSettings == 1 then
 			send.block_input(true,DodgeConfig.BlockTime)
@@ -204,8 +204,8 @@ function dodgelinepass(pos1, pos2, radius, maxDist)
 	x4 = myHero.x - k * (pm2z-pos1.z)
 	z4 = myHero.z + k * (pm2x-pos1.x)
 	calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
-	dodgex = x4 + ((radius+50)/calc3)*(myHero.x-x4)
-	dodgez = z4 + ((radius+50)/calc3)*(myHero.z-z4)
+	dodgex = x4 + ((radius+150)/calc3)*(myHero.x-x4)
+	dodgez = z4 + ((radius+150)/calc3)*(myHero.z-z4)
 	if perpendicular < radius and calc1 < calc4 and calc2 < calc4 and DodgeConfig.DodgeSkillShots == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
 		if DodgeConfig.BlockSettings == 1 then
 			send.block_input(true,DodgeConfig.BlockTime)
@@ -373,7 +373,7 @@ function LoadTable()
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Blitzcrank" then
-			table.insert(skillshotArray,{name= "RocketGrabMissile", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 925, type = 1, radius = 200, color= colorcyan, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
+			table.insert(skillshotArray,{name= "RocketGrabMissile", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 925, type = 1, radius = 120, color= colorcyan, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Brand" then
@@ -383,7 +383,7 @@ function LoadTable()
 		end
 		if 1==1 or skillshotplayerObj.name == "Cassiopeia" then
 			table.insert(skillshotArray,{name= "CassiopeiaMiasma", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 175, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			table.insert(skillshotArray,{name= "CassiopeiaNoxiousBlast", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 75, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+			table.insert(skillshotArray,{name= "CassiopeiaNoxiousBlast", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 125, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Caitlyn" then
@@ -500,13 +500,13 @@ function LoadTable()
 			table.insert(skillshotArray,{name= "KennenShurikenHurlMissile1", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 75, color= colorcyan, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 		skillshotcharexist = true
 		end
-		if 1==1 or skillshotplayerObj.name == "Khazix" then
-			table.insert(skillshotArray,{name= "KhazixE", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 5, radius = 310, color= coloryello, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+		--[[if 1==1 or skillshotplayerObj.name == "Khazix" then
+			table.insert(skillshotArray,{name= "KhazixE", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 3, radius = 310, color= coloryello, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "KhazixW", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 70, color= coloryellow, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "khazixwlong", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 400, color= coloryellow, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "khazixelong", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 310, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			skillshotcharexist = true
-		end
+		end]]
 		if 1==1 or skillshotplayerObj.name == "KogMaw" then
 			table.insert(skillshotArray,{name= "KogMawVoidOozeMissile", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1115, type = 1, radius = 100, color= colorcyan, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "KogMawLivingArtillery", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 2200, type = 3, radius = 200, color= coloryellow, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -651,13 +651,13 @@ function LoadTable()
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Syndra" then
-			table.insert(skillshotArray,{name= "SyndraQ", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 190, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+			table.insert(skillshotArray,{name= "SyndraQ", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 250, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "syndrae5", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 650, type = 1, radius = 100, color= coloryellow, time = 0.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			table.insert(skillshotArray,{name= "SyndraW", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 210, color= colorcyan, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Thresh" then
-			table.insert(skillshotArray,{name= "ThreshQ", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 160, color= coloryellow, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+			table.insert(skillshotArray,{name= "ThreshQ", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 160, color= coloryellow, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Tristana" then
@@ -669,7 +669,7 @@ function LoadTable()
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "TwistedFate" then
-			table.insert(skillshotArray,{name= "WildCards", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 80, color= colorcyan, time = 5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+			table.insert(skillshotArray,{name= "WildCards", shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 100, color= colorcyan, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 		skillshotcharexist = true
 		end
 		if 1==1 or skillshotplayerObj.name == "Urgot" then

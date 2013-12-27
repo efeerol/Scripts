@@ -1,15 +1,17 @@
 require 'Utils'
-local version = '1.3'
+local version = '1.4'
 --[[
 	---------------
 	--- GENERAL ---
 	---------------
 	
 	- Add at the top of your script: 				local Q,W,E,R = 'Q','W','E','R'
-	- GetCD() 										Add this to your main function to get cooldowns; 
+	- GetCD() 										Add into your main function to get cooldowns; 
 	- QRDY,WRDY,ERDY,RRDY: 							Returns 0 or 1 whether the skill is on cooldown or ready
 	- GetAA()										Returns true for each successful autoattack (only for melee champs)
 	- IsLolActive()									Returns true if the LoL-window in the foreground and the chat window is closed
+	- IsSheenRdy()									Returns true if Sheen, Trinity Force, Iceborn Gauntlet, Lichbane passive is ready
+	
 	
 	----------------------	
 	--- Draw Functions ---
@@ -32,9 +34,9 @@ local version = '1.3'
 	-----------------------
 	
 	- Spell: 		Can be Q,W,E,R or 'Q','W','E','R'
-	- cd: 			Can be anything that returns 0/1 or false/true (usually QRDY,WRDY,ERDY,RRDY)
+	- cd: 			Can be QRDY,WRDY,ERDY,RRDY which returns 0/1 or false/true
 	- a,b:			Can be myHero, enemy, target, mousePos, object and so on...
-	- range:		Requires a number, the maximum range between a/b, in which the function is executed
+	- range:		Requires a number, the maximum range, in which the function is executed
 	- x,z:			Can be any x- and z-coordinate, y is always 0
 	- delay: 		Cast delay of the skillshot, 1.6 is correct for most champs
 	- speed:		Projectile speed of the skillshot, example for Ezreal's Q: 20, set it to 0 for instant casts
@@ -84,15 +86,19 @@ local version = '1.3'
 ]]	
 
 function SpellTarget(spell,cd,a,b,range)
-	if (cd == 1 or cd) and a ~= nil and b ~= nil and GetDistance(a,b) < range then
-		CastSpellTarget(spell,b)
+	if a ~= nil and b ~= nil then
+		if (cd == 1 or cd) and GetDistance(a,b) < range then
+			CastSpellTarget(spell,b)
+		end
 	end
 end
 
 function SpellXYZ(spell,cd,a,b,range,x,z)
-	local y = 0
-	if (cd == 1 or cd) and a ~= nil and b ~= nil and x ~= nil and z ~= nil and GetDistance(a,b) < range then
-		CastSpellXYZ(spell,x,y,z)
+	if a ~= nil and b ~= nil then
+		local y = 0
+		if (cd == 1 or cd) and x ~= nil and z ~= nil and GetDistance(a,b) < range then
+			CastSpellXYZ(spell,x,y,z)
+		end
 	end
 end
 
@@ -110,6 +116,18 @@ function SpellPred(spell,cd,a,b,range,delay,speed,block,blockradius)
 				end
 			else CastSpellXYZ(spell,FX,FY,FZ)
 			end
+		end
+	end
+end
+
+function SpellPredSimple(spell,cd,a,b,range,delay,speed,block)
+	if (cd == 1 or cd) and a ~= nil and b ~= nil and delay ~= nil and speed ~= nil and GetDistance(a,b)<range then
+		local FX,FY,FZ = GetFireahead(b,delay,speed)
+		if block == 1 then
+			if CreepBlock(a.x,a.y,a.z,FX,FY,FZ) == 0 then
+				CastSpellXYZ(spell,FX,FY,FZ)
+			end
+		else CastSpellXYZ(spell,FX,FY,FZ)
 		end
 	end
 end
@@ -140,28 +158,28 @@ end
 function GetAA()
 	local AArange = (myHero.range+(GetDistance(GetMinBBox(myHero))))*1.2
 	local targetaa = GetWeakEnemy('PHYS',AArange)
-    local spells={}
-    local a={GetCastSpell()}    
-    local g=0
-    while (a~=nil and a[1] ~= nil and g<200) do
-        local spell={}
-        local startPos={}
-        local endPos={}
-        spell.unit=a[1]
-        spell.name=a[2]
-        startPos.x=a[3]
-        startPos.y=a[4]
-        startPos.z=a[5]
-        endPos.x=a[6]
-        endPos.y=a[7]
-        endPos.z=a[8]
-        spell.target=a[12]
-        spell.startPos=startPos
-        spell.endPos=endPos
-        table.insert(spells, spell)
-        a={GetCastSpell()}
-        g=g+1
-		if string.find(spell.name,'Attack') or string.find(spell.name,'attack') and spell.name == myHero.name then
+    local spells1={}
+    local a1={GetCastSpell()}    
+    local g1=0
+    while (a1~=nil and a1[1] ~= nil and g1<200) do
+        local spell1={}
+        local startPos1={}
+        local endPos1={}
+        spell1.unit=a1[1]
+        spell1.name=a1[2]
+        startPos1.x=a1[3]
+        startPos1.y=a1[4]
+        startPos1.z=a1[5]
+        endPos1.x=a1[6]
+        endPos1.y=a1[7]
+        endPos1.z=a1[8]
+        spell1.target=a1[12]
+        spell1.startPos1=startPos1
+        spell1.endPo1s=endPos1
+        table.insert(spells1, spell1)
+        a1={GetCastSpell()}
+        g1=g1+1
+		if (string.find(spell1.name,'Attack') or string.find(spell1.name,'attack')) and (spell1.unit.name == myHero.name) then
 			attackstart = true
 		end
 	end
@@ -225,24 +243,35 @@ function MoveTarget(target)
 	end
 end
 
+function IsSheenRdy()
+	if ((GetInventorySlot(3025)==1 or GetInventorySlot(3057)==1 or GetInventorySlot(3078)==1 or GetInventorySlot(3100)==1) and myHero.SpellTime1 >= 1) or
+	((GetInventorySlot(3025)==2 or GetInventorySlot(3057)==2 or GetInventorySlot(3078)==2 or GetInventorySlot(3100)==2) and myHero.SpellTime2 >= 1) or
+	((GetInventorySlot(3025)==3 or GetInventorySlot(3057)==3 or GetInventorySlot(3078)==3 or GetInventorySlot(3100)==3) and myHero.SpellTime3 >= 1) or
+	((GetInventorySlot(3025)==4 or GetInventorySlot(3057)==4 or GetInventorySlot(3078)==4 or GetInventorySlot(3100)==4) and myHero.SpellTime4 >= 1) or
+	((GetInventorySlot(3025)==5 or GetInventorySlot(3057)==5 or GetInventorySlot(3078)==5 or GetInventorySlot(3100)==5) and myHero.SpellTime5 >= 1) or
+	((GetInventorySlot(3025)==6 or GetInventorySlot(3057)==6 or GetInventorySlot(3078)==6 or GetInventorySlot(3100)==6) and myHero.SpellTime6 >= 1) then
+	return true
+	end
+end
+
 ----------------------------------------------------------------
 ----------------------------------------------------------------
 -- IT'S NECESSARY TO USE A COOLDOWN HANDLING FUNCTION LIKE THIS:
 
 function GetCD()
-	if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then 
+	if myHero.SpellTimeQ > 0 and GetSpellLevel('Q') > 0 then 
 		QRDY = 1
 		else QRDY = 0 
 	end
-	if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then 
+	if myHero.SpellTimeW > 0 and GetSpellLevel('W') > 0 then 
 		WRDY = 1
 		else WRDY = 0 
 	end
-	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then 
+	if myHero.SpellTimeE > 0 and GetSpellLevel('E') > 0 then 
 		ERDY = 1
 		else ERDY = 0 
 	end
-	if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then 
+	if myHero.SpellTimeR > 0 and GetSpellLevel('R') > 0 then 
 		RRDY = 1
 	else RRDY = 0 end
 end
