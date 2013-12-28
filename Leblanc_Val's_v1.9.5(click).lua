@@ -7,7 +7,7 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.9.4 Hit'
+local version = '1.9.5 Click'
 local MarkTimer = nil
 local target,target2
 local ls = nil
@@ -16,7 +16,7 @@ local Ziel = nil
 local QRWE,QRW,QRE,QR,QWE,QE,WE,WQRE,WE,WQ,WQE,WQR,xE,xQ,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
 local ShowRange = 2500
 local jumpspotrange = 50
-local jumpmouserange = 75
+local jumpmouserange = 100
 
 function Main()
 	if IsLolActive() and IsChatOpen() == 0 then
@@ -260,7 +260,7 @@ function SetVariables()
 	target = GetWeakEnemy('MAGIC',700)
 	target2 = GetWeakEnemy('MAGIC',1150)
 	
-	if (Q1RDY==0 and W1RDY==0 and E1RDY==0 and RRDY==0) or myHero.dead==1 or (timer~=0 and GetTickCount()-timer>1500) then 
+	if (Q1RDY==0 and W1RDY==0 and E1RDY==0 and RRDY==0) or myHero.dead==1 or (timer~=0 and GetTickCount()-timer>250) then 
 		ls = nil
 		Ziel = nil
 		timer = 0
@@ -1113,12 +1113,30 @@ function OnProcessSpell(unit, spell)
 	end
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
 		if LBKeyConf.Combo or  LBKeyConf.Harass or QRWE or QRW or QRE or QR or QWE or QE or WE or WQRE or WE or WQ or WQE or WQR or xE or xQ or QWW then
-			if spell.name == 'LeblancChaosOrb' then ls = 'Q1' end
-			if spell.name == 'LeblancChaosOrbM' then ls = 'Q2' end
-			if spell.name == 'LeblancSlide' then ls = 'W1' end
-			if spell.name == 'leblancslidereturn' then ls = 'W2' end
-			if spell.name == 'LeblancSoulShackle' then ls = 'E1' end
-			if spell.name == 'LeblancSoulShackleM' then ls = 'E2' end
+			if spell.name == 'LeblancChaosOrb' then 
+				ls = 'Q1' 
+				timer = GetTickCount()
+			end
+			if spell.name == 'LeblancChaosOrbM' then 
+				ls = 'Q2' 
+				timer = GetTickCount()
+			end
+			if spell.name == 'LeblancSlide' then 
+				ls = 'W1'
+				timer = GetTickCount()
+			end
+			if spell.name == 'leblancslidereturn' then 
+				ls = 'W2' 
+				timer = GetTickCount()
+			end
+			if spell.name == 'LeblancSoulShackle' then 
+				ls = 'E1' 
+				timer = GetTickCount()
+			end
+			if spell.name == 'LeblancSoulShackleM' then 
+				ls = 'E2' 
+				timer = GetTickCount()
+			end
 		end
 	end
 end

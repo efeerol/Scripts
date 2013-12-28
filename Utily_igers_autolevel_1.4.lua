@@ -4,7 +4,7 @@ require 'SKeys'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 
-local version = "1.3"
+local version = "1.4"
 local Q,W,E,R = 'Q','W','E','R'
 local metakey = SKeys.Control
 local attempts = 0
@@ -12,6 +12,7 @@ local lastAttempt = 0
 
 local skillingOrder = {
     ----------------1 2 3 4 5 6 7 8 9 101112131415161718
+	Aatrox		 = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Ahri         = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,W,E,E,R,W,W},
     Akali        = {Q,W,Q,E,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Alistar      = {Q,E,W,Q,E,R,Q,E,Q,E,R,Q,E,W,W,R,W,W},
@@ -116,6 +117,7 @@ local skillingOrder = {
     Warwick      = {W,Q,Q,W,Q,R,Q,E,Q,E,R,E,E,E,W,R,W,W},
     Xerath       = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
     XinZhao      = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
+	Yasuo		 = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Yorick       = {W,E,Q,E,E,R,E,W,E,Q,R,W,Q,W,Q,R,W,Q},
     Zac          = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Zed          = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
