@@ -7,8 +7,8 @@ local send = require 'SendInputScheduled'
 local metakey = SKeys.Control
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 3.4")
-local version = '3.4'
+print("\nVersion 3.5")
+local version = '3.5'
 local target
 local targeti
 local target2
@@ -128,7 +128,7 @@ function LeeRun()
 		for _, ward in pairs(wards) do
 			if ward~=nil and GetWardSlot(ward) ~= nil and os.clock() > lastWardJump  then
 				
-				www=ward
+				www=GetWardSlot(ward)
 				break
 				
 			end
@@ -286,7 +286,7 @@ function ward(hx,hy,hz)
 			--wx,wy,wz=GetFireahead(myHero,5,0)
 			
 			if www~=nil and os.clock() > lastWardJump then
-				UseItemLocation(www, getWardSpot(hx,hy,hz))
+				CastSpellXYZ(www, getWardSpot(hx,hy,hz))
 				lastWardJump=os.clock()+3
 				success=true
 			end	
@@ -306,7 +306,7 @@ function ward(hx,hy,hz)
 			success=false
 			--wx,wy,wz=GetFireahead(myHero,5,0)
 			if www~=nil and os.clock() > lastWardJump then
-				UseItemLocation(www, mousePos.x,mousePos.y,mousePos.z)
+				CastSpellXYZ(www, mousePos.x,mousePos.y,mousePos.z)
 				lastWardJump=os.clock()+3
 				success=true
 			end	
@@ -413,23 +413,23 @@ function getWardSpot(a,b,c)
 			if myHero.x==spot.x then
 					tx = myHero.x
 					if myHero.z>spot.z then
-							tz = myHero.z-600
+							tz = myHero.z-590
 					else
-							tz = myHero.z+(600)
+							tz = myHero.z+(590)
 					end
 		   
 			elseif spot.z==myHero.z then
 					tz = myHero.z
 					if myHero.x>spot.x then
-							tx = myHero.x-(600)
+							tx = myHero.x-(590)
 					else
-							tx = myHero.x+(600)
+							tx = myHero.x+(590)
 					end
 		   
 			elseif myHero.x>spot.x then
 					angle = math.asin((myHero.x-spot.x)/dist)
-					zs = (600)*math.cos(angle)
-					xs = (600)*math.sin(angle)
+					zs = (590)*math.cos(angle)
+					xs = (590)*math.sin(angle)
 					if myHero.z>spot.z then
 							tx = myHero.x-xs
 							tz = myHero.z-zs
@@ -440,8 +440,8 @@ function getWardSpot(a,b,c)
 		   
 			elseif myHero.x<spot.x then
 					angle = math.asin((spot.x-myHero.x)/dist)
-					zs = (600)*math.cos(angle)
-					xs = (600)*math.sin(angle)
+					zs = (590)*math.cos(angle)
+					xs = (590)*math.sin(angle)
 					if myHero.z>spot.z then
 							tx = myHero.x+xs
 							tz = myHero.z-zs
@@ -510,7 +510,7 @@ function initiate()
 			print("\nQ9")
 			if www~=nil then
 				print("\nQ10")
-				UseItemLocation(www, wardx,wardy,wardz)
+				CastSpellXYZ(www, wardx,wardy,wardz)
 				success=true
 				wardFound=true
 				lastWardJump=os.clock()+5

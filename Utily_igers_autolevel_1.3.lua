@@ -2,8 +2,9 @@ require 'Utils'
 require 'winapi'
 require 'SKeys'
 local send = require 'SendInputScheduled'
+local uiconfig = require 'uiconfig'
 
-local version = "1.2.2"
+local version = "1.3"
 local Q,W,E,R = 'Q','W','E','R'
 local metakey = SKeys.Control
 local attempts = 0
@@ -43,7 +44,7 @@ local skillingOrder = {
     JarvanIV     = {Q,E,Q,W,Q,R,Q,E,W,Q,R,E,E,E,W,R,W,W},
     Jax          = {E,W,Q,W,W,R,W,E,W,E,R,Q,E,Q,Q,R,E,Q},
     Jayce        = {Q,E,Q,W,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
-    Karma        = {Q,E,Q,W,E,Q,E,Q,E,Q,E,Q,E,W,W,W,W,W},
+    Karma        = {Q,W,E,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Karthus      = {Q,E,W,Q,Q,R,Q,Q,E,E,R,E,E,W,W,R,W,W},
     Kassadin     = {Q,W,Q,E,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Katarina     = {Q,E,W,W,W,R,W,E,W,Q,R,Q,Q,Q,E,R,E,E},
@@ -91,7 +92,7 @@ local skillingOrder = {
     Sivir        = {Q,E,Q,W,Q,R,Q,W,Q,W,R,W,E,W,E,R,E,E},
     Skarner      = {Q,W,Q,W,Q,R,Q,W,Q,W,R,W,E,E,E,R,E,E},
     Sona         = {Q,W,E,Q,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
-    Soraka       = {Q,E,Q,W,Q,R,Q,W,Q,E,R,W,E,W,E,R,W,E},
+    Soraka       = {W,E,W,E,W,R,W,E,W,E,R,E,Q,Q,Q,R,Q,Q},
     Swain        = {W,E,E,Q,E,R,E,Q,E,Q,R,Q,Q,W,W,R,W,W},
     Syndra       = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
     Talon        = {W,E,Q,W,W,R,W,Q,W,Q,R,Q,Q,E,E,R,E,E},
@@ -122,10 +123,9 @@ local skillingOrder = {
     Zilean       = {Q,W,Q,E,Q,R,Q,W,Q,W,R,W,W,E,E,R,E,E},
     Zyra         = {E,W,Q,Q,Q,R,Q,E,Q,E,R,E,E,W,W,R,W,W},
 }
-
-IGERsLvlSpells = scriptConfig("IGERsAutoLevelSpells","IGERs AutoLevelSpells")
-IGERsLvlSpells:addParam("autoLevelSpells", "[Default: Num2]AutoLevelSpells", SCRIPT_PARAM_ONKEYTOGGLE, true, 98)
-IGERsLvlSpells:permaShow("autoLevelSpells")
+	AutoLevel, menu = uiconfig.add_menu('AutoLevel', 250)
+	menu.checkbutton('Autolevel', 'Autolevel', true)
+	menu.permashow('Autolevel')
 
 function Level_Spell(letter)  
      if letter == Q then send.key_press(0x69)
@@ -138,9 +138,12 @@ function IsLolActive()
     return tostring(winapi.get_foreground_window()) == "League of Legends (TM) Client"
 end
 
-function OnTick()
-    if IGERsLvlSpells.autoLevelSpells and IsLolActive() and IsChatOpen() == 0 then
-        local spellLevelSum = GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R)
+function Main()
+    if AutoLevel.Autolevel and IsLolActive() and IsChatOpen() == 0 then
+        if myHero.name == 'Karma' or myHero.name == 'Jayce' then
+            spellLevelSum = (GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R))-1
+        else spellLevelSum = GetSpellLevel(Q) + GetSpellLevel(W) + GetSpellLevel(E) + GetSpellLevel(R)
+        end
         if attempts <= 10 or (attempts > 10 and GetTickCount() > lastAttempt+1500) then
             if spellLevelSum < myHero.selflevel then
                 if lastSpellLevelSum ~= spellLevelSum then attempts = 0 end
@@ -157,15 +160,4 @@ function OnTick()
     send.tick()
 end
 
---function OnWndMsg(msg, key)
---    if true then
---        if msg == KEY_DOWN then
---            print('\nkey down...'..tostring(key))        
---        elseif msg == KEY_UP then
---            print('\nkey up...'..tostring(key))
---        end
---    end
---end
-
-printtext("\n >> IGER's AutoLevelSpells " .. version .. " loaded!\n")
-SetTimerCallback("OnTick")
+SetTimerCallback("Main")

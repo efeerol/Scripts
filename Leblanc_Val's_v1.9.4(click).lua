@@ -7,16 +7,18 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.9.3 Hit'
+local version = '1.9.4 Hit'
 local MarkTimer = nil
 local target,target2
 local ls = nil
 local timer,timer2 = 0,0
 local Ziel = nil
 local QRWE,QRW,QRE,QR,QWE,QE,WE,WQRE,WE,WQ,WQE,WQR,xE,xQ,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
+local ShowRange = 2500
+local jumpspotrange = 50
+local jumpmouserange = 75
 
 function Main()
-
 	if IsLolActive() and IsChatOpen() == 0 then
 		GetSpells()
 		SetVariables()
@@ -27,6 +29,7 @@ function Main()
 		Mastery_Damage()
 		BaseCheck()
 		IsWall2()
+		Jump1()
 		ComboAlwaysOn()
 		if LBKeyConf.Combo then Once_Combo() end
 		if Ziel==nil then LBKeyConf.Combo=false end
@@ -56,6 +59,7 @@ end
 	LBSettings, menu = uiconfig.add_menu('LeBlanc Settings', 250)
 	menu.checkbutton('ReturnPad', 'Draw ReturnPad', true)
 	menu.slider('MinimapPos', 'Minimap Position', 1, 2, 2, {"Left","Right"})
+	menu.checkbutton('jumphelper', 'JumpHelper', false)
 	
 	CfgMasteries, menu = uiconfig.add_menu('Mastery Settings', 250)
 	menu.slider('Butcher_Mastery', 'Butcher', 0, 2, 2, nil, true)
@@ -71,6 +75,79 @@ end
 	menu.slider('Zhonyas_Hourglass_Value', 'Zhonya Hourglass Value', 0, 100, 15, nil, true)
 	menu.slider('Wooglets_Witchcap_Value', 'Wooglets Witchcap Value', 0, 100, 15, nil, true)
 	menu.slider('Seraphs_Embrace_Value', 'Seraphs Embrace Value', 0, 100, 15, nil, true)
+	
+local JumpSpots = {
+{x = 2856, y = -188, z = 2637},
+{x = 2631, y = -188, z = 3125},
+{x = 3384, y = -189, z = 2221},
+{x = 3831, y = -189, z = 2475},
+{x = 4408, y = -189, z = 1402},
+{x = 4467, y = -189, z = 1985},
+{x = 5107, y = -189, z = 3207},
+{x = 5081, y = -189, z = 2625},
+{x = 5911, y = -189, z = 2893},
+{x = 5731, y = -189, z = 2375},
+{x = 7785, y = -189, z = 2751},
+{x = 8009, y = -189, z = 2295},
+{x = 8123, y = -189, z = 2917},
+{x = 8479, y = -189, z = 2475},
+{x = 9525, y = -189, z = 1483},
+{x = 9329, y = -189, z = 1925},
+{x = 10470, y = -189, z = 2174},
+{x = 10195, y = -189, z = 2559},
+{x = 11282, y = -189, z = 3094},
+{x = 10979, y = -189, z = 2675},
+{x = 9777, y = -189, z = 3859},
+{x = 9879, y = -189, z = 3325},
+{x = 9191, y = -189, z = 3468},
+{x = 9677, y = -189, z = 3181},
+{x = 12186, y = -189, z = 6703},
+{x = 12179, y = -189, z = 6119},
+{x = 12000, y = -189, z = 7743},
+{x = 12129, y = -189, z = 7173},
+{x = 9579, y = -189, z = 8923},
+{x = 9869, y = -189, z = 9405},
+{x = 8690, y = -189, z = 10255},
+{x = 8613, y = -189, z = 9679},
+{x = 7776, y = -189, z = 10075},
+{x = 8115, y = -189, z = 9583},
+{x = 7127, y = -148, z = 10561},
+{x = 7229, y = -189, z = 10073},
+{x = 6771, y = -148, z = 10569},
+{x = 6635, y = -189, z = 10081},
+{x = 6949, y = -189, z = 11887},
+{x = 6947, y = -190, z = 11479},
+{x = 6191, y = -189, z = 10031},
+{x = 5881, y = -189, z = 9523},
+{x = 5308, y = -189, z = 10244},
+{x = 5431, y = -189, z = 9673},
+{x = 3780, y = -189, z = 9213},
+{x = 4267, y = -189, z = 8873},
+{x = 3303, y = -189, z = 8628},
+{x = 3701, y = -189, z = 8203},
+{x = 1645, y = -189, z = 8813},
+{x = 1731, y = -189, z = 8273},
+{x = 6717, y = -189, z = 3229},
+{x = 6781, y = -189, z = 3825},
+{x = 7535, y = -189, z = 3771},
+{x = 7529, y = -189, z = 3175},
+{x = 6481, y = -189, z = 4295},
+{x = 6143, y = -189, z = 4667},
+{x = 5111, y = -189, z = 5386},
+{x = 4605, y = -189, z = 5501},
+{x = 7243, y = -189, z = 8329},
+{x = 6681, y = -189, z = 8323},
+{x = 7545, y = -189, z = 7359},
+{x = 7400, y = -189, z = 7933},
+{x = 6109, y = -189, z = 5565},
+{x = 5581, y = -189, z = 5687},
+{x = 7753, y = -189, z = 5897},
+{x = 8329, y = -189, z = 5725},
+{x = 7995, y = -189, z = 6583},
+{x = 8429, y = -189, z = 6175},
+{x = 9617, y = -190, z = 6104},
+{x = 9279, y = -188, z = 6425},
+                        }      	
 
 function Harass()
 	local targeth = GetWeakEnemy('MAGIC',800)
@@ -267,6 +344,16 @@ function OnDraw()
 			CustomCircle(100,4,5,target2)
 		elseif target~=nil and GetDistance(target)<700 then
 			CustomCircle(100,4,2,target)
+		end
+	end
+	for _, JumpSpot in pairs(JumpSpots) do
+		if LBSettings.jumphelper and GetMap() == 2 then
+			if GetDistance(JumpSpot,myHero) <= ShowRange then
+				if GetDistance(JumpSpot,mousePos) <= jumpmouserange then
+					DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, jumpmouserange, 0xFFFF0000)
+				else DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, jumpmouserange, 0xFFFF8000)
+				end
+			end
 		end
 	end
 	if	   Q1RDY==1			 	and W1RDY==1 and W2RDY==0 and E1RDY==1 				and RRDY==1 	and ls==nil		then DrawTextObject('BURST',myHero,Color.Yellow)
@@ -1137,6 +1224,235 @@ end
 function useSeraphsEmbrace()
 	GetInventorySlot(3040)
 	UseItemOnTarget(3040,myHero)
+end
+
+function Jump1()
+        local a1x,a1z = 9617,6104
+        local b1x,b1z = 9279,6425
+        local a2x,a2z = 7995,6583
+        local b2x,b2z = 8429,6175
+        local a3x,a3z = 7753,5897
+        local b3x,b3z = 8329,5725
+        local a4x,a4z = 6109,5565
+        local b4x,b4z = 5581,5687
+        local a5x,a5z = 7545,7359
+        local b5x,b5z = 7400,7933
+        local a9x,a9z = 7243,8329
+        local b9x,b9z = 6681,8323
+        local a10x,a10z = 5111,5386
+        local b10x,b10z = 4605,5501
+        local a11x,a11z = 6481,4295
+        local b11x,b11z = 6143,4667
+        local a12x,a12z = 7535,3771
+        local b12x,b12z = 7529,3175
+        local a13x,a13z = 6717,3229
+        local b13x,b13z = 6781,3825
+        local a14x,a14z = 1645,8813
+        local b14x,b14z = 1731,8273
+        local a15x,a15z = 3303,8628
+        local b15x,b15z = 3701,8203
+        local a16x,a16z = 3780,9213
+        local b16x,b16z = 4267,8873
+        local a17x,a17z = 5308,10244
+        local b17x,b17z = 5431,9673
+        local a18x,a18z = 6191,10031
+        local b18x,b18z = 5881,9523
+        local a19x,a19z = 6949,11887
+        local b19x,b19z = 6947,11479
+        local a20x,a20z = 6771,10569
+        local b20x,b20z = 6635,10081
+        local a21x,a21z = 7127,10561
+        local b21x,b21z = 7229,10073
+        local a22x,a22z = 7776,10075
+        local b22x,b22z = 8115,9583
+        local a23x,a23z = 8690,10255
+        local b23x,b23z = 8613,9679
+        local a24x,a24z = 9579,8923
+        local b24x,b24z = 9869,9405
+        local a25x,a25z = 12000,7743
+        local b25x,b25z = 12129,7173
+        local a26x,a26z = 12186,6703
+        local b26x,b26z = 12179,6119
+        local a27x,a27z = 9191,3468
+        local b27x,b27z = 9677,3181
+        local a28x,a28z = 9777,3859
+        local b28x,b28z = 9879,3325
+        local a29x,a29z = 11282,3094
+        local b29x,b29z = 10979,2675
+        local a30x,a30z = 10470,2174
+        local b30x,b30z = 10195,2559
+        local a31x,a31z = 9525,1483
+        local b31x,b31z = 9329,1925
+        local a32x,a32z = 8123,2917
+        local b32x,b32z = 8479,2475
+        local a33x,a33z = 7785,2751
+        local b33x,b33z = 8009,2295
+        local a34x,a34z = 5911,2893
+        local b34x,b34z = 5731,2375
+        local a35x,a35z = 5107,3207
+        local b35x,b35z = 5081,2625
+        local a36x,a36z = 4408,1402
+        local b36x,b36z = 4467,1985
+        local a37x,a37z = 3384,2221
+        local b37x,b37z = 3831,2475
+        local a38x,a38z = 2856,2637
+        local b38x,b38z = 2631,3125
+       
+        for _, JumpSpot in pairs(JumpSpots) do
+                if GetDistance(JumpSpot,mousePos) <= jumpmouserange and KeyDown(1) and LBSettings.jumphelper and GetMap() == 2 then
+                        MoveToXYZ(JumpSpot.x,JumpSpot.y,JumpSpot.z)
+                        jump2 = true
+                end
+        end
+       
+        if (KeyDown(2) or LBKeyConf.Combo) and LBSettings.jumphelper then
+                jump2 = false
+        end
+       
+        if jump2 == true and LBSettings.jumphelper and W1RDY == 1 and GetMap() == 2 then
+				local p = myHero
+                if distXYZ(a1x,a1z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b1x,-189,b1z)
+                elseif distXYZ(b1x,b1z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a1x,-189,a1z)
+                elseif distXYZ(a2x,a2z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b2x,-189,b2z)
+                elseif distXYZ(b2x,b2z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a2x,-189,a2z)
+                elseif distXYZ(a3x,a3z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b3x,-189,b3z)
+                elseif distXYZ(b3x,b3z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a3x,-189,a3z)
+                elseif distXYZ(a4x,a4z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b4x,-189,b4z)
+                elseif distXYZ(b4x,b4z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a4x,-189,a4z)
+                elseif distXYZ(a5x,a5z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b5x,-189,b5z)
+                elseif distXYZ(b5x,b5z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a5x,-189,a5z)
+                elseif distXYZ(a9x,a9z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b9x,-189,b9z)
+                elseif distXYZ(b9x,b9z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a9x,-189,a9z)
+                elseif distXYZ(a10x,a10z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b10x,-189,b10z)
+                elseif distXYZ(b10x,b10z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a10x,-189,a10z)
+                elseif distXYZ(a11x,a11z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b11x,-189,b11z)
+                elseif distXYZ(b11x,b11z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a11x,-189,a11z)
+                elseif distXYZ(a12x,a12z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b12x,-189,b12z)
+                elseif distXYZ(b12x,b12z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a12x,-189,a12z)
+                elseif distXYZ(a13x,a13z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b13x,-189,b13z)
+                elseif distXYZ(b13x,b13z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a13x,-189,a13z)
+                elseif distXYZ(a14x,a14z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b14x,-189,b14z)
+                elseif distXYZ(b14x,b14z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a14x,-189,a14z)
+                elseif distXYZ(a15x,a15z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b15x,-189,b15z)
+                elseif distXYZ(b15x,b15z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a15x,-189,a15z)
+                elseif distXYZ(a16x,a16z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b16x,-189,b16z)
+                elseif distXYZ(b16x,b16z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a16x,-189,a16z)
+                elseif distXYZ(a17x,a17z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b17x,-189,b17z)
+                elseif distXYZ(b17x,b17z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a17x,-189,a17z)
+                elseif distXYZ(a18x,a18z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b18x,-189,b18z)
+                elseif distXYZ(b18x,b18z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a18x,-189,a18z)
+                elseif distXYZ(a19x,a19z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b19x,-189,b19z)
+                elseif distXYZ(b19x,b19z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a19x,-189,a19z)
+                elseif distXYZ(a20x,a20z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b20x,-189,b20z)
+                elseif distXYZ(b20x,b20z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a20x,-189,a20z)
+                elseif distXYZ(a21x,a21z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b21x,-189,b21z)
+                elseif distXYZ(b21x,b21z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a21x,-189,a21z)
+                elseif distXYZ(a22x,a22z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b22x,-189,b22z)
+                elseif distXYZ(b22x,b22z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a22x,-189,a22z)
+                elseif distXYZ(a23x,a23z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b23x,-189,b23z)
+                elseif distXYZ(b23x,b23z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a23x,-189,a23z)
+                elseif distXYZ(a24x,a24z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b24x,-189,b24z)
+                elseif distXYZ(b24x,b24z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a24x,-189,a24z)
+                elseif distXYZ(a25x,a25z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b25x,-189,b25z)
+                elseif distXYZ(b25x,b25z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a25x,-189,a25z)
+                elseif distXYZ(a26x,a26z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b26x,-189,b26z)
+                elseif distXYZ(b26x,b26z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a26x,-189,a26z)
+                elseif distXYZ(a27x,a27z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b27x,-189,b27z)
+                elseif distXYZ(b27x,b27z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a27x,-189,a27z)
+                elseif distXYZ(a28x,a28z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b28x,-189,b28z)
+                elseif distXYZ(b28x,b28z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a28x,-189,a28z)
+                elseif distXYZ(a29x,a29z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b29x,-189,b29z)
+                elseif distXYZ(b29x,b29z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a29x,-189,a29z)
+                elseif distXYZ(a30x,a30z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b30x,-189,b30z)
+                elseif distXYZ(b30x,b30z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a30x,-189,a30z)
+                elseif distXYZ(a31x,a31z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b31x,-189,b31z)       
+                elseif distXYZ(b31x,b31z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a31x,-189,a31z)
+                elseif distXYZ(a32x,a32z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b32x,-189,b32z)
+                elseif distXYZ(b32x,b32z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a32x,-189,a32z)
+                elseif distXYZ(a33x,a33z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b33x,-189,b33z)       
+                elseif distXYZ(b33x,b33z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a33x,-189,a33z)
+                elseif distXYZ(a34x,a34z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b34x,-189,b34z)               
+                elseif distXYZ(b34x,b34z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a34x,-189,a34z)       
+                elseif distXYZ(a35x,a35z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b35x,-189,b35z)               
+                elseif distXYZ(b35x,b35z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a35x,-189,a35z)       
+                elseif distXYZ(a36x,a36z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b36x,-189,b36z)               
+                elseif distXYZ(b36x,b36z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a36x,-189,a36z)               
+                elseif distXYZ(a37x,a37z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b37x,-189,b37z)                       
+                elseif distXYZ(b37x,b37z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a37x,-189,a37z)       
+                elseif distXYZ(a38x,a38z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',b38x,-189,b38z)               
+                elseif distXYZ(b38x,b38z,p.x,p.z)<jumpspotrange then
+                        CastSpellXYZ('W',a38x,-189,a38z)       
+                end
+        end
 end
 
 SetTimerCallback('Main')
