@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 2.4\n")
+printtext("\nBeta 2.6\n")
 
 local target
 local stuntarget
@@ -59,12 +59,13 @@ RivConfig:addParam("shield", "AutoShield", SCRIPT_PARAM_ONKEYTOGGLE, true, 117)
 RivConfig:addParam("stun", "AutoStun", SCRIPT_PARAM_ONKEYTOGGLE, false, 48)
 RivConfig:addParam("ks", " KillSteal", SCRIPT_PARAM_ONOFF, true)
 RivConfig:addParam("smite", "Smitesteal", SCRIPT_PARAM_ONKEYTOGGLE, false, 119)
-RivConfig:addParam('s', "Speed of Combo and TFight", SCRIPT_PARAM_NUMERICUPDOWN, 0.4, 118,0,1,0.05)
+RivConfig:addParam('s', "AA Delay in Combos", SCRIPT_PARAM_NUMERICUPDOWN, 0.4, 118,0,1,0.05)
 RivConfig:permaShow("teamfight")
 RivConfig:permaShow("ks")
 RivConfig:permaShow("smite")
 RivConfig:permaShow("shield")
 RivConfig:permaShow("stun")
+RivConfig:permaShow("s")
      
      
 function Run()
@@ -221,22 +222,22 @@ function OnProcessSpell(unit,spell)
 		if string.find(spell.name,"RivenTriCleave") ~= nil then
 			Qmod=(Qmod+1)%3
 			QmodReset=os.clock()+3.5
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed			
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed			
 		elseif string.find(spell.name,"RivenMartyr") ~= nil then
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
 
 		elseif string.find(spell.name,"RivenFeint") ~= nil then
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
 
 		elseif string.find(spell.name,"RivenFengShuiEngine") ~= nil then    
 			Ractive=true
 			Rtimer=os.clock()
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
                 
 		elseif string.find(spell.name,"rivenizunablade") ~= nil then  
 			Ractive=false
 			castR=false
-			Atimer=os.clock()+(1/myHero.attackspeed) -delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed) -(1-delay)/myHero.attackspeed
 		end 
 		--[[if string.find(spell.name,"BasicAttack") ~= nil or string.find(spell.name,"CritAttack") ~= nil then  
 		--    Atimer=os.clock()+(1/myHero.attackspeed)
@@ -245,12 +246,12 @@ function OnProcessSpell(unit,spell)
 		if string.find(spell.name,"RivenFengShuiEngine") ~= nil then    
 			Ractive=true
 			Rtimer=os.clock()
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
 
 		elseif string.find(spell.name,"rivenizunablade") ~= nil then  
 			Ractive=false
 			castR=false
-			Atimer=os.clock()+(1/myHero.attackspeed)-delay/myHero.attackspeed
+			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
 		end 
 
 	end
@@ -505,12 +506,13 @@ function TF2()
 		if ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
 			CastSpellXYZ("E",ufa.x,0,ufa.z)
 		elseif QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) and Qmod<2 then
-			CastSpellXYZ("Q",ufa.x,0,ufa.z)
-
-			if RRDY==1 and Ractive==false then
+			
+			if Ractive==false and RRDY==1 then
 				CastSpellXYZ("R",myHero.x,0,myHero.z)
 				Ractive=true
 			end
+			CastSpellXYZ("Q",ufa.x,0,ufa.z)
+
 		elseif WRDY==1 and (os.clock()>Atimer) and GetD(target,myHero)<275 then
 		
 			if not runningAway(target) then
@@ -581,12 +583,12 @@ function TF2()
 			end
 			if Qmod==2 and Qspot==nil then				
 				AttackTarget(target)
-			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)>30 then
+			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)>50 then
 				MoveToXYZ(Qspot.x,0,Qspot.z)
-			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)<=30 then
+			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)<=50 then
 				CastSpellXYZ("Q",ufa.x,0,ufa.z)
 			else
-			AttackTarget(target)
+				AttackTarget(target)
 			end
 		end
 
@@ -630,7 +632,7 @@ AttackTarget(target)
 end
 elseif targetult~=nil then
 if ERDY==1 then CastSpellXYZ("E",ufa2.x,0,ufa2.z)
-elseif QRDY==1 then CastSpellXYZ("Q",ufa.x,0,ufa.z) 
+elseif QRDY==1 then CastSpellXYZ("Q",ufa2.x,0,ufa2.z) 
 else AttackTarget(targetult) end
 else
 MoveToMouse()

@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nA-Void Me\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.3\n")
+printtext("\nVersion 1.4\n")
 
 local target
 local targetclose
@@ -332,11 +332,13 @@ function harass()
 			if GetD(target,myHero)<600 then
 				CastSpellTarget('Q',target)
 				CastSpellXYZ('E',target.x,0,target.z)
-			elseif GetD(target,myHero)>600 and QRDY==1 then
+			elseif GetD(target,myHero)>600 and QRDY==1 and GetD(target)<700 then
 				CastSpellTarget('Q',target)
 				if ERDY==1 then
 					MoveToXYZ(target.x,0,target.z)
 				end
+			else
+				MoveToMouse()
 			end			
 		end
 	else 
@@ -449,28 +451,30 @@ function escape()
 				if GetD(target,myHero)<1200 then
 				
 					dist=GetD(target,myHero)
+					RDIST=KassConfig.distanceR*targetkslongrange.movespeed/330
+					NRDIST=KassConfig.distanceNR*targetkslongrange.movespeed/330
 					
 					if not runningAway(target) then
 						if target.x==myHero.x then
 							tx = target.x
 							if target.z>myHero.z then
-								tz = target.z-600
+								tz = target.z-NRDIST
 							else
-								tz = target.z+600
+								tz = target.z+NRDIST
 							end
 						
 						elseif target.z==myHero.z then
 							tz = target.z
 							if target.x>myHero.x then
-								tx = target.x-600
+								tx = target.x-NRDIST
 							else
-								tx = target.x+600
+								tx = target.x+NRDIST
 							end
 						
 						elseif target.x>myHero.x then
 							angle = math.asin((target.x-myHero.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if target.z>myHero.z then
 								tx = target.x-xs
 								tz = target.z-zs
@@ -481,8 +485,8 @@ function escape()
 						
 						elseif target.x<myHero.x then
 							angle = math.asin((myHero.x-target.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if target.z>myHero.z then
 								tx = target.x+xs
 								tz = target.z-zs
@@ -495,23 +499,23 @@ function escape()
 						if target.x==myHero.x then
 							tx = target.x
 							if target.z>myHero.z then
-								tz = target.z-500
+								tz = target.z-RDIST
 							else
-								tz = target.z+500
+								tz = target.z+RDIST
 							end
 						
 						elseif target.z==myHero.z then
 							tz = target.z
 							if target.x>myHero.x then
-								tx = target.x-500
+								tx = target.x-RDIST
 							else
-								tx = target.x+500
+								tx = target.x+RDIST
 							end
 						
 						elseif target.x>myHero.x then
 							angle = math.asin((target.x-myHero.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if target.z>myHero.z then
 								tx = target.x-xs
 								tz = target.z-zs
@@ -522,8 +526,8 @@ function escape()
 						
 						elseif target.x<myHero.x then
 							angle = math.asin((myHero.x-target.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if target.z>myHero.z then
 								tx = target.x+xs
 								tz = target.z-zs
@@ -543,11 +547,13 @@ function escape()
 			if GetD(target,myHero)<650 then
 				CastSpellTarget('Q',target)
 				CastSpellXYZ('E',target.x,0,target.z)
-			elseif GetD(target,myHero)>650 and QRDY==1 then
+			elseif GetD(target,myHero)>600 and QRDY==1 and GetD(target)<700 then
 				CastSpellTarget('Q',target)
 				if ERDY==1 then
 					MoveToXYZ(target.x,0,target.z)
 				end
+			else
+				MoveToMouse()
 			end			
 		end
 	else 
@@ -568,14 +574,16 @@ function Teamfight()
 		elseif WRDY==1 and GetD(target)<250 then
 			CastSpellTarget('W',myHero) 
 			AttackTarget(target)
-		else
+		elseif GetD(target)<600 then
 			
 			if GetD(target)<400 then
 				UseAllItems(target)
 			elseif GetD(target)<600 then
 				UseTargetItems(target)
 			end		
-		AttackTarget(target)
+			AttackTarget(target)
+		elseif GetD(target)>700 and targetclose==nil then
+			MoveToMouse()
 		end
 		
 		if RRDY==1 and GetD(target)>700 then
@@ -632,30 +640,32 @@ function killsteal()
 				local tx,tz
 				if ERDY==1 then
 					if GetD(targetkslongrange,myHero)<1200 then
-				
+						
+						RDIST=KassConfig.distanceR*targetkslongrange.movespeed/330
+						NRDIST=KassConfig.distanceNR*targetkslongrange.movespeed/330
 						dist=GetD(targetkslongrange,myHero)
 						
 						if not runningAway(targetkslongrange) then
 							if targetkslongrange.x==myHero.x then
 								tx = targetkslongrange.x
 								if targetkslongrange.z>myHero.z then
-									tz = targetkslongrange.z-600
+									tz = targetkslongrange.z-NRDIST
 								else
-									tz = targetkslongrange.z+600
+									tz = targetkslongrange.z+NRDIST
 								end
 							
 							elseif targetkslongrange.z==myHero.z then
 								tz = targetkslongrange.z
 								if targetkslongrange.x>myHero.x then
-									tx = targetkslongrange.x-600
+									tx = targetkslongrange.x-NRDIST
 								else
-									tx = targetkslongrange.x+600
+									tx = targetkslongrange.x+NRDIST
 								end
 							
 							elseif targetkslongrange.x>myHero.x then
 								angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-								zs = 600*math.cos(angle)
-								xs = 600*math.sin(angle)
+								zs = NRDIST*math.cos(angle)
+								xs = NRDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x-xs
 									tz = targetkslongrange.z-zs
@@ -666,8 +676,8 @@ function killsteal()
 							
 							elseif targetkslongrange.x<myHero.x then
 								angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-								zs = 600*math.cos(angle)
-								xs = 600*math.sin(angle)
+								zs = NRDIST*math.cos(angle)
+								xs = NRDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x+xs
 									tz = targetkslongrange.z-zs
@@ -680,23 +690,23 @@ function killsteal()
 							if targetkslongrange.x==myHero.x then
 								tx = targetkslongrange.x
 								if targetkslongrange.z>myHero.z then
-									tz = targetkslongrange.z-500
+									tz = targetkslongrange.z-RDIST
 								else
-									tz = targetkslongrange.z+500
+									tz = targetkslongrange.z+RDIST
 								end
 							
 							elseif targetkslongrange.z==myHero.z then
 								tz = targetkslongrange.z
 								if targetkslongrange.x>myHero.x then
-									tx = targetkslongrange.x-500
+									tx = targetkslongrange.x-RDIST
 								else
-									tx = targetkslongrange.x+500
+									tx = targetkslongrange.x+RDIST
 								end
 							
 							elseif targetkslongrange.x>myHero.x then
 								angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-								zs = 500*math.cos(angle)
-								xs = 500*math.sin(angle)
+								zs = RDIST*math.cos(angle)
+								xs = RDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x-xs
 									tz = targetkslongrange.z-zs
@@ -707,8 +717,8 @@ function killsteal()
 							
 							elseif targetkslongrange.x<myHero.x then
 								angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-								zs = 500*math.cos(angle)
-								xs = 500*math.sin(angle)
+								zs = RDIST*math.cos(angle)
+								xs = RDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x+xs
 									tz = targetkslongrange.z-zs
@@ -726,28 +736,30 @@ function killsteal()
 					if GetD(targetkslongrange,myHero)<1200 then
 					
 						dist=GetD(targetkslongrange,myHero)
+						RDIST=KassConfig.distanceR*targetkslongrange.movespeed/330
+						NRDIST=KassConfig.distanceNR*targetkslongrange.movespeed/330
 						
 						if not runningAway(targetkslongrange) then
 							if targetkslongrange.x==myHero.x then
 								tx = targetkslongrange.x
 								if targetkslongrange.z>myHero.z then
-									tz = targetkslongrange.z-600
+									tz = targetkslongrange.z-NRDIST
 								else
-									tz = targetkslongrange.z+600
+									tz = targetkslongrange.z+NRDIST
 								end
 							
 							elseif targetkslongrange.z==myHero.z then
 								tz = targetkslongrange.z
 								if targetkslongrange.x>myHero.x then
-									tx = targetkslongrange.x-600
+									tx = targetkslongrange.x-NRDIST
 								else
-									tx = targetkslongrange.x+600
+									tx = targetkslongrange.x+NRDIST
 								end
 							
 							elseif targetkslongrange.x>myHero.x then
 								angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-								zs = 600*math.cos(angle)
-								xs = 600*math.sin(angle)
+								zs = NRDIST*math.cos(angle)
+								xs = NRDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x-xs
 									tz = targetkslongrange.z-zs
@@ -758,8 +770,8 @@ function killsteal()
 							
 							elseif targetkslongrange.x<myHero.x then
 								angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-								zs = 600*math.cos(angle)
-								xs = 600*math.sin(angle)
+								zs = NRDIST*math.cos(angle)
+								xs = NRDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x+xs
 									tz = targetkslongrange.z-zs
@@ -772,23 +784,23 @@ function killsteal()
 							if targetkslongrange.x==myHero.x then
 								tx = targetkslongrange.x
 								if targetkslongrange.z>myHero.z then
-									tz = targetkslongrange.z-500
+									tz = targetkslongrange.z-RDIST
 								else
-									tz = targetkslongrange.z+500
+									tz = targetkslongrange.z+RDIST
 								end
 							
 							elseif targetkslongrange.z==myHero.z then
 								tz = targetkslongrange.z
 								if targetkslongrange.x>myHero.x then
-									tx = targetkslongrange.x-500
+									tx = targetkslongrange.x-RDIST
 								else
-									tx = targetkslongrange.x+500
+									tx = targetkslongrange.x+RDIST
 								end
 							
 							elseif targetkslongrange.x>myHero.x then
 								angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-								zs = 500*math.cos(angle)
-								xs = 500*math.sin(angle)
+								zs = RDIST*math.cos(angle)
+								xs = RDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x-xs
 									tz = targetkslongrange.z-zs
@@ -799,8 +811,8 @@ function killsteal()
 							
 							elseif targetkslongrange.x<myHero.x then
 								angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-								zs = 500*math.cos(angle)
-								xs = 500*math.sin(angle)
+								zs = RDIST*math.cos(angle)
+								xs = RDIST*math.sin(angle)
 								if targetkslongrange.z>myHero.z then
 									tx = targetkslongrange.x+xs
 									tz = targetkslongrange.z-zs
@@ -841,28 +853,30 @@ function killsteal()
 				if GetD(targetkslongrange,myHero)<1200 then
 				
 					dist=GetD(targetkslongrange,myHero)
+					RDIST=KassConfig.distanceR*targetkslongrange.movespeed/330
+					NRDIST=KassConfig.distanceNR*targetkslongrange.movespeed/330
 					
 					if not runningAway(targetkslongrange) then
 						if targetkslongrange.x==myHero.x then
 							tx = targetkslongrange.x
 							if targetkslongrange.z>myHero.z then
-								tz = targetkslongrange.z-600
+								tz = targetkslongrange.z-NRDIST
 							else
-								tz = targetkslongrange.z+600
+								tz = targetkslongrange.z+NRDIST
 							end
 						
 						elseif targetkslongrange.z==myHero.z then
 							tz = targetkslongrange.z
 							if targetkslongrange.x>myHero.x then
-								tx = targetkslongrange.x-600
+								tx = targetkslongrange.x-NRDIST
 							else
-								tx = targetkslongrange.x+600
+								tx = targetkslongrange.x+NRDIST
 							end
 						
 						elseif targetkslongrange.x>myHero.x then
 							angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x-xs
 								tz = targetkslongrange.z-zs
@@ -873,8 +887,8 @@ function killsteal()
 						
 						elseif targetkslongrange.x<myHero.x then
 							angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x+xs
 								tz = targetkslongrange.z-zs
@@ -887,23 +901,23 @@ function killsteal()
 						if targetkslongrange.x==myHero.x then
 							tx = targetkslongrange.x
 							if targetkslongrange.z>myHero.z then
-								tz = targetkslongrange.z-500
+								tz = targetkslongrange.z-RDIST
 							else
-								tz = targetkslongrange.z+500
+								tz = targetkslongrange.z+RDIST
 							end
 						
 						elseif targetkslongrange.z==myHero.z then
 							tz = targetkslongrange.z
 							if targetkslongrange.x>myHero.x then
-								tx = targetkslongrange.x-500
+								tx = targetkslongrange.x-RDIST
 							else
-								tx = targetkslongrange.x+500
+								tx = targetkslongrange.x+RDIST
 							end
 						
 						elseif targetkslongrange.x>myHero.x then
 							angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x-xs
 								tz = targetkslongrange.z-zs
@@ -914,8 +928,8 @@ function killsteal()
 						
 						elseif targetkslongrange.x<myHero.x then
 							angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x+xs
 								tz = targetkslongrange.z-zs
@@ -933,28 +947,30 @@ function killsteal()
 				if GetD(targetkslongrange,myHero)<1200 then
 				
 					dist=GetD(targetkslongrange,myHero)
+					RDIST=KassConfig.distanceR*targetkslongrange.movespeed/330
+					NRDIST=KassConfig.distanceNR*targetkslongrange.movespeed/330
 					
 					if not runningAway(targetkslongrange) then
 						if targetkslongrange.x==myHero.x then
 							tx = targetkslongrange.x
 							if targetkslongrange.z>myHero.z then
-								tz = targetkslongrange.z-600
+								tz = targetkslongrange.z-NRDIST
 							else
-								tz = targetkslongrange.z+600
+								tz = targetkslongrange.z+NRDIST
 							end
 						
 						elseif targetkslongrange.z==myHero.z then
 							tz = targetkslongrange.z
 							if targetkslongrange.x>myHero.x then
-								tx = targetkslongrange.x-600
+								tx = targetkslongrange.x-NRDIST
 							else
-								tx = targetkslongrange.x+600
+								tx = targetkslongrange.x+NRDIST
 							end
 						
 						elseif targetkslongrange.x>myHero.x then
 							angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x-xs
 								tz = targetkslongrange.z-zs
@@ -965,8 +981,8 @@ function killsteal()
 						
 						elseif targetkslongrange.x<myHero.x then
 							angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-							zs = 600*math.cos(angle)
-							xs = 600*math.sin(angle)
+							zs = NRDIST*math.cos(angle)
+							xs = NRDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x+xs
 								tz = targetkslongrange.z-zs
@@ -979,23 +995,23 @@ function killsteal()
 						if targetkslongrange.x==myHero.x then
 							tx = targetkslongrange.x
 							if targetkslongrange.z>myHero.z then
-								tz = targetkslongrange.z-500
+								tz = targetkslongrange.z-RDIST
 							else
-								tz = targetkslongrange.z+500
+								tz = targetkslongrange.z+RDIST
 							end
 						
 						elseif targetkslongrange.z==myHero.z then
 							tz = targetkslongrange.z
 							if targetkslongrange.x>myHero.x then
-								tx = targetkslongrange.x-500
+								tx = targetkslongrange.x-RDIST
 							else
-								tx = targetkslongrange.x+500
+								tx = targetkslongrange.x+RDIST
 							end
 						
 						elseif targetkslongrange.x>myHero.x then
 							angle = math.asin((targetkslongrange.x-myHero.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x-xs
 								tz = targetkslongrange.z-zs
@@ -1006,8 +1022,8 @@ function killsteal()
 						
 						elseif targetkslongrange.x<myHero.x then
 							angle = math.asin((myHero.x-targetkslongrange.x)/dist)
-							zs = 500*math.cos(angle)
-							xs = 500*math.sin(angle)
+							zs = RDIST*math.cos(angle)
+							xs = RDIST*math.sin(angle)
 							if targetkslongrange.z>myHero.z then
 								tx = targetkslongrange.x+xs
 								tz = targetkslongrange.z-zs

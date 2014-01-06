@@ -2,7 +2,7 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 1.8")
+print("\nVersion 2.0")
 
 local target
 local targetrange
@@ -54,12 +54,15 @@ VeigConfig:addParam("nm", "NEARMOUSE Targetting", SCRIPT_PARAM_ONKEYTOGGLE, fals
 VeigConfig:addParam("OS", "Always W Combo", SCRIPT_PARAM_ONKEYTOGGLE, false,57)
 VeigConfig:addParam('spm', "Stun Placement", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,0.8,1.5,0.01)
 VeigConfig:addParam('sfa', "Stun Fireahead", SCRIPT_PARAM_NUMERICUPDOWN, 3, 189,1,4,0.1)
+VeigConfig:addParam("AW", "Auto W Stunned Enemy", SCRIPT_PARAM_ONOFF, false)
 VeigConfig:addParam("ult", "Ult On/Off", SCRIPT_PARAM_ONOFF, false)
 VeigConfig:addParam('zh', 'Zhonyas', SCRIPT_PARAM_ONOFF, true)
 VeigConfig:addParam("ks", "KillSteal", SCRIPT_PARAM_ONOFF, true)
 VeigConfig:permaShow("pf")
 VeigConfig:permaShow("nm")
 VeigConfig:permaShow("ult")
+VeigConfig:permaShow("OS")
+VeigConfig:permaShow("AW")
 VeigConfig:permaShow("zh")
 VeigConfig:permaShow("ks")
 
@@ -101,7 +104,7 @@ function VeigRun()
 		
 	if target~=nil then
 	
-		twfx,twfy,twfz=GetFireahead(target,10,0)
+		twfx,twfy,twfz=GetFireahead(target,11,0)
 		twfa={x=twfx,y=twfy,z=twfz}
 	
 	end
@@ -551,7 +554,7 @@ function C()
 			if pos~=nil and pos.x~=nil then
 				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,0.5,0))
+				CastSpellXYZ('W',GetFireahead(target,2,0))
 			end
 		end
 		if GetD(target)<650 and QRDY==1 then
@@ -559,11 +562,11 @@ function C()
 		elseif GetD(target)<650 and RRDY==1 and VeigConfig.ult then
 			CastSpellTarget('R',target)
 		end
-		--if GetD(twfa)<900 and WRDY==1 and VeigConfig.OS then
-			--CastSpellXYZ("W",twfx,0,twfz)
-		--else
+		if GetD(twfa)<900 and WRDY==1 and VeigConfig.OS then
+			CastSpellXYZ("W",twfx,0,twfz)
+		else
 			AttackTarget(target)
-		--end
+		end
 	else
 		MoveToMouse()
 		
@@ -667,7 +670,7 @@ function Harass()
 			if pos~=nil and pos.x~=nil then
 				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,0.5,0))
+				CastSpellXYZ('W',GetFireahead(target,2,0))
 			end
 		end
 		if GetD(target)<850 and ERDY==1 and WTimer+2>os.clock() then
@@ -829,7 +832,7 @@ function killsteal()
 			if pos~=nil and pos.x~=nil then
 				CastSpellXYZ('W',pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(targetrange,0.1,0))
+				CastSpellXYZ('W',GetFireahead(targetrange,1,0))
 			end
 			E(targetrange)			
 			CastSpellTarget("Q",targetrange)
@@ -858,11 +861,19 @@ function OnCreateObj(obj)
 			shotFired2 = false
 			lastAttack = GetTickCount()
 	end
-	if obj~=nil and obj.x~=nil and GetD(obj)<900 and (string.find(obj.charName,"LOC_Stun") or string.find(obj.charName,"Stun_glb") or string.find(obj.charName,"Global_Fear") or string.find(obj.charName,"AlZaharNetherGrasp_tar") or string.find(obj.charName,"Global_Taunt") or string.find(obj.charName,"LuxLightBinding_tar") or string.find(obj.charName,"leBlanc_shackle_tar") or string.find(obj.charName,"RunePrison_tar") or string.find(obj.charName,"InfiniteDuress_tar") or string.find(obj.charName,"DarkBinding_tar") or string.find(obj.charName,"Amumu_SadRobot_Ultwrap") or string.find(obj.charName,"Amumu_Ultwrap") or string.find(obj.charName,"maokai_elementalAdvance_root_01") or string.find(obj.charName,"RengarEMax_tar") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit_Lobster") or string.find(obj.charName,"VarusRHitFlash")) then
-		print("\nName "..obj.charName)
+	if obj~=nil and obj.x~=nil and GetD(obj)<900 and (string.find(obj.charName,"LOC_Stun") or string.find(obj.charName,"LOC_Suppress") or string.find(obj.charName,"LOC_Taunt") or string.find(obj.charName,"LOC_fear") or string.find(obj.charName,"Global_Stun") or string.find(obj.charName,"Ahri_Charm_buf") or string.find(obj.charName,"CurseBandages") or string.find(obj.charName,"CurseBandages") or string.find(obj.charName,"leBlanc_shackle_tar_blood") or string.find(obj.charName,"LuxLightBinding") or string.find(obj.charName,"DarkBinding_tar") or string.find(obj.charName,"RunePrison") or string.find(obj.charName,"UnstoppableForce_stun") or string.find(obj.charName,"VarusRHit") or string.find(obj.charName,"Zyra_E_sequence_root") or string.find(obj.charName,"Stun_glb") or string.find(obj.charName,"Global_Fear") or string.find(obj.charName,"AlZaharNetherGrasp_tar") or string.find(obj.charName,"Global_Taunt") or string.find(obj.charName,"LuxLightBinding_tar") or string.find(obj.charName,"leBlanc_shackle_tar") or string.find(obj.charName,"RunePrison_tar") or string.find(obj.charName,"InfiniteDuress_tar") or string.find(obj.charName,"DarkBinding_tar") or string.find(obj.charName,"Amumu_SadRobot_Ultwrap") or string.find(obj.charName,"Amumu_Ultwrap") or string.find(obj.charName,"maokai_elementalAdvance_root_01") or string.find(obj.charName,"RengarEMax_tar") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit") or string.find(obj.charName,"Fizz_UltimateMissle_Orbit_Lobster") or string.find(obj.charName,"VarusRHitFlash")) then
+		--print("\nName "..obj.charName)
 		for i, enemy in pairs(enemies) do
 			if enemy~=nil and enemy.unit~=nil and enemy.unit.dead~=1 and math.abs(enemy.unit.x-obj.x)<50 and math.abs(enemy.unit.z-obj.z)<50 then
-					print("\n  Checking\n")
+					--print("\n  Checking\n")
+					if WRDY==1 and (VeigConfig.AW or ((VeigConfig.h or VeigConfig.Combo) and target~=nil and enemy.name==target.name)) and GetD(enemy)<850 then
+						local pos=GetMEC(110,900,enemy)
+						if pos~=nil and pos.x~=nil then
+							CastSpellXYZ('W',pos.x,0,pos.z)
+						else
+							CastSpellXYZ('W',GetFireahead(enemy,2,0))
+						end
+					end					
 					enemy.stunned=1
 					enemy.stunTimer=os.clock()+2
 			end
