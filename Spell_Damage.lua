@@ -144,7 +144,7 @@ Aatrox = {
 		QDmgP = "40*Qlvl-20+1.3*ad", --deal 10% less damage for each subsequent target hit, down to a minimum of 50%
 		WDmgM = "50*Wlvl+30+.6*ap",
 		EDmgM = "50*Elvl+30+.8*ap",
-		RDmgP = "225*Rlvl+25+2*ad",
+		RDmgP = "225*Rlvl+25+2*bad",
 	},
 	Cassiopeia = {
 		QDmgM = "40*Qlvl+35+.8*ap",
