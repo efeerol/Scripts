@@ -1,5 +1,5 @@
 require 'Utils'
-local version = '1.4'
+local version = '1.5'
 --[[
 	---------------
 	--- GENERAL ---
@@ -11,6 +11,8 @@ local version = '1.4'
 	- GetAA()										Returns true for each successful autoattack (only for melee champs)
 	- IsLolActive()									Returns true if the LoL-window in the foreground and the chat window is closed
 	- IsSheenRdy()									Returns true if Sheen, Trinity Force, Iceborn Gauntlet, Lichbane passive is ready
+	- IsBuffed(target,name)							Returns true if the target has a buff/debuff. Example: IsBuffed(myHero,'Annie_E_buf')
+	- IsBetween(a,b,c,dist)							Returns true if b is in a line between a and c. Example: IsBetween(myHero,minion,target,125)
 	
 	
 	----------------------	
@@ -105,7 +107,7 @@ end
 function SpellPred(spell,cd,a,b,range,delay,speed,block,blockradius)
 	if (cd == 1 or cd) and a ~= nil and b ~= nil and delay ~= nil and speed ~= nil and GetDistance(a,b)<range then
 		local FX,FY,FZ = GetFireahead(b,delay,speed)
-		if distXYZ(a.x,a.z,b.x,b.z)<range and distXYZ(a.x,a.z,FX,FZ)<range then
+		if distXYZ(a.x,a.z,FX,FZ)<range and distXYZ(b.x,b.z,FX,FZ)<((b.movespeed/1000)*(((delay*100)+100)+((speed/10)/GetDistance(a,b)))) then
 			if block == 1 and blockradius==nil then
 				if CreepBlock(a.x,a.y,a.z,FX,FY,FZ) == 0 then
 					CastSpellXYZ(spell,FX,FY,FZ)
@@ -251,6 +253,36 @@ function IsSheenRdy()
 	((GetInventorySlot(3025)==5 or GetInventorySlot(3057)==5 or GetInventorySlot(3078)==5 or GetInventorySlot(3100)==5) and myHero.SpellTime5 >= 1) or
 	((GetInventorySlot(3025)==6 or GetInventorySlot(3057)==6 or GetInventorySlot(3078)==6 or GetInventorySlot(3100)==6) and myHero.SpellTime6 >= 1) then
 	return true
+	end
+end
+
+function IsBuffed(target,name)
+    for i = 1, objManager:GetMaxObjects(), 1 do
+        obj = objManager:GetObject(i)
+        if obj~=nil and target~=nil and string.find(obj.charName,name) and GetDistance(obj, target) < 100 then
+			return true
+        end
+    end
+end
+
+function IsBetween(a,b,c,dist)
+	if a~=nil and b~=nil and c~=nil then
+		ex = a.x
+		ez = a.z
+		tx = c.x
+		tz = c.z
+		dx = ex-tx
+		dz = ez-tz
+		if dx ~= 0 then
+		m = dz/dx
+		c = ez-m*ex
+		end
+		mx = b.x
+		mz = b.z
+		distanc = (math.abs(mz - m*mx - c))/(math.sqrt(m*m+1))
+		if distanc<dist and math.sqrt((tx-ex)*(tx-ex)+(tz-ez)*(tz-ez))>math.sqrt((tx-mx)*(tx-mx)+(tz-mz)*(tz-mz)) then
+			return true
+		end
 	end
 end
 

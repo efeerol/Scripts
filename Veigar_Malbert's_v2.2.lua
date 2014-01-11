@@ -2,13 +2,12 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 2.0")
+print("\nVersion 2.2")
 
 local target
 local targetrange
 local targetminion
 local target600
-local ignitedamage=0
 local closestEnemy
 local checkDie=false
  
@@ -52,11 +51,11 @@ VeigConfig:addParam("f", "Farm", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C")
 VeigConfig:addParam("pf", "Protect when Farming", SCRIPT_PARAM_ONKEYTOGGLE, true,55)
 VeigConfig:addParam("nm", "NEARMOUSE Targetting", SCRIPT_PARAM_ONKEYTOGGLE, false,56)
 VeigConfig:addParam("OS", "Always W Combo", SCRIPT_PARAM_ONKEYTOGGLE, false,57)
-VeigConfig:addParam('spm', "Stun Placement", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,0.8,1.5,0.01)
-VeigConfig:addParam('sfa', "Stun Fireahead", SCRIPT_PARAM_NUMERICUPDOWN, 3, 189,1,4,0.1)
+VeigConfig:addParam("spm", "Stun Placement", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,0.8,1.5,0.01)
+VeigConfig:addParam("sfa", "Stun Fireahead", SCRIPT_PARAM_NUMERICUPDOWN, 3, 189,1,4,0.1)
 VeigConfig:addParam("AW", "Auto W Stunned Enemy", SCRIPT_PARAM_ONOFF, false)
 VeigConfig:addParam("ult", "Ult On/Off", SCRIPT_PARAM_ONOFF, false)
-VeigConfig:addParam('zh', 'Zhonyas', SCRIPT_PARAM_ONOFF, true)
+VeigConfig:addParam("zh", "Zhonyas", SCRIPT_PARAM_ONOFF, true)
 VeigConfig:addParam("ks", "KillSteal", SCRIPT_PARAM_ONOFF, true)
 VeigConfig:permaShow("pf")
 VeigConfig:permaShow("nm")
@@ -68,6 +67,7 @@ VeigConfig:permaShow("ks")
 
 
 function VeigRun()
+	if cc<40 then cc=cc+1 if cc==30 then LoadTable() end end
 	if VeigConfig.nm then
 		target = GetWeakEnemy("MAGIC",750,"NEARMOUSE")
 	else
@@ -118,7 +118,7 @@ function VeigRun()
                 farm()
         end
 	
-	ignite()
+	--ignite()
 	if VeigConfig.ks then
 		killsteal()
 	end
@@ -129,19 +129,19 @@ function VeigRun()
         end
 		
 			------------
-	if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+	if myHero.SpellTimeQ > 1.0 and GetSpellLevel("Q") > 0 then
                 QRDY = 1
                 else QRDY = 0
         end
-        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel("W") > 0 then
                 WRDY = 1
                 else WRDY = 0
         end
-        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel("E") > 0 then
                 ERDY = 1
                 else ERDY = 0
         end
-        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel("R") > 0 then
                 RRDY = 1
         else RRDY = 0 end
 	--------------------------
@@ -173,7 +173,7 @@ function OnProcessSpell(unit, spell)
 			end
         end
  
-        else
+        elseif myHero.dead~=1 then
                 local Q
                 local W
                 local E
@@ -191,42 +191,42 @@ function OnProcessSpell(unit, spell)
                                 if spell.name == Q then
                                         if spellDmg[unit.name] and getDmg("Q",myHero,unit)~=nil and getDmg("Q",myHero,unit) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                                --CastSummonerBarrier()
+                                                --CastSummonerHeal()
                                         end
                                
                                 elseif spell.name == W then
                                         if spellDmg[unit.name] and getDmg("W",myHero,unit)~=nil and getDmg("W",myHero,unit) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                               -- CastSummonerBarrier()
+                                               -- CastSummonerHeal()
                                         end
                                
                                 elseif spell.name == E then
                                         if spellDmg[unit.name] and getDmg("E",myHero,unit)~=nil and getDmg("E",myHero,unit) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                               -- CastSummonerBarrier()
+                                               -- CastSummonerHeal()
                                         end
  
                                 elseif spell.name == R then
                                         if spellDmg[unit.name] and getDmg("R",myHero,unit)~=nil and getDmg("R",myHero,unit) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                               -- CastSummonerBarrier()
+                                               -- CastSummonerHeal()
                                         end
                                
                                 elseif spell.name:find("BasicAttack") or spell.name:find("BasicAttack2") or spell.name:find("BasicaAttack3")  or spell.name:find("ChaosTurretFire") then
                                         if (unit.baseDamage + unit.addDamage) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                              --  CastSummonerBarrier()
+                                               -- CastSummonerHeal()
                                         end    
                                 elseif spell.name:find("CritAttack") then
                                         if 2*(unit.baseDamage + unit.addDamage) > myHero.health then
                                                 zhonyas()
-                                                CastSummonerBarrier()
-                                                CastSummonerHeal()
+                                               -- CastSummonerBarrier()
+                                               -- CastSummonerHeal()
                                         end
                                 end
    
@@ -429,8 +429,8 @@ function dodgeaoe(pos1, pos2, radius)
     if calc < radius then
                
                                 zhonyas()
-                                        CastSummonerBarrier()
-                                        CastSummonerHeal()
+                                      --  CastSummonerBarrier()
+                                      --  CastSummonerHeal()
     end
 end
 
@@ -451,8 +451,8 @@ function dodgelinepoint(pos1, pos2, radius)
     if perpendicular < radius and calc1 < calc4 and calc2 < calc4 then
        
                                 zhonyas()
-                                        CastSummonerBarrier()
-                                        CastSummonerHeal()
+                                     --   CastSummonerBarrier()
+                                     --   CastSummonerHeal()
     end
 end
  
@@ -475,8 +475,8 @@ function dodgelinepass(pos1, pos2, radius, maxDist)
     if perpendicular < radius and calc1 < calc4 and calc2 < calc4 then
                
                                 zhonyas()
-                                        CastSummonerBarrier()
-                                        CastSummonerHeal()
+                                     --   CastSummonerBarrier()
+                                     --   CastSummonerHeal()
     end
 end
  
@@ -526,45 +526,46 @@ end
 ------------------------------END Spell Callback Stuff
  
 
-function ignite()
-	if myHero.SummonerD == 'SummonerDot' then
-			ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('D')
-	elseif myHero.SummonerF == 'SummonerDot' then
-					ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('F')
+--[[function ignite()
+	if myHero.SummonerD == "SummonerDot" then
+			ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady("D")
+	elseif myHero.SummonerF == "SummonerDot" then
+					ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady("F")
 	else
 			ignitedamage=0
 	end
-end
+end--]]
 
 function C()
 	if target~=nil then
-		if GetD(target)<650 and RRDY==1 and VeigConfig.ks and target.health<getDmg('R',target,myHero)*RRDY and target.health>=getDmg('AD',target,myHero) and target.health>=getDmg('Q',target,myHero)*QRDY then
-			CastSpellTarget('R',target)
+		if GetD(target)<650 and RRDY==1 and VeigConfig.ks and target.health<getDmg("R",target,myHero)*RRDY and target.health>=getDmg("AD",target,myHero) and target.health>=getDmg("Q",target,myHero)*QRDY then
+			CastSpellTarget("R",target)
 		end
 		
-		if GetD(target)<400 then
-			UseAllItems(target)
-		elseif GetD(target)<600 then
-			UseTargetItems(target)
-		end
+		
 		if ERDY==1 and GetD(target)<850 then
 			E(target)
 		elseif WRDY==1 and GetD(target)<850 and checkStunned(target)==true then
 			local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
-				CastSpellXYZ('W',pos.x,0,pos.z)
+				CastSpellXYZ("W",pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,2,0))
+				CastSpellXYZ("W",GetFireahead(target,2,0))
 			end
 		end
 		if GetD(target)<650 and QRDY==1 then
-			CastSpellTarget('Q',target)
+			CastSpellTarget("Q",target)
 		elseif GetD(target)<650 and RRDY==1 and VeigConfig.ult then
-			CastSpellTarget('R',target)
+			CastSpellTarget("R",target)
 		end
 		if GetD(twfa)<900 and WRDY==1 and VeigConfig.OS then
 			CastSpellXYZ("W",twfx,0,twfz)
 		else
+			if GetD(target)<400 then
+			UseAllItems(target)
+		elseif GetD(target)<600 then
+			UseTargetItems(target)
+		end
 			AttackTarget(target)
 		end
 	else
@@ -620,7 +621,7 @@ function E(enemy)
 							tz = tfz+zs
 					end 
 			end
-			CastSpellXYZ('E',tx,tfy,tz)
+			CastSpellXYZ("E",tx,tfy,tz)
 	end
 end
 
@@ -654,9 +655,9 @@ function Stun()
 		else
 			E(closestEnemy)
 		end
-		moveToCursor()
+		MoveToMouse()
 	else
-		moveToCursor()
+		MoveToMouse()
 	end
 
 end
@@ -668,9 +669,9 @@ function Harass()
 		if GetD(target)<850 and ERDY==1 and WRDY==1 then
 			local pos=GetMEC(110,900,target)
 			if pos~=nil and pos.x~=nil then
-				CastSpellXYZ('W',pos.x,0,pos.z)
+				CastSpellXYZ("W",pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(target,2,0))
+				CastSpellXYZ("W",GetFireahead(target,2,0))
 			end
 		end
 		if GetD(target)<850 and ERDY==1 and WTimer+2>os.clock() then
@@ -681,7 +682,7 @@ function Harass()
 			AttackTarget(target)
 		
 	else
-		moveToCursor()
+		MoveToMouse()
 	end
 end
 
@@ -697,9 +698,9 @@ function farm()
                         if getDmg("AD",targetminion,myHero)>=targetminion.health then
                                 Action(targetminion)
                         end
-                        moveToCursor()
+                        MoveToMouse()
                 else
-                        moveToCursor()
+                        MoveToMouse()
                 end
  
 end
@@ -709,7 +710,7 @@ function farm2()
         CustomCircle(range,2,4,myHero)
                        
         if targetrange ~= nil then
-				if QRDY==1 then CastSpellTarget('Q',targetrange) end
+				if QRDY==1 then CastSpellTarget("Q",targetrange) end
                 Action(targetrange)
         else targetminion = GetLowestHealthEnemyMinion(range)
         end
@@ -720,9 +721,9 @@ function farm2()
 				if getDmg("AD",targetminion,myHero)>=targetminion.health then
 						Action(targetminion)
 				end
-                moveToCursor()
+                MoveToMouse()
         else
-                moveToCursor()
+                MoveToMouse()
         end
  
 end
@@ -734,7 +735,7 @@ function Action(ttt)
                         CustomCircle(100,10,1,ttt)
         else
                         CustomCircle(100,5,2,ttt)
-            if heroCanMove() then moveToCursor() end
+            if heroCanMove() then MoveToMouse() end
         end
 end
  
@@ -767,10 +768,6 @@ function heroCanMove()
     return false
 end
  
-function moveToCursor()
-    isMoving = true
-    MoveToXYZ(moveX,0,moveZ)
-end
 
 function isMoving(unitM)
 	local mx,my,mz=GetFireahead(unitM,5,0)
@@ -787,13 +784,13 @@ function Action2(ttt)
                         CustomCircle(100,10,1,ttt)
         else
                         CustomCircle(100,5,2,ttt)
-            if heroCanMove2() then moveToCursor() end
+            if heroCanMove2() then MoveToMouse() end
         end
 end
  
 function attackEnemy2(yyy)
         if ValidTarget(yyy) then
-        CastSpellTarget('Q',yyy)
+        CastSpellTarget("Q",yyy)
         shotFired2 = true
         end
 end
@@ -830,9 +827,9 @@ function killsteal()
 		elseif targetrange.health<(QQ+WW)*ERDY then
 			local pos=GetMEC(110,900,targetrange)
 			if pos~=nil and pos.x~=nil then
-				CastSpellXYZ('W',pos.x,0,pos.z)
+				CastSpellXYZ("W",pos.x,0,pos.z)
 			else
-				CastSpellXYZ('W',GetFireahead(targetrange,1,0))
+				CastSpellXYZ("W",GetFireahead(targetrange,1,0))
 			end
 			E(targetrange)			
 			CastSpellTarget("Q",targetrange)
@@ -842,14 +839,6 @@ function killsteal()
 			CastSpellTarget("R",targetrange)
 			
 		end
-        --[[if target600~=nil and target600.health<ignitedamage then
-                if myHero.SummonerD == 'SummonerDot' then
-                        if IsSpellReady('D') then CastSpellTarget('D',target600) end
-                end
-                if myHero.SummonerF == 'SummonerDot' then
-                        if IsSpellReady('F') then CastSpellTarget('F',target600) end
-                end
-        end --]]
 	end
 
 end
@@ -869,9 +858,9 @@ function OnCreateObj(obj)
 					if WRDY==1 and (VeigConfig.AW or ((VeigConfig.h or VeigConfig.Combo) and target~=nil and enemy.name==target.name)) and GetD(enemy)<850 then
 						local pos=GetMEC(110,900,enemy)
 						if pos~=nil and pos.x~=nil then
-							CastSpellXYZ('W',pos.x,0,pos.z)
+							CastSpellXYZ("W",pos.x,0,pos.z)
 						else
-							CastSpellXYZ('W',GetFireahead(enemy,2,0))
+							CastSpellXYZ("W",GetFireahead(enemy,2,0))
 						end
 					end					
 					enemy.stunned=1

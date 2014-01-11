@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nMaster JedYi\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 5.2\n")
+printtext("\nVersion 5.3\n")
 
 local target
 local hasSheen = 0
@@ -98,7 +98,6 @@ local turret = {}
 	YiConfig:addParam('autoQMrange', 'AutoQminionrange', SCRIPT_PARAM_ONKEYTOGGLE, false, 48)
 	YiConfig:addParam("smite", "Smitesteal", SCRIPT_PARAM_ONKEYTOGGLE, true, 118)
 	YiConfig:addParam('farm', 'AutoCreepFarm', SCRIPT_PARAM_ONKEYTOGGLE, false, 119)
-	YiConfig:addParam('zh', 'Zhonyas', SCRIPT_PARAM_ONOFF, true)
 	YiConfig:addParam('drawQ', 'DrawQsOnEnemies', SCRIPT_PARAM_ONOFF, true)
 	YiConfig:addParam('autoQM3', 'AutoQminion3orLess', SCRIPT_PARAM_ONOFF, false)
 	YiConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONOFF, true)
@@ -129,18 +128,8 @@ function Run()
                 RRDY = 1
         else RRDY = 0 end
         --------------------------
-	checkDie=false
 	
-	if YiConfig.zh then 
-		checkDie=true
-		if enemyInRange~=nil and myHero.health<myHero.maxHealth*10/100 and not isMed() then
-			zhonyas()
-		end
-	else
-		checkDie=false
-	end
-	
-	cc=cc+1
+	if cc<40 then cc=cc+1 end
 	if (cc==30) then
 		LoadTable()
 	end
@@ -254,41 +243,35 @@ local R
 			--print("\nB: " .. unit.name)
     		if spell.name == Q then
 				if spellDmg[unit.name] and getDmg("Q",myHero,unit)~=nil and getDmg("Q",myHero,unit) > myHero.health then
-					zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
 				end
     		
 			elseif spell.name == W then
         		if spellDmg[unit.name] and getDmg("W",myHero,unit)~=nil and getDmg("W",myHero,unit) > myHero.health then
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
 				end
     		
 			elseif spell.name == E then
     			if spellDmg[unit.name] and getDmg("E",myHero,unit)~=nil and getDmg("E",myHero,unit) > myHero.health then
-   			     	zhonyas()
 					CastSummonerBarrier()
 					CastSummonerHeal()
         		end
 
 			elseif spell.name == R then
         		if spellDmg[unit.name] and getDmg("R",myHero,unit)~=nil and getDmg("R",myHero,unit) > myHero.health then
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
         		end
     		
 			elseif spell.name:find("BasicAttack") or spell.name:find("BasicAttack2") or spell.name:find("BasicaAttack3")  or spell.name:find("ChaosTurretFire") then
         		if (unit.baseDamage + unit.addDamage) > myHero.health then
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
 				end	
 			elseif spell.name:find("CritAttack") then
         		if 2*(unit.baseDamage + unit.addDamage) > myHero.health then
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
 				end
@@ -480,16 +463,6 @@ local R
 end
 
 
-function zhonyas()
-	if GetInventorySlot(3157)~=nil then 
-		k = GetInventorySlot(3157)
-		CastSpellTarget(tostring(k),myHero)
-	elseif GetInventorySlot(3090)~=nil then 
-		k = GetInventorySlot(3090)
-		CastSpellTarget(tostring(k),myHero)
-	end
-end
-
 
 function isMed()
 	if CLOCKM~=nil then
@@ -503,7 +476,7 @@ end
 
 function smitesteal()
         if myHero.SummonerD == "SummonerSmite" then
-                CastHotkey("AUTO 100,0 SPELLF:SMITESTEAL RANGE=700 TRUE COOLDOWN")
+                CastHotkey("AUTO 100,0 SPELLD:SMITESTEAL RANGE=700 TRUE COOLDOWN")
                 return
         end
         if myHero.SummonerF == "SummonerSmite" then
@@ -569,8 +542,6 @@ end
 function dodgeaoe(pos1, pos2, radius)
     local calc = (math.floor(math.sqrt((pos2.x-myHero.x)^2 + (pos2.z-myHero.z)^2)))
     if calc < radius then
-		
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
     end
@@ -592,7 +563,6 @@ function dodgelinepoint(pos1, pos2, radius)
 	calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
     if perpendicular < radius and calc1 < calc4 and calc2 < calc4 then
 	
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
     end
@@ -616,7 +586,6 @@ function dodgelinepass(pos1, pos2, radius, maxDist)
 	calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
     if perpendicular < radius and calc1 < calc4 and calc2 < calc4 then
 		
-        			zhonyas() 
 					CastSummonerBarrier()
 					CastSummonerHeal()
     end

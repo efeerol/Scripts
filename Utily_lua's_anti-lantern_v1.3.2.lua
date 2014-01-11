@@ -1,6 +1,6 @@
 --[[
 Lua's Anti-Lantern
-			v1.3
+			v1.3.2
 ]]--
 require 'Utils'
 local warding = 0
@@ -9,7 +9,7 @@ local delay = 0
 local random = {x = 0, z = 0}
 
 function onTick()
-	if warding ~= 0 and lastLantern ~= nil and GetTickCount() - warding > delay and GetDistance(myHero,lastLantern) <= 650 and FindWards(lastLantern) == false and NearEnemys(lastLantern) ~= nil then
+	if warding ~= 0 and lastLantern ~= nil and GetTickCount() - warding > delay and GetDistance(myHero,lastLantern) <= 650 and not FindWards(lastLantern) and NearEnemys(lastLantern) ~= nil then
 		local NearEnemy = NearEnemys(lastLantern)
 		if (NearEnemy.health/NearEnemy.maxHealth*100) < 50 then
 			if GetWardSlot(3362) ~= nil then
@@ -41,10 +41,10 @@ end
 function NearEnemys(lantern)
     for i = 1, objManager:GetMaxHeroes() do
 	local enemy = objManager:GetHero(i)
-		if enemy ~= nil and enemy.team ~= enemy.team and GetDistance(enemy,lantern) <= 700 then
+		if enemy ~= nil and enemy.team ~= myHero.team and GetDistance(enemy,lantern) <= 500 then
 			for i = 1, objManager:GetMaxHeroes() do
-			local enemyTresh = objManager:GetHero(i)
-				if enemyTresh.name == 'Thresh' and enemyTresh.team ~= myHero.team and GetDistance(enemyTresh,lantern) >= 350 then
+			local enemyThresh = objManager:GetHero(i)
+				if enemyThresh.name == 'Thresh' and enemyThresh.team ~= myHero.team and (GetDistance(enemyThresh,lantern) >= 350 or enemyThresh.visible == 0) then
 					return enemy
 				end
 			end
