@@ -6,7 +6,7 @@ require 'runrunrun'
 require 'vals_lib'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '2.0.1 (Click)'
+local version = '2.1'
 local MarkTimer = nil
 local ls = nil
 local timer = 0
@@ -21,7 +21,7 @@ local Eradius = 75
 	LBConf, menu = uiconfig.add_menu('LeBlanc Hotkeys', 250)
 	menu.keydown('Qkey', 'Q-Key', Keys.X)
 	menu.keydown('Ekey', 'E-Key', Keys.Y)
-	menu.keytoggle('Combo', 'Combo', Keys.Z, false)
+	menu.keydown('Combo', 'Combo', Keys.Z)
 	menu.keydown('Harass', 'Harass', Keys.T)
 	menu.permashow('Qkey')
 	menu.permashow('Ekey')
@@ -32,15 +32,13 @@ local Eradius = 75
 	menu.checkbutton('AWB', 'Auto-W-Back', false)
 	menu.checkbutton('KSNotes', 'KSNotes', true)
 	menu.checkbutton('ReturnPad', 'Draw ReturnPad', true)
+	menu.checkbutton('MouseMove', 'MouseMove', true)
 	menu.checkbutton('jumphelper', 'JumpHelper', false)
 	menu.checkbutton('DrawCircles', 'DrawCircles', true)
 
 
 function Main()
 	if IsLolActive() then
-		target = GetWeakEnemy('MAGIC',700)
-		targetE = GetWeakEnemy('MAGIC',800)
-		target2 = GetWeakEnemy('MAGIC',1250)
 		SetVariables()
 		GetSpells()
 		CheckSpells()
@@ -48,20 +46,15 @@ function Main()
 		Jump()
 		QspellOnce()
 		EspellOnce()
-		ComboAlwaysOn()
-		if LBConf.Combo then Once_Combo() end
-		if Ziel==nil then LBConf.Combo=false end
+		if LBConf.Combo then Combo() end
 		if LBConf.Harass then Harass() end
 		if LBSettings.KSNotes then KSNotifications() end
-		if LBSettings.ReturnPad then ReturnPad() end	
+		if LBSettings.ReturnPad then ReturnPad() end
 	end
 end
 
-function Once_Combo()
-	run_many_reset(1, Combo)
-end
-
 function QSpell()
+	local target = GetWeakEnemy('MAGIC',700)
 	if LBConf.Qkey == true then
 		if Q1RDY==1 then
 			if MarkedEnemy~=nil then
@@ -87,6 +80,7 @@ function QspellOnce()
 end
 	
 function ESpell()
+	local targetE = GetWeakEnemy('MAGIC',800)
 	if LBConf.Ekey == true then
 		if E1RDY==1 then
 			if MarkedEnemy~=nil then
@@ -112,49 +106,54 @@ function EspellOnce()
 end	
 
 function Harass()
+	local target = GetWeakEnemy('MAGIC',700)
 	if target~=nil and Q1RDY==1 and W1RDY==1 and ls==nil then
 		QWW = true
 		Ziel = target
+		target = nil
 	end
-	if QWW and ls==nil then SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-	elseif 	ls=='Q1' then run_every(1, Wspell)
-	elseif 	ls=='W1' then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-	elseif 	ls=='W2' then
-		ls = nil
-		Ziel = nil
-		QWW = false
+	if QWW and Ziel~=nil then
+		if ls==nil then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellXYZ(W,W1RDY,myHero,Ziel,800,Ziel.x,Ziel.z) end
+		if 	ls=='W1' then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
+		if 	ls=='W2' then
+			ls = nil
+			Ziel = nil
+			QWW = false
+			target = GetWeakEnemy('MAGIC',700)
+		end
 	end
 	if LBSettings.MouseMove then MoveMouse() end
 end
 
 function SetVariables()
-	if Ziel==nil or(Ziel~=nil and Ziel.dead==1) or myHero.dead==1 or (LBConf.Combo == false and LBConf.Harass == false) or (timer~=0 and GetTickCount()-timer>800) then
+	if Ziel==nil or(Ziel~=nil and Ziel.dead==1) or myHero.dead==1 or (LBConf.Combo == false and LBConf.Harass == false) or (timer~=0 and GetTickCount()-timer>750) then
 		QRWE,QRE,QRW,QR,QWE,QE,QW,WQRE,WQR,WQE,xE,xQ,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false
 		ls,Ziel = nil,nil
 		timer = 0
 	end
 
-	if GetInventorySlot(3128)==1 and myHero.SpellTime1 >= 1 then BFT = 1
-	elseif GetInventorySlot(3128)==2 and myHero.SpellTime2 >= 1 then BFT = 1
-	elseif GetInventorySlot(3128)==3 and myHero.SpellTime3 >= 1 then BFT = 1
-	elseif GetInventorySlot(3128)==4 and myHero.SpellTime4 >= 1 then BFT = 1
-	elseif GetInventorySlot(3128)==5 and myHero.SpellTime5 >= 1 then BFT = 1
-	elseif GetInventorySlot(3128)==6 and myHero.SpellTime6 >= 1 then BFT = 1
+	if GetInventorySlot(3188)==1 and myHero.SpellTime1 >= 1 then BFT = 1
+	elseif GetInventorySlot(3188)==2 and myHero.SpellTime2 >= 1 then BFT = 1
+	elseif GetInventorySlot(3188)==3 and myHero.SpellTime3 >= 1 then BFT = 1
+	elseif GetInventorySlot(3188)==4 and myHero.SpellTime4 >= 1 then BFT = 1
+	elseif GetInventorySlot(3188)==5 and myHero.SpellTime5 >= 1 then BFT = 1
+	elseif GetInventorySlot(3188)==6 and myHero.SpellTime6 >= 1 then BFT = 1
 	else BFT = 0
 	end
 
-	if GetInventorySlot(3188)==1 and myHero.SpellTime1 >= 1 then DFG = 1
-	elseif GetInventorySlot(3188)==2 and myHero.SpellTime2 >= 1 then DFG = 1
-	elseif GetInventorySlot(3188)==3 and myHero.SpellTime3 >= 1 then DFG = 1
-	elseif GetInventorySlot(3188)==4 and myHero.SpellTime4 >= 1 then DFG = 1
-	elseif GetInventorySlot(3188)==5 and myHero.SpellTime5 >= 1 then DFG = 1
-	elseif GetInventorySlot(3188)==6 and myHero.SpellTime6 >= 1 then DFG = 1
+	if GetInventorySlot(3128)==1 and myHero.SpellTime1 >= 1 then DFG = 1
+	elseif GetInventorySlot(3128)==2 and myHero.SpellTime2 >= 1 then DFG = 1
+	elseif GetInventorySlot(3128)==3 and myHero.SpellTime3 >= 1 then DFG = 1
+	elseif GetInventorySlot(3128)==4 and myHero.SpellTime4 >= 1 then DFG = 1
+	elseif GetInventorySlot(3128)==5 and myHero.SpellTime5 >= 1 then DFG = 1
+	elseif GetInventorySlot(3128)==6 and myHero.SpellTime6 >= 1 then DFG = 1
 	else DFG = 0
 	end
 end
 
 function Wspell()
-	if Ziel~=nil then
+	if Ziel~=nil and W2RDY==0 then
 		if GetDistance(Ziel)<800 then
 			EnemyPos = Vector(Ziel.x, Ziel.y, Ziel.z)
 			HeroPos = Vector(myHero.x, myHero.y, myHero.z)
@@ -164,47 +163,25 @@ function Wspell()
 			SpellXYZ(W,W1RDY,myHero,Ziel,800,Ziel.x,Ziel.z)
 		end
 	end
+	if W1RDY==1 then
+		return true
+	end
 end
 
 function WLspell()
-	if Ziel~=nil then SpellXYZ(W,W1RDY,myHero,Ziel,1300,Ziel.x,Ziel.z) end
+	if Ziel~=nil and W2RDY==0 then SpellXYZ(W,W1RDY,myHero,Ziel,1300,Ziel.x,Ziel.z) end
+	if W1RDY==1 then
+		return true
+	end
 end
 
 function CheckSpells()
-	if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR or QWW then
+	if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR then
 		for i = 1, objManager:GetMaxObjects(), 1 do
 			obj = objManager:GetObject(i)
 			if obj~=nil then
-				if obj.charName == 'leBlanc_ChaosOrb_mis.troy' and GetDistance(obj) < 200 and Q1 == true then
-					ls = 'Q1'
-					timer = GetTickCount()
-				end
-				if obj.charName == 'leBlanc_ChaosOrb_mis_ult.troy' and GetDistance(obj) < 200 and Q2 == true then
-					ls = 'Q2'
-					timer = GetTickCount()
-				end
 				if obj.charName == 'leBlanc_slide_impact_self.troy' and GetDistance(obj) < 100 and W1 == true then
 					ls = 'W1'
-					timer = GetTickCount()
-				end
-				if obj.charName == 'Leblanc_displacement_blink_return_trigger.troy' and GetDistance(obj) < 100 and W2 == true then
-					ls = 'W2'
-					timer = GetTickCount()
-				end
-			end
-		end
-		for i = 1, objManager:GetMaxDelObjects(), 1 do
-			local object = {objManager:GetDelObject(i)}
-			local ret={}
-			ret.index=object[1]
-			ret.name=object[2]
-			ret.charName=object[3]
-			ret.x=object[4]
-			ret.y=object[5]
-			ret.z=object[6]
-			if ret~=nil then
-				if ret.charName == 'leBlanc_shackle_mis.troy' and GetDistance(ret) < 950 and E1 == true then
-					ls = 'E1'
 					timer = GetTickCount()
 				end
 			end
@@ -216,29 +193,25 @@ function OnProcessSpell(unit, spell)
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
 		if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR or QWW then
 			if spell.name == 'LeblancChaosOrb' then
-				Q1 = true
-			else
-				Q1 = false	
+				ls = 'Q1'
+				timer = GetTickCount()
 			end
 			if spell.name == 'LeblancChaosOrbM' then
-				Q2 = true
-			else
-				Q2 = false	
+				ls = 'Q2'
+				timer = GetTickCount()
 			end
 			if spell.name == 'LeblancSlide' then
 				W1 = true
 			else
 				W1 = false	
 			end
-			if spell.name == 'leblancslidereturn' then
-				W2 = true
-			else
-				W2 = false	
-			end
 			if spell.name == 'LeblancSoulShackle' then
-				E1 = true
-			else
-				E1 = false	
+				ls = 'E1'
+				timer = GetTickCount()
+			end
+			if spell.name == 'ItemBlackfireTorch' or spell.name == 'DeathfireGrasp' then
+				ls = 'item'
+				timer = GetTickCount()
 			end
 		end
 	end
@@ -262,6 +235,8 @@ function GetSpells()
 end
 
 function OnDraw()
+	local target = GetWeakEnemy('MAGIC',700)
+	local target2 = GetWeakEnemy('MAGIC',1150)
 	if myHero.dead == 0 and LBSettings.DrawCircles then
 		if Q1RDY==1 then
 			CustomCircle(700,1,2,myHero)
@@ -269,10 +244,13 @@ function OnDraw()
 		if Q1RDY==1 and W1RDY==1 then
 			CustomCircle(1250,1,5,myHero)
 		end
-		if target2~=nil and target==nil and GetDistance(target2)<1250 then
+		if target2~=nil and target==nil and Ziel==nil and GetDistance(target2)<1250 then
 			CustomCircle(100,4,5,target2)
 		elseif target~=nil and GetDistance(target)<700 then
 			CustomCircle(100,4,2,target)
+		end
+		if Ziel~=nil then
+			CustomCircle(100,4,1,Ziel)
 		end
 	end
 	if	   Q1RDY==1			 		and W1RDY==1 and W2RDY==0 and E1RDY==1 				and RRDY==1 	and ls==nil		then DrawTextObject('BURST',myHero,Color.Yellow)
@@ -425,6 +403,9 @@ function KSNotifications()
 end
 
 function Combo()
+	local target = GetWeakEnemy('MAGIC',700)
+	local targetE = GetWeakEnemy('MAGIC',800)
+	local target2 = GetWeakEnemy('MAGIC',1150)
 	if target2~=nil then
 		EnemyPos = Vector(target2.x, target2.y, target2.z)
 		HeroPos = Vector(myHero.x, myHero.y, myHero.z)
@@ -462,126 +443,182 @@ function Combo()
 	end
 
 		if ls==nil then
---[[QRWE]]	if target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then QRWE = true
---[[QRE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and Block==0 then QRE = true
---[[QRW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then QRW = true
---[[QR]]	elseif target~=nil 	and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then QR = true
---[[QWE]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 then QWE = true
---[[QE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and Block==0 then QE = true
---[[QW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and  Wall==0 then QW = true
---[[WQRE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then WQRE = true
---[[WQR]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then WQR = true
---[[WQE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 and Block==0 then WQE = true
---[[E]]		elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and Block==0 then xE = true
---[[Q]]		elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then xQ = true
+--[[QRWE]]	if target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then
+				QRWE = true
+				Ziel = target
+				target = nil
+--[[QRE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and Block==0 then
+				QRE = true
+				Ziel = target
+				target = nil
+--[[QRW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then
+				QRW = true
+				Ziel = target
+				target = nil
+--[[QR]]	elseif target~=nil 	and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then
+				QR = true
+				Ziel = target
+				target = nil
+--[[QWE]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 then
+				QWE = true
+				Ziel = target
+				target = nil
+--[[QE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and Block==0 then
+				QE = true
+				Ziel = target
+				target = nil
+--[[QW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and  Wall==0 then
+				QW = true
+				Ziel = target
+				target = nil
+--[[WQRE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then
+				WQRE = true
+				Ziel = target2
+				target2 = nil
+--[[WQR]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then
+				WQR = true
+				Ziel = target2
+				target2 = nil
+--[[WQE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 and Block==0 then
+				WQE = true
+				Ziel = target2
+				target2 = nil
+--[[E]]		elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and Block==0 then
+				xE = true
+				Ziel = targetE
+				targetE = nil
+--[[Q]]		elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then
+				xQ = true
+				Ziel = target
+				target = nil
 			end
 		end
-	if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ then Ziel = target
-	elseif WQRE or WQE or WQR then  Ziel = target2
-	end
-	
-	if Ziel==nil and ls==nil and timer==0 then
-		return true
-	end
-end
 
-function ComboAlwaysOn()
 --[[QRWE]]	if QRWE and Ziel~=nil then
-				if		ls==nil  then
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif 	ls=='Q2' then run_every(1, Wspell)
-				elseif 	ls=='W1' then Espell()
-				elseif	ls=='E1' and LBSettings.AWB==false then QRWE = false
+				if  ls==nil  then UseDFGBFT() end
+				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if 	ls=='Q2' then run_many_reset(1, Wspell) end
+				if 	ls=='W1' then Espell() end
+				if	ls=='E1' and LBSettings.AWB==false then
+					QRWE = false
+					target = GetWeakEnemy('MAGIC',700)
 				elseif	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then QRWE = false
+				elseif	ls=='W2' and LBSettings.AWB==true then
+					QRWE = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QRE]]	elseif QRE and Ziel~=nil then
-				if		ls==nil  then
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif ls=='Q2' then Espell()
-				elseif	ls=='E1' then QRE = false
+				if  ls==nil  then UseDFGBFT() end
+				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if ls=='Q2' then Espell() end
+				if	ls=='E1' then
+					QRE = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QRW]]	elseif QRW and Ziel~=nil then
-				if		ls==nil  then
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif 	ls=='Q2' then run_every(1, Wspell)
-				elseif 	ls=='W1' and LBSettings.AWB==false then QRW = false
+				if  ls==nil  then UseDFGBFT() end
+				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if 	ls=='Q2' then run_many_reset(1, Wspell) end
+				if 	ls=='W1' and LBSettings.AWB==false then
+					QRW = false
+					target = GetWeakEnemy('MAGIC',700)
 				elseif 	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then QWE = false
+				elseif	ls=='W2' and LBSettings.AWB==true then
+					QWE = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QR]]	elseif QR and Ziel~=nil then
-				if		ls==nil  then
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif 	ls=='Q2' then QR = false
+				if  ls==nil  then UseDFGBFT() end
+				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if 	ls=='Q2' then
+					QR = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QWE]]	elseif QWE and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then run_every(1, Wspell)
-				elseif 	ls=='W1' then Espell()
-				elseif	ls=='E1' and LBSettings.AWB==false then QWE = false
+				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then run_many_reset(1, Wspell) end
+				if 	ls=='W1' then Espell() end
+				if	ls=='E1' and LBSettings.AWB==false then
+					QWE = false
+					target = GetWeakEnemy('MAGIC',700)
 				elseif	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then QWE = false
+				elseif	ls=='W2' and LBSettings.AWB==true then
+					QWE = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QE]]	elseif QE and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then Espell()
-				elseif 	ls=='E1' then QE = false
+				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then Espell() end
+				if 	ls=='E1' then
+					QE = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[QW]]	elseif QW and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then run_every(1, Wspell)
-				elseif	ls=='W1' and LBSettings.AWB==false then QW = false
+				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then run_many_reset(1, Wspell) end
+				if	ls=='W1' and LBSettings.AWB==false then
+					QW = false
+					target = GetWeakEnemy('MAGIC',700)
 				elseif	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then QW = false
+				elseif	ls=='W2' and LBSettings.AWB==true then
+					QW = false
+					target = GetWeakEnemy('MAGIC',700)
 				end
 --[[WQRE]]	elseif WQRE and Ziel~=nil then
-				if		ls==nil  then run_every(1, WLspell)
-				elseif 	ls=='W1' then 
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif 	ls=='Q2' then Espell()
-				elseif	ls=='E1' then WQRE = false
+				if	ls==nil  then run_many_reset(1, WLspell) end
+				if 	ls=='W1' then UseDFGBFT() end
+				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if 	ls=='Q2' then Espell() end
+				if	ls=='E1' then
+					WQRE = false
+					target2 = GetWeakEnemy('MAGIC',1150)
 				end
 --[[WQR]]	elseif WQR and Ziel~=nil then
-				if		ls==nil  then run_every(1, WLspell)
-				elseif 	ls=='W1' then 
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700)
-				elseif 	ls=='Q2' then WQR = false
+				if		ls==nil  then run_many_reset(1, WLspell) end
+				if 	ls=='W1' then UseDFGBFT() end
+				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+				if 	ls=='Q2' then
+					WQR = false
+					target2 = GetWeakEnemy('MAGIC',1150)
 				end
 --[[WQE]]	elseif WQE and Ziel~=nil then
-				if		ls==nil  then run_every(1, WLspell)
-				elseif 	ls=='W1' then 
-					UseDFGBFT()
-					SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif 	ls=='Q1' then Espell()
-				elseif	ls=='E1' then WQE = false
+				if		ls==nil  then run_many_reset(1, WLspell) end
+				if 	ls=='W1' then UseDFGBFT() end
+				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if 	ls=='Q1' then Espell() end
+				if	ls=='E1' then
+					WQE = false
+					target2 = GetWeakEnemy('MAGIC',1150)
 				end
 --[[xE]]	elseif xE and Ziel~=nil then
-				if		ls==nil  then Espell()
-				elseif	ls=='E1' then xE = false
+				if		ls==nil  then Espell() end
+				if	ls=='E1' then
+					xE = false
+					targetE = GetWeakEnemy('MAGIC',800)
 				end
 --[[xQ]]	elseif xQ and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700)
-				elseif	ls=='Q1' then xQ = false 
+				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+				if	ls=='Q1' then
+					xQ = false 
+					target = GetWeakEnemy('MAGIC',700)
 				end
 			end
 	if QRWE==false and QRE==false and QRW==false and QR==false and QWE==false and QE==false and QW==false and WQRE==false and WQR==false and WQE==false and xE==false and xQ==false then
 		ls = nil
 		Ziel = nil
 	end
-	if Ziel~=nil then
-		MoveTarget(Ziel)
+	if LBSettings.MouseMove then 
+		if Ziel~=nil then
+			MoveTarget(Ziel)
+		else
+			MoveMouse()
+		end
 	end
 end
 
@@ -596,8 +633,8 @@ function Espell()
 end
 
 function UseDFGBFT()
-	if BFT == 1 and Ziel~=nil then UseItemOnTarget(3128, Ziel)
-	elseif DFG == 1 and Ziel~=nil then UseItemOnTarget(3188, Ziel)
+	if BFT == 1 and Ziel~=nil then UseItemOnTarget(3188, Ziel)
+	elseif DFG == 1 and Ziel~=nil then UseItemOnTarget(3128, Ziel)
 	end
 end
 
