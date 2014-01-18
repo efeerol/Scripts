@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 2.6\n")
+printtext("\nBeta 2.9\n")
 
 local target
 local stuntarget
@@ -32,8 +32,9 @@ local Qmod=0
 local QmodReset=0
 local Qspot=nil
 local QLayoutSpot=0
+local nearestTarget
 
-
+local _registry = {}
 local cc = 0
 local skillshotArray = { 
 }
@@ -50,6 +51,7 @@ local autoE=false
 
      
 RivConfig = scriptConfig("Riven", "Riven Config")
+RivConfig:addParam("an", "Attack Nearest Mouse Object", SCRIPT_PARAM_ONKEYDOWN, false, 67)
 RivConfig:addParam("h", "Harass QWQQ EscapeE", SCRIPT_PARAM_ONKEYDOWN, false, 65)
 RivConfig:addParam("teamfight", "Teamfight", SCRIPT_PARAM_ONKEYDOWN, false, 84)
 RivConfig:addParam("tf2", "EQQWQ Combo", SCRIPT_PARAM_ONKEYDOWN, false, 89)
@@ -59,7 +61,7 @@ RivConfig:addParam("shield", "AutoShield", SCRIPT_PARAM_ONKEYTOGGLE, true, 117)
 RivConfig:addParam("stun", "AutoStun", SCRIPT_PARAM_ONKEYTOGGLE, false, 48)
 RivConfig:addParam("ks", " KillSteal", SCRIPT_PARAM_ONOFF, true)
 RivConfig:addParam("smite", "Smitesteal", SCRIPT_PARAM_ONKEYTOGGLE, false, 119)
-RivConfig:addParam('s', "AA Delay in Combos", SCRIPT_PARAM_NUMERICUPDOWN, 0.4, 118,0,1,0.05)
+RivConfig:addParam('s', "AA Delay in Combos", SCRIPT_PARAM_NUMERICUPDOWN, 0.6, 118,0,1,0.05)
 RivConfig:permaShow("teamfight")
 RivConfig:permaShow("ks")
 RivConfig:permaShow("smite")
@@ -98,7 +100,11 @@ function Run()
 	else
 		Rdamage=0
 	end
-
+	if cc<40 then cc=cc+1 end
+	if (cc==30) then
+		LoadTable()
+		--print(table_print(skillshotArray) .. " on:" .. tostring(drawskillshot));
+	end
 	ignite()
 	if castR==false and Ractive==true then
 		if Rtimer+13.5<os.clock() then
@@ -121,7 +127,10 @@ function Run()
 			
 	if IsChatOpen() == 0 and RivConfig.teamfight then
 		if target~=nil then
-			if QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
+			if Ractive==true and target.dead~=1 and (target.health<Rdamage or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
+				CastSpellXYZ("R",ufa.x,0,ufa.z)
+				Ractive=false
+			elseif QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
 				CastSpellXYZ("Q",ufa.x,0,ufa.z)
 
 				if RRDY==1 and Ractive==false then
@@ -139,9 +148,6 @@ function Run()
 			elseif RRDY==1 and Ractive==false and target.dead~=1 and (os.clock()>Atimer) then
 				CastSpellXYZ("R",ufa.x,0,ufa.z)
 				Ractive=true
-			elseif Ractive==true and target.dead~=1 and (target.health<Rdamage or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
-				CastSpellXYZ("R",ufa.x,0,ufa.z)
-				Ractive=false
 			else
 				if GetD(target)<400 then
 					CastSummonerExhaust(target)
@@ -187,6 +193,9 @@ function Run()
 	if RivConfig.stun and WRDY==1 and stuntarget~=nil and (IsChatOpen() == 1 or IsChatOpen() == 0 and not RivConfig.teamfight and not RivConfig.tf2 and not RivConfig.h and not RivConfig.c and not RivConfig.g)then
 		CastSpellTarget('W',myHero)
 	end
+	if IsChatOpen() == 0 and RivConfig.an then
+		AttackNearest()
+	end
 	------------
         if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
                 QRDY = 1
@@ -218,8 +227,9 @@ end
 function OnProcessSpell(unit,spell)
 
 
-	if (RivConfig.teamfight or RivConfig.combo) and unit.name==myHero.name and unit.team==myHero.team then  
+	if (RivConfig.teamfight or RivConfig.combo or RivConfig.an) and unit.name==myHero.name and unit.team==myHero.team then  
 		if string.find(spell.name,"RivenTriCleave") ~= nil then
+		--print("\nCheck1")
 			Qmod=(Qmod+1)%3
 			QmodReset=os.clock()+3.5
 			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed			
@@ -304,7 +314,7 @@ function OnProcessSpell(unit,spell)
 			elseif string.find(unit.name,"minion") == nil and string.find(unit.name,"Minion_") == nil and (spell.name:find("BasicAttack") or spell.name:find("BasicAttack2") or spell.name:find("BasicaAttack3")  or spell.name:find("ChaosTurretFire")) then
         		CastSpellXYZ("E",GetCursorWorldX(),0,GetCursorWorldZ())
 				if (unit.baseDamage + unit.addDamage) > myHero.health then
-					print("\nMN "..unit.name)
+					--print("\nMN "..unit.name)
 					CastSummonerBarrier()
 					CastSummonerHeal()
 				end	
@@ -503,7 +513,10 @@ end
 
 function TF2()
 	if target~=nil then
-		if ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
+		if Ractive==true and target.dead~=1 and (target.health<Rdamage  or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
+			CastSpellXYZ("R",ufa.x,0,ufa.z)
+			Ractive=false
+		elseif ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
 			CastSpellXYZ("E",ufa.x,0,ufa.z)
 		elseif QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) and Qmod<2 then
 			
@@ -570,9 +583,6 @@ function TF2()
 		elseif RRDY==1 and Ractive==false and target.dead~=1 then
 			CastSpellXYZ("R",ufa.x,0,ufa.z)
 			Ractive=true
-		elseif Ractive==true and target.dead~=1 and (target.health<Rdamage  or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
-			CastSpellXYZ("R",ufa.x,0,ufa.z)
-			Ractive=false
 		else
 			if GetD(target)<400 then
 				CastSummonerExhaust(target)
@@ -675,13 +685,71 @@ function harass()
 
 end
 
+function AttackNearest()
+	local mouse={x=mousePos.x,y=mousePos.y,z=mousePos.z}
+	
+		DrawCircle(mouse.x,mouse.y,mouse.z,200,2)
+	if nearestTarget~=nil and nearestTarget.dead==0 and GetD(nearestTarget,mouse)<200 then
+		
+		CustomCircle(50,3,5,nearestTarget)
+		run_every(1,GetNearest,200)
+		
+		if nearestTarget~=nil and GetD(nearestTarget)<=500 then
+			
+			if QRDY==1 and (os.clock()>Atimer or GetD(nearestTarget)>myHero.range+150) then
+				CastSpellXYZ("Q",nearestTarget.x,0,nearestTarget.z)
+
+				
+				if WRDY==1 and Ractive==true and GetD(nearestTarget)<250 then
+					CastSpellXYZ("W",nearestTarget.x,0,nearestTarget.z)
+				end
+
+			elseif WRDY==1 and (os.clock()>Atimer) and GetD(nearestTarget,myHero)<275 then
+				CastSpellXYZ("W",myHero.x,0,myHero.z)
+			elseif ERDY==1 and (os.clock()>Atimer or GetD(nearestTarget)>myHero.range+150) then
+				CastSpellXYZ("E",nearestTarget.x,0,nearestTarget.z)
+			else
+				if GetD(nearestTarget)<400 then
+					CastSummonerExhaust(nearestTarget)
+					UseAllItems(nearestTarget)
+				elseif GetD(nearestTarget)<600 then
+					CastSummonerExhaust(nearestTarget)
+					UseTargetItems(nearestTarget)
+				end
+				AttackTarget(nearestTarget)
+
+			end
+		else
+			MoveToMouse()
+		end
+	else
+		GetNearest(200)
+		MoveToMouse()
+	end
+end
+
+function GetNearest(RANGE)
+	local mouse={x=mousePos.x,y=0,z=mousePos.z}
+	local objectreturn=nil
+	for i=1, objManager:GetMaxObjects(), 1 do
+		local object = objManager:GetObject(i)
+		if object~=nil and object.x~=nil and object.z~=nil and object.dead~=1 and GetD(object,mouse)<RANGE then
+			if (objectreturn==nil or objectreturn.dead==1) then
+				objectreturn=object
+			elseif (objectreturn~=nil and objectreturn.dead==0) and object~=nil and object.x~=nil and GetD(object,mouse)<GetD(objectreturn,mouse) then
+				objectreturn=object
+			end
+		end
+	end
+	nearestTarget=objectreturn
+end
 
 function Escape()
 	if ERDY==1  then
-		print('\nE  '..myHero.SpellTimeE..'  '..myHero.SpellNameE)
+		--print('\nE  '..myHero.SpellTimeE..'  '..myHero.SpellNameE)
 		CastSpellXYZ("E",mousePos.x,0,mousePos.z)
 	elseif ERDY==0 and QRDY==1 then
-		print('\n'..myHero.SpellTimeQ..'  '..myHero.SpellNameQ)
+		--print('\n'..myHero.SpellTimeQ..'  '..myHero.SpellNameQ)
 		CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
 	else
 		MoveToMouse()
@@ -690,7 +758,7 @@ end
 
 function smitesteal()
 if myHero.SummonerD == "SummonerSmite" then
-CastHotkey("AUTO 100,0 SPELLF:SMITESTEAL RANGE=700 TRUE COOLDOWN")
+CastHotkey("AUTO 100,0 SPELLD:SMITESTEAL RANGE=700 TRUE COOLDOWN")
 return
 end
 if myHero.SummonerF == "SummonerSmite" then
@@ -1245,6 +1313,75 @@ end
 else
 return 99999
 end
+end
+
+function run_every(interval, fn, ...)
+    return internal_run({fn=fn, interval=interval}, ...)
+end
+
+function internal_run(t, ...)    
+    local fn = t.fn
+    local key = t.key or fn
+    
+    local now = os.clock()
+    local data = _registry[key]
+       
+    if data == nil or t.reset then
+        local args = {}
+        local n = select('#', ...)
+        local v
+        for i=1,n do
+            v = select(i, ...)
+            table.insert(args, v)
+        end   
+        -- the first t and args are stored in registry        
+        data = {count=0, last=0, complete=false, t=t, args=args}
+        _registry[key] = data
+    end
+        
+    --assert(data~=nil, 'data==nil')
+    --assert(data.count~=nil, 'data.count==nil')
+    --assert(now~=nil, 'now==nil')
+    --assert(data.t~=nil, 'data.t==nil')
+    --assert(data.t.start~=nil, 'data.t.start==nil')
+    --assert(data.last~=nil, 'data.last==nil')
+    -- run
+    local countCheck = (t.count==nil or data.count < t.count)
+    local startCheck = (data.t.start==nil or now >= data.t.start)
+    local intervalCheck = (t.interval==nil or now-data.last >= t.interval)
+    --print('', 'countCheck', tostring(countCheck))
+    --print('', 'startCheck', tostring(startCheck))
+    --print('', 'intervalCheck', tostring(intervalCheck))
+    --print('')
+    if not data.complete and countCheck and startCheck and intervalCheck then                
+        if t.count ~= nil then -- only increment count if count matters
+            data.count = data.count + 1
+        end
+        data.last = now        
+        
+        if t._while==nil and t._until==nil then
+            return fn(...)
+        else
+            -- while/until handling
+            local signal = t._until ~= nil
+            local checker = t._while or t._until
+            local result
+            if fn == checker then            
+                result = fn(...)
+                if result == signal then
+                    data.complete = true
+                end
+                return result
+            else
+                result = checker(...)
+                if result == signal then
+                    data.complete = true
+                else
+                    return fn(...)
+                end
+            end            
+        end
+    end    
 end
 
 SetTimerCallback("Run")
