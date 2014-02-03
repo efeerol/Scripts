@@ -5,7 +5,7 @@ require 'vals_lib'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '2.3'
+local version = '2.3.1'
 local timer = nil
 local dodgetimer = 0
 local skillshotArray = {}
@@ -67,9 +67,9 @@ end
 function OnProcessSpell(unit, spell)
 	if targetaa ~= nil then
 		if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
-			if (spell.name == "XinZhaoBasicAttack" or spell.name == "XinZhaoBasicAttack2" or spell.name == "XinZhaoCritAttack" or spell.name == "XenZhaoBattleCry" or spell.name == "XenZhaoThrust" or spell.name == "XenZhaoComboTarget" or spell.name == "XenZhaoSweep") and spell.target~=nil and spell.target.name == targetaa.name then
+			if (spell.name == "XinZhaoBasicAttack" or spell.name == "XinZhaoBasicAttack2" or spell.name == "XinZhaoCritAttack") and spell.target~=nil and spell.target.name == targetaa.name then
+if QRDY==1 and XinConfig.AutoQ then CastSpellXYZ("Q", targetaa.x,targetaa.y,targetaa.z) end
 				if WRDY==1 and XinConfig.AutoW then CastSpellXYZ("W", targetaa.x,targetaa.y,targetaa.z) end
-				if QRDY==1 and XinConfig.AutoQ then CastSpellXYZ("Q", targetaa.x,targetaa.y,targetaa.z) end
 				if XinConfig.UseItems then UseAllItems(targetaa) end
 			end
 		end
