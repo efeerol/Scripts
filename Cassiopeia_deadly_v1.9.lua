@@ -1,82 +1,40 @@
 --[[
-                                                                    dddddddd                                                                             
-DDDDDDDDDDDDD                                                       d::::::dlllllll                                                                      
-D::::::::::::DDD                                                    d::::::dl:::::l                                                                      
-D:::::::::::::::DD                                                  d::::::dl:::::l                                                                      
-DDD:::::DDDDD:::::D                                                 d:::::d l:::::l                                                                      
-  D:::::D    D:::::D     eeeeeeeeeeee    aaaaaaaaaaaaa      ddddddddd:::::d  l::::lyyyyyyy           yyyyyyy                                             
-  D:::::D     D:::::D  ee::::::::::::ee  a::::::::::::a   dd::::::::::::::d  l::::l y:::::y         y:::::y                                              
-  D:::::D     D:::::D e::::::eeeee:::::eeaaaaaaaaa:::::a d::::::::::::::::d  l::::l  y:::::y       y:::::y                                               
-  D:::::D     D:::::De::::::e     e:::::e         a::::ad:::::::ddddd:::::d  l::::l   y:::::y     y:::::y                                                
-  D:::::D     D:::::De:::::::eeeee::::::e  aaaaaaa:::::ad::::::d    d:::::d  l::::l    y:::::y   y:::::y                                                 
-  D:::::D     D:::::De:::::::::::::::::e aa::::::::::::ad:::::d     d:::::d  l::::l     y:::::y y:::::y                                                  
-  D:::::D     D:::::De::::::eeeeeeeeeee a::::aaaa::::::ad:::::d     d:::::d  l::::l      y:::::y:::::y                                                   
-  D:::::D    D:::::D e:::::::e         a::::a    a:::::ad:::::d     d:::::d  l::::l       y:::::::::y                                                    
-DDD:::::DDDDD:::::D  e::::::::e        a::::a    a:::::ad::::::ddddd::::::ddl::::::l       y:::::::y                                                     
-D:::::::::::::::DD    e::::::::eeeeeeeea:::::aaaa::::::a d:::::::::::::::::dl::::::l        y:::::y                                                      
-D::::::::::::DDD       ee:::::::::::::e a::::::::::aa:::a d:::::::::ddd::::dl::::::l       y:::::y                                                       
-DDDDDDDDDDDDD            eeeeeeeeeeeeee  aaaaaaaaaa  aaaa  ddddddddd   dddddllllllll      y:::::y                                                        
-                                                                                         y:::::y                                                         
-                                                                                        y:::::y                                                          
-                                                                                       y:::::y                                                           
-                                                                                      y:::::y                                                            
-                                                                                     yyyyyyy                                                             
-        CCCCCCCCCCCCC               AAA                 SSSSSSSSSSSSSSS   SSSSSSSSSSSSSSS IIIIIIIIII     OOOOOOOOO                                       
-     CCC::::::::::::C              A:::A              SS:::::::::::::::SSS:::::::::::::::SI::::::::I   OO:::::::::OO                                     
-   CC:::::::::::::::C             A:::::A            S:::::SSSSSS::::::S:::::SSSSSS::::::SI::::::::I OO:::::::::::::OO                                   
-  C:::::CCCCCCCC::::C            A:::::::A           S:::::S     SSSSSSS:::::S     SSSSSSSII::::::IIO:::::::OOO:::::::O                                  
- C:::::C       CCCCCC           A:::::::::A          S:::::S           S:::::S              I::::I  O::::::O   O::::::O                                  
-C:::::C                        A:::::A:::::A         S:::::S           S:::::S              I::::I  O:::::O     O:::::O                                  
-C:::::C                       A:::::A A:::::A         S::::SSSS         S::::SSSS           I::::I  O:::::O     O:::::O                                  
-C:::::C                      A:::::A   A:::::A         SS::::::SSSSS     SS::::::SSSSS      I::::I  O:::::O     O:::::O                                  
-C:::::C                     A:::::A     A:::::A          SSS::::::::SS     SSS::::::::SS    I::::I  O:::::O     O:::::O                                  
-C:::::C                    A:::::AAAAAAAAA:::::A            SSSSSS::::S       SSSSSS::::S   I::::I  O:::::O     O:::::O                                  
-C:::::C                   A:::::::::::::::::::::A                S:::::S           S:::::S  I::::I  O:::::O     O:::::O                                  
- C:::::C       CCCCCC    A:::::AAAAAAAAAAAAA:::::A               S:::::S           S:::::S  I::::I  O::::::O   O::::::O                                  
-  C:::::CCCCCCCC::::C   A:::::A             A:::::A  SSSSSSS     S:::::SSSSSSS     S:::::SII::::::IIO:::::::OOO:::::::O                                  
-   CC:::::::::::::::C  A:::::A               A:::::A S::::::SSSSSS:::::S::::::SSSSSS:::::SI::::::::I OO:::::::::::::OO                                   
-     CCC::::::::::::C A:::::A                 A:::::AS:::::::::::::::SSS:::::::::::::::SS I::::::::I   OO:::::::::OO                                     
-bbbbbbbbCCCCCCCCCCCCCAAAAAAA                   AAAAAAASSSSSSSSSSSSSSS   SSSSSSSSSSSSSSS   IIIIIIIIII     OOOOOOOOO                                       
-b::::::b                                               CCCCCCCCCCCCC      CCCCCCCCCCCCC     OOOOOOOOO     NNNNNNNN        NNNNNNNNNNNNNNN        NNNNNNNN
-b::::::b                                            CCC::::::::::::C   CCC::::::::::::C   OO:::::::::OO   N:::::::N       N::::::N:::::::N       N::::::N
-b::::::b                                          CC:::::::::::::::C CC:::::::::::::::C OO:::::::::::::OO N::::::::N      N::::::N::::::::N      N::::::N
- b:::::b                                         C:::::CCCCCCCC::::CC:::::CCCCCCCC::::CO:::::::OOO:::::::ON:::::::::N     N::::::N:::::::::N     N::::::N
- b:::::bbbbbbbbb yyyyyyy           yyyyyyy      C:::::C       CCCCCC:::::C       CCCCCCO::::::O   O::::::ON::::::::::N    N::::::N::::::::::N    N::::::N
- b::::::::::::::bby:::::y         y:::::y      C:::::C            C:::::C              O:::::O     O:::::ON:::::::::::N   N::::::N:::::::::::N   N::::::N
- b::::::::::::::::by:::::y       y:::::y       C:::::C            C:::::C              O:::::O     O:::::ON:::::::N::::N  N::::::N:::::::N::::N  N::::::N
- b:::::bbbbb:::::::by:::::y     y:::::y        C:::::C            C:::::C              O:::::O     O:::::ON::::::N N::::N N::::::N::::::N N::::N N::::::N
- b:::::b    b::::::b y:::::y   y:::::y         C:::::C            C:::::C              O:::::O     O:::::ON::::::N  N::::N:::::::N::::::N  N::::N:::::::N
- b:::::b     b:::::b  y:::::y y:::::y          C:::::C            C:::::C              O:::::O     O:::::ON::::::N   N:::::::::::N::::::N   N:::::::::::N
- b:::::b     b:::::b   y:::::y:::::y           C:::::C            C:::::C              O:::::O     O:::::ON::::::N    N::::::::::N::::::N    N::::::::::N
- b:::::b     b:::::b    y:::::::::y             C:::::C       CCCCCC:::::C       CCCCCCO::::::O   O::::::ON::::::N     N:::::::::N::::::N     N:::::::::N
- b:::::bbbbbb::::::b     y:::::::y               C:::::CCCCCCCC::::CC:::::CCCCCCCC::::CO:::::::OOO:::::::ON::::::N      N::::::::N::::::N      N::::::::N
- b::::::::::::::::b       y:::::y                 CC:::::::::::::::C CC:::::::::::::::C OO:::::::::::::OO N::::::N       N:::::::N::::::N       N:::::::N
- b:::::::::::::::b       y:::::y                    CCC::::::::::::C   CCC::::::::::::C   OO:::::::::OO   N::::::N        N::::::N::::::N        N::::::N
- bbbbbbbbbbbbbbbb       y:::::y                        CCCCCCCCCCCCC      CCCCCCCCCCCCC     OOOOOOOOO     NNNNNNNN         NNNNNNNNNNNNNN         NNNNNNN
-                       y:::::y                                                                                                                           
-                      y:::::y                                                                                                                            
-                     y:::::y                                                                                                                             
-                    y:::::y                                                                                                                              
-                   yyyyyyy                                                                                                                               
-VVVVVVVV           VVVVVVVV              1111111                888888888                                                                                
-V::::::V           V::::::V             1::::::1              88:::::::::88                                                                              
-V::::::V           V::::::V            1:::::::1            88:::::::::::::88                                                                            
-V::::::V           V::::::V            111:::::1           8::::::88888::::::8                                                                           
- V:::::V           V:::::V                1::::1           8:::::8     8:::::8                                                                           
-  V:::::V         V:::::V                 1::::1           8:::::8     8:::::8                                                                           
-   V:::::V       V:::::V                  1::::1            8:::::88888:::::8                                                                            
-    V:::::V     V:::::V                   1::::l             8:::::::::::::8                                                                             
-     V:::::V   V:::::V                    1::::l            8:::::88888:::::8                                                                            
-      V:::::V V:::::V                     1::::l           8:::::8     8:::::8                                                                           
-       V:::::V:::::V                      1::::l           8:::::8     8:::::8                                                                           
-        V:::::::::V                       1::::l           8:::::8     8:::::8                                                                           
-         V:::::::V                     111::::::111        8::::::88888::::::8                                                                           
-          V:::::V           ......     1::::::::::1 ......  88:::::::::::::88                                                                            
-           V:::V            .::::.     1::::::::::1 .::::.    88:::::::::88                                                                              
-            VVV             ......     111111111111 ......      888888888                                                                                
-                                                                                                                                                         
-                                                                                                                                                         
-                                                                                                                                                         
+ ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄       ▄         ▄       ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
+▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░▌     ▐░▌       ▐░▌     ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░▌     ▐░▌       ▐░▌     ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀  ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌
+▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌       ▐░▌     ▐░▌          ▐░▌       ▐░▌▐░▌          ▐░▌               ▐░▌     ▐░▌       ▐░▌
+▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌▐░▌     ▐░█▄▄▄▄▄▄▄█░▌     ▐░▌          ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄      ▐░▌     ▐░▌       ▐░▌
+▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░▌     ▐░░░░░░░░░░░▌     ▐░▌          ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌
+▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌▐░▌      ▀▀▀▀█░█▀▀▀▀      ▐░▌          ▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀▀▀▀▀▀█░▌ ▀▀▀▀▀▀▀▀▀█░▌     ▐░▌     ▐░▌       ▐░▌
+▐░▌       ▐░▌▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌          ▐░▌          ▐░▌          ▐░▌       ▐░▌          ▐░▌          ▐░▌     ▐░▌     ▐░▌       ▐░▌
+▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄▄▄ ▐░▌          ▐░█▄▄▄▄▄▄▄▄▄ ▐░▌       ▐░▌ ▄▄▄▄▄▄▄▄▄█░▌ ▄▄▄▄▄▄▄▄▄█░▌ ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌
+▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌          ▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+ ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀  ▀            ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀ 
+                                                                                                                                                            
+ ▄▄▄▄▄▄▄▄▄▄   ▄         ▄       ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄        ▄  ▄▄        ▄                                                             
+▐░░░░░░░░░░▌ ▐░▌       ▐░▌     ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌      ▐░▌▐░░▌      ▐░▌                                                            
+▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌     ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░▌░▌     ▐░▌▐░▌░▌     ▐░▌                                                            
+▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌          ▐░▌          ▐░▌       ▐░▌▐░▌▐░▌    ▐░▌▐░▌▐░▌    ▐░▌                                                            
+▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌     ▐░▌          ▐░▌          ▐░▌       ▐░▌▐░▌ ▐░▌   ▐░▌▐░▌ ▐░▌   ▐░▌                                                            
+▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌     ▐░▌          ▐░▌          ▐░▌       ▐░▌▐░▌  ▐░▌  ▐░▌▐░▌  ▐░▌  ▐░▌                                                            
+▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀      ▐░▌          ▐░▌          ▐░▌       ▐░▌▐░▌   ▐░▌ ▐░▌▐░▌   ▐░▌ ▐░▌                                                            
+▐░▌       ▐░▌     ▐░▌          ▐░▌          ▐░▌          ▐░▌       ▐░▌▐░▌    ▐░▌▐░▌▐░▌    ▐░▌▐░▌                                                            
+▐░█▄▄▄▄▄▄▄█░▌     ▐░▌          ▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌     ▐░▐░▌▐░▌     ▐░▐░▌                                                            
+▐░░░░░░░░░░▌      ▐░▌          ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌      ▐░░▌▐░▌      ▐░░▌                                                            
+ ▀▀▀▀▀▀▀▀▀▀        ▀            ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀        ▀▀  ▀        ▀▀                                                             
+                                                                                                                                                            
+ ▄               ▄   ▄▄▄▄         ▄▄▄▄▄▄▄▄▄▄▄                                                                                                               
+▐░▌             ▐░▌▄█░░░░▌       ▐░░░░░░░░░░░▌                                                                                                              
+ ▐░▌           ▐░▌▐░░▌▐░░▌       ▐░█▀▀▀▀▀▀▀█░▌                                                                                                              
+  ▐░▌         ▐░▌  ▀▀ ▐░░▌       ▐░▌       ▐░▌                                                                                                              
+   ▐░▌       ▐░▌      ▐░░▌       ▐░█▄▄▄▄▄▄▄█░▌                                                                                                              
+    ▐░▌     ▐░▌       ▐░░▌       ▐░░░░░░░░░░░▌                                                                                                              
+     ▐░▌   ▐░▌        ▐░░▌        ▀▀▀▀▀▀▀▀▀█░▌                                                                                                              
+      ▐░▌ ▐░▌         ▐░░▌                 ▐░▌                                                                                                              
+       ▐░▐░▌      ▄▄▄▄█░░█▄▄▄  ▄  ▄▄▄▄▄▄▄▄▄█░▌                                                                                                              
+        ▐░▌      ▐░░░░░░░░░░░▌▐░▌▐░░░░░░░░░░░▌                                                                                                              
+         ▀        ▀▀▀▀▀▀▀▀▀▀▀  ▀  ▀▀▀▀▀▀▀▀▀▀▀                                                                                                               
+                                                                                                                                                            
                                                                                                                                                          
 		Follow me on Facebook! I post info on all new scripts and updates there
 		CCONN's Facebook: https://www.facebook.com/CCONN81
@@ -181,15 +139,20 @@ menu.keydown('Harass', 'Harass', Keys.X)
 menu.keydown('PassiveFarm', 'Farm', Keys.C)
 menu.keydown('PushLane', 'Lane Clear', Keys.V)
 menu.keydown('Cast_Ult', 'Cast Ultimate', Keys.A)
+menu.label('lbl7', ' ')																				
+menu.label('lbl8', 'MEC Ultimate Options')															
+menu.checkbutton('useAutoMECR', 'use Auto MEC R', true)
+menu.slider('valMECR', 'Minimum MEC Value', 1, 5, 3, {1,2,3,4,5})
 	menu.permashow('Combo')
 	menu.permashow('ComboR')
 	menu.permashow('Harass')
 	menu.permashow('PassiveFarm')
 	menu.permashow('PushLane')
 	menu.permashow('Cast_Ult')
+	menu.permashow('useAutoMECR')
+	menu.permashow('valMECR')
 
 CfgSettings, menu = uiconfig.add_menu('2. Cassio Settings', 200)
---menu.checkbutton('AutoCarry_ONOFF', 'Orbwalk in Combo', true)
 menu.checkbutton('Auto_Q_ONOFF', 'Auto Q', true)
 menu.checkbutton('Auto_W_ONOFF', 'Auto W', true)
 menu.checkbutton('Auto_E_ONOFF', 'Auto E', true)
@@ -276,6 +239,7 @@ function DeadlyCassio()
 		targetHero = GetWeakEnemy('MAGIC', 850)
 		target2 = GetWeakEnemy('MAGIC', 700)
 		Mastery_Damage()
+		if CfgControls.useAutoMECR then mecPetrifyingGaze(CfgControls.valMECR) end
 		if CfgPotions.Red_Elixir_ONOFF then RedElixir() end
 		if CfgSettings.Draw_ONOFF then Draw() end
 		if CfgSummonerSpells.Auto_Summoner_Spells_ONOFF then SummonerSpells() end
@@ -835,7 +799,7 @@ function AutoR()
 	if target2 ~= nil and target2.health < (target2.maxHealth*(CfgSettings.Auto_Ult_Value / 100)) then
 		if CfgSettings.Auto_Ult_ONOFF then
 			if myHero.selflevel >= 6 then
-				if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
+				if myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
 					if GetDistance(target2) <= CfgSettings.RRNG and GetTargetDirection(target2) == CHASING then
 						ultPos = GetMEC(230, CfgSettings.RRNG, target2)
 						if ultPos then
@@ -897,36 +861,20 @@ function Low_HP_Ult()
 	end
 end
 
---[[This function is still under development!
-function AutoGetMecULT()
-	if target2 ~= nil and myHero.selflevel >= 6 then
-		if myHero.SpellTimeR > 1.0 and myHero.mana >= 80 + (myHero.SpellLevelR * 40) then
-			if GetDistance(myHero, target2) <= 800 then
-				ultPos = GetMEC(230, 800, target2)
-				local ultChamps = 0
-				local ultChampsFacing = 0
-				for i = 1, objManager:GetMaxHeroes()  do
-				local unit = objManager:GetHero(i)
-					if (unit ~= nil and unit.team ~= myHero.team and unit.visible == 1 and unit.dead == 0) and GetDistance(ultPos,unit) < 230 then
-						ultChamps = ultChamps + 1
-					end
-					if (unit ~= nil and unit.team ~= myHero.team and unit.visible == 1 and unit.dead == 0) and GetDistance(ultPos,unit) < 230 then
-                        if GetTargetDirection(unit) == CHASING then
-							ultChampsFacing = ultChampsFacing + 1
-						end
-					end
-				end
-				if ultPos then
-					if ultChamps >= 2 then
-						CastSpellXYZ("R", ultPos.x, 0, ultPos.z)
-						ultChamps = 0
-					end
+function mecPetrifyingGaze(Value)
+	for i = 1, objManager:GetMaxHeroes()  do
+    	local enemy = objManager:GetHero(i)
+    	if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable == 0 and enemy.dead == 0) then
+			ultPos = GetMEC(230, CfgSettings.RRNG, enemy)
+			if ultPos and GetDistance(ultPos) < CfgSettings.RRNG and CountUnit(ultPos,230) >= Value then
+				if  myHero.SpellLevelR >= 1 and myHero.SpellTimeR > 1.0 and myHero.mana >= 100 then
+					CastSpellXYZ('R', ultPos.x, 0, ultPos.z)
 				end
 			end
 		end
 	end
 end
-]]
+
 ----------[[End of Spell Functions]]
 
 ----------[[Summoner Spell Functions]]
@@ -1183,6 +1131,20 @@ end
 
 SetTimerCallback("OnTick")
 ----------[[End of IGERs Auto Level]]
+
+----------[[Lib Func]]
+function CountUnit(Center,Radius)
+	local UnitCount = 0
+	for i = 1, objManager:GetMaxHeroes()  do
+    	local enemy = objManager:GetHero(i)
+    	if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable == 0 and enemy.dead == 0) then
+			if GetDistance(enemy,Center) < Radius then
+				UnitCount = UnitCount + 1
+			end
+		end
+	end
+	return UnitCount
+end
 
 ----------[[Auto Dodge Skillhots]]
 function Main()
