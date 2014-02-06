@@ -69,6 +69,7 @@ if IsChatOpen() == 0 then
         target5 = GetWeakEnemy('MAGIC',1500)
         targetignite = GetWeakEnemy('TRUE',600)
         if nidalee.Autoharass then Autoharass() end
+		if nidalee.Autoharass2 then Autoharass() end
         if nidalee.shielditems then shielditems()  end
         if nidalee.ignite then ignite() end
 		if nidalee.useItems then useItems() end
@@ -85,8 +86,8 @@ end
  
  
         nidalee, menu = uiconfig.add_menu('Insane nidalee', 200)
-       
-        menu.keytoggle('Autoharass', 'NeverMissQ', Keys.F2, true)      
+        menu.keydown('Autoharass2', 'Aimbot Q', Keys.X)  
+        menu.keytoggle('Autoharass', 'AutoQ', Keys.F2, false)      
         menu.keytoggle('useItems', 'useItems', Keys.F5, true)
         menu.keytoggle('ignite', 'ignite', Keys.F6, true)
         menu.keytoggle('shielditems', 'shielditems', Keys.F3, true)
@@ -164,7 +165,7 @@ if target4~=nil then
    if target4==nil or distXYZ(myHero.x,myHero.z,FX,FZ)>Qrange then
 for i,v in pairs(Counter) do Counter[i] = nil end
 if target4 ~= nil and vts:len() ~= 0 and bq == 1 and CreepBlock(qx,qy,qz,25) == 0 then
-SpellPred(Q,QRDY,myHero,target4,1500,2,11,1)
+SpellPred(Q,QRDY,myHero,target4,1475,2,11,1)
 elseif target4 ~= nil and vts:len() ~= 0  then
 SpellPred(Q,QRDY,myHero,target4,1500,3,11,1)
 end 

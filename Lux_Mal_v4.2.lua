@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nOh Lux\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 4.1\n")
+printtext("\nVersion 4.2\n")
 				print("\n Team "..myHero.team .. "\n")
 --local target
 local escapetarget
@@ -16,12 +16,18 @@ local Ecast=false
 local delay=0.001
 local target600
 
+local _registry = {}
 local junglewho={"Baron, Drag, EBlue", "Baron, Drag, EBlue, ERed", "Baron, Drag, BothBlue", "ALL JUNGLE BUFFS","OFF"}
 local index=1
-
-
+local egg = {team = 0, enemy = 0}
+local zac = {team = 0, enemy = 0}
+local aatrox = {team = 0, enemy = 0}
+local qDelay=0
+local qSpeed=0
+			local rList={}
+			
 LuxConfig = scriptConfig("Luxtastic", "Lux Config")
-LuxConfig:addParam("combo", "Q Stun Combo", SCRIPT_PARAM_ONKEYDOWN, false, 81)
+LuxConfig:addParam("combo", "Q Stun Combo", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 LuxConfig:addParam("escape", "Escape Walking", SCRIPT_PARAM_ONKEYDOWN, false, 65)
 LuxConfig:addParam("comboBB", "Burst Combo", SCRIPT_PARAM_ONKEYDOWN, false, 84)
 LuxConfig:addParam("pq4m", "Predict Q4 Me", SCRIPT_PARAM_ONKEYTOGGLE, true, 55)
@@ -30,9 +36,12 @@ LuxConfig:addParam("ultFinish", "Use Ult with Burst to Finish Only", SCRIPT_PARA
 LuxConfig:addParam("shield", "AutoShield", SCRIPT_PARAM_ONKEYTOGGLE, true, 57)
 LuxConfig:addParam("igniteks", " Ignite KillSteal", SCRIPT_PARAM_ONKEYTOGGLE, true, 118)
 LuxConfig:addParam("ks", " KillSteal", SCRIPT_PARAM_ONKEYTOGGLE, true, 119)
+LuxConfig:addParam("draw", "Draw KillSteals", SCRIPT_PARAM_ONOFF, true)
 LuxConfig:addParam("nm", " NearMouse Targetting", SCRIPT_PARAM_ONOFF, true)
 LuxConfig:addParam('choosejungle', "Jungle Ult Killstealing", SCRIPT_PARAM_NUMERICUPDOWN, 1, 48,1,5,1)
 LuxConfig:addParam('s', "Speed of Burst Combo", SCRIPT_PARAM_NUMERICUPDOWN, 0.05, 117,0,1,0.05)
+LuxConfig:addParam('qs', "QSpeed", SCRIPT_PARAM_NUMERICUPDOWN, 11.5, 189,11,14,0.5)
+LuxConfig:addParam('qd', "QDelay", SCRIPT_PARAM_NUMERICUPDOWN, 5, 187,2,6,0.2)
 
 LuxConfig:permaShow("comboBB")
 LuxConfig:permaShow("pq4m")
@@ -143,33 +152,16 @@ local modcounter = 0
 
 function Run()
 
-	cc=cc+1
+	if cc<400 then cc=cc+1 end
         if (cc==30) then
                 LoadTable()
         end
 	escapetarget=nil
 	shieldally=nil
 	delay=LuxConfig.s
-	
-	if LuxConfig.choosejungle==1 then 
-		index=1 
-		KS1()
-		UpdatejungleTable1()
-	elseif LuxConfig.choosejungle==2 then 
-		index=2 
-		KS2()
-		UpdatejungleTable2()
-	elseif LuxConfig.choosejungle==3 then 
-		index=3 
-		KS3()
-		UpdatejungleTable3()
-	elseif LuxConfig.choosejungle==4 then 
-		index=4 
-		KS4()
-		UpdatejungleTable4()
-	elseif LuxConfig.choosejungle==5 then 
-		index=5 
-	end
+	qDelay=LuxConfig.qd
+	qSpeed=LuxConfig.qs
+
 
 	if LuxConfig.shield and WRDY==1 then
                 autoE=true
@@ -208,7 +200,7 @@ target600 = GetWeakEnemy("TRUE", 600)
 		end
 		
 		if escapetarget~=nil then
-			if QRDY==1 then CastSpellXYZ('Q',GetFireahead(escapetarget,2.5,12)) end
+			if QRDY==1 then CastSpellXYZ('Q',GetFireahead(escapetarget,qDelay,qSpeed)) end
 			if EObjecttimer==0 then
 				if ERDY==1 then CastSpellXYZ('E',GetFireahead(escapetarget,3.5,13)) end
 			elseif EObjecttimer~=0 and EObjecttimer+3<os.clock() then
@@ -224,17 +216,7 @@ target600 = GetWeakEnemy("TRUE", 600)
 	
 	
 	if IsChatOpen() == 0 and LuxConfig.combo then
-                if targetcombo ~= nil then
-                    if QRDY==1 and GetD(targetcombo) < 1100 then
-                        CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
-                    end
-					if myHero.SpellNameE=="luxlightstriketoggle" and (eTimer<os.clock() or (EObject~=nil and GetD(EObject,targetcombo)>250)) then						
-                        CastSpellTarget("E",targetcombo)
-					end
-                    UseAllItems(targetcombo)
-                else
-                        MoveToMouse()
-                end
+                Combo2()
         end
 
 		
@@ -242,7 +224,7 @@ target600 = GetWeakEnemy("TRUE", 600)
 		if targetult~=nil then
 			local tufax,tufay,tufaz=GetFireahead(targetult,6.5,0)
 			local tufa={x=tufax,y=tufay,z=tufaz}
-			if GetD(tufa)<3000 and targetult.health<getDmg('R',targetult,myHero)*RRDY then
+			if IsInvulnerable(targetult).status==0 and GetD(tufa)<3000 and targetult.health<getDmg('R',targetult,myHero)*RRDY then
 				CastSpellXYZ('R',GetFireahead(targetult,6.5,0))
 			end
 		end
@@ -250,136 +232,207 @@ target600 = GetWeakEnemy("TRUE", 600)
 
 	if LuxConfig.igniteks then 
 		if myHero.SummonerD == 'SummonerDot' then
-                        ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('D')
-                elseif myHero.SummonerF == 'SummonerDot' then
-                                ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('F')
-				else
-				ignitedamage=0
-                end
+				ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('D')
+		elseif myHero.SummonerF == 'SummonerDot' then
+						ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('F')
+		else
+		ignitedamage=0
+		end
 		if target600~=nil and target600.health<ignitedamage then
-			        if myHero.SummonerD == 'SummonerDot' then
-                                        if IsSpellReady('D') then CastSpellTarget('D',target600) end
-                                end
-                                if myHero.SummonerF == 'SummonerDot' then
-                                        if IsSpellReady('F') then CastSpellTarget('F',target600) end
-                                end
+			if myHero.SummonerD == 'SummonerDot' then
+					if IsSpellReady('D') then CastSpellTarget('D',target600) end
+			end
+			if myHero.SummonerF == 'SummonerDot' then
+					if IsSpellReady('F') then CastSpellTarget('F',target600) end
+			end
 		end		
 	end
 	
-	
-	
 	if LuxConfig.pe4m and ERDY==1 and myHero.SpellNameE=="luxlightstriketoggle" then 
-		if (EObject~=nil and GetD(EObject,targetcombo)>250) then
+		if (EObject~=nil and targetcombo~=nil and GetD(EObject,targetcombo)>250) then
 			CastSpellTarget("E",targetcombo)
 		end
 	end
 	------------------------------------------------------------T COMBO
 	
 	if IsChatOpen() == 0 and LuxConfig.comboBB then
-		if targetcombo~=nil then
-			local tcx,tcy,tcz = GetFireahead(targetcombo,2.5,12)
-			local tc={x=tcx,y=tcy,z=tcz}
-			if QRDY==1 and (os.clock()>Atimer) and LuxConfig.pq4m and GetD(tc)<1200 then
-				CastSpellXYZ("Q",GetFireahead(targetcombo,2.5,12))
-			elseif QRDY==1 and (os.clock()>Atimer) and not LuxConfig.pq4m then
-				CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
-			elseif ERDY==1 and myHero.SpellNameE=="LuxLightStrikeKugel" then
-				CastSpellXYZ("E",GetFireahead(targetcombo,3.5,13))
-			elseif not LuxConfig.ultFinish and RRDY==1 and targetcombo.dead~=1 then
-				CastSpellXYZ("R",GetFireahead(targetcombo,6.5,0))
-			elseif ERDY==1 and myHero.SpellNameE=="luxlightstriketoggle" and (os.clock()>Atimer or (EObject~=nil and GetD(EObject,targetcombo)>250)) then	
-                CastSpellTarget("E",targetcombo)
-			else
-				if GetD(targetcombo)<400 then
-					CastSummonerExhaust(targetcombo)
-					UseAllItems(targetcombo)
-				elseif GetD(targetcombo)<600 then
-					CastSummonerExhaust(targetcombo)
-					UseAllItems(targetcombo)
-				end
-				AttackTarget(targetcombo)
-
-			end
-		else
-			MoveToMouse()
-		end
-			------------
-        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+		TeamFight()		
+	end
+	------------
+        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 and myHero.mana>=(40+10*GetSpellLevel('Q')) then
                 QRDY = 1
                 else QRDY = 0
         end
-        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 and myHero.mana>=(65) then
                 WRDY = 1
                 else WRDY = 0
         end
-        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 then
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 and myHero.mana>=(55+15*GetSpellLevel('E')) then
                 ERDY = 1
                 else ERDY = 0
         end
-        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 and myHero.mana>=100 then
                 RRDY = 1
         else RRDY = 0 end
         --------------------------
 		
-		
+	if LuxConfig.choosejungle==1 then 
+		index=1 
+		KS1()
+		UpdatejungleTable1()
+	elseif LuxConfig.choosejungle==2 then 
+		index=2 
+		KS2()
+		UpdatejungleTable2()
+	elseif LuxConfig.choosejungle==3 then 
+		index=3 
+		KS3()
+		UpdatejungleTable3()
+	elseif LuxConfig.choosejungle==4 then 
+		index=4 
+		KS4()
+		UpdatejungleTable4()
+	elseif LuxConfig.choosejungle==5 then 
+		index=5 
 	end
+end
+
+function TeamFight()
+	if targetcombo~=nil then
+		if QRDY==1 then
+			tcx,tcy,tcz = GetFireahead(targetcombo,qDelay,qSpeed)
+			tc={x=tcx,y=tcy,z=tcz}
+		end
+		if QRDY==1 and LuxConfig.pq4m and (os.clock()>Atimer)  and GetD(tc)>100 and GetD(tc)<1200 then
+			CastSpellXYZ("Q",tcx,tcy,tcz)
+		elseif QRDY==1 and LuxConfig.pq4m and (os.clock()>Atimer) and GetD(tc)<=100 then
+		CastSpellXYZ("Q",targetcombo.x,targetcombo.y,targetcombo.z)
+		elseif QRDY==1 and not LuxConfig.pq4m and (os.clock()>Atimer) then
+			CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
+		elseif ERDY==1 and myHero.SpellNameE=="LuxLightStrikeKugel" then
+			local x1,y1,z1=GetFireahead(targetcombo,4.5,13)
+			run_every(0.3,castE,x1,y1,z1)
+		elseif not LuxConfig.ultFinish and RRDY==1 and targetcombo.dead~=1 and IsInvulnerable(targetcombo).status==0 then
+			CastSpellXYZ("R",GetFireahead(targetcombo,6.5,0))
+		elseif ERDY==1 and myHero.SpellNameE=="luxlightstriketoggle" and (os.clock()>Atimer or (EObject~=nil and GetD(EObject,targetcombo)>250)) then	
+			CastSpellTarget("E",targetcombo)
+		else
+			if GetD(targetcombo)<400 then
+				CastSummonerExhaust(targetcombo)
+				UseAllItems(targetcombo)
+			elseif GetD(targetcombo)<600 then
+				CastSummonerExhaust(targetcombo)
+				UseAllItems(targetcombo)
+			end
+			AttackTarget(targetcombo)
+
+		end
+	else
+		MoveToMouse()
+	end
+end
+
+function Combo2()
+	if targetcombo ~= nil then
+		if QRDY==1 and GetD(targetcombo) < 1100 then
+			CastSpellXYZ("Q",mousePos.x,0,mousePos.z)
+		end
+		if myHero.SpellNameE=="luxlightstriketoggle" and (eTimer<os.clock() or (EObject~=nil and GetD(EObject,targetcombo)>250)) then						
+			CastSpellTarget("E",targetcombo)
+		end
+		UseAllItems(targetcombo)
+	else
+			MoveToMouse()
+	end
+end
+
+function castE(u,v,w)
+	CastSpellXYZ("E",u,v,w)
 end
 
 function OnCreateObj(obj)
 	if obj~=nil then
 	
-	if LuxConfig.combo and targetcombo ~= nil then
-        
-                if string.find(obj.charName,"LuxLightBinding") and GetD(targetcombo, obj) < 10 and GetD(myHero, targetcombo) < 1300 and os.clock() > eTimer then
-                        AttackTarget(targetcombo)
-                        CastSpellTarget("E",targetcombo)
-                        eTimer = os.clock() + 5
-                        AttackTarget(targetcombo)
-                end
-                if  string.find(obj.charName,"LuxLightstrike") and RRDY==1 then
-                        CastSpellXYZ("R",targetcombo.x,0,targetcombo.z)
-                        AttackTarget(targetcombo)
-                end
-                --if string.find(obj.charName,"Global_Silence") then
-                       
-                --end
-                if string.find(obj.charName,"LuxMaliceCannon") and ERDY==1 then
-                        AttackTarget(targetcombo)
-                        CastSpellTarget("E",targetcombo)
-                        AttackTarget(targetcombo)
-                end
-                if string.find(obj.charName,"LuxBlitz_nova") then
-                        AttackTarget(targetcombo)
-                        EObject=nil
-                        EObjecttimer=0
-                end
-                if string.find(obj.charName,"LuxLightstrike_tar_green") then
-                                --[[modu=(modu+1)%2
-                                if modu==1 then
-                                EObjecttimer=os.clock()
-                                end                            
-                                if modu==0 then--]]
-                                EObject=obj
-                               -- end
-                end
-               
-        
-	elseif (LuxConfig.comboBB) and GetD(obj)<1000 then
-	--printtext("\nOName " .. obj.charName .. " Oteam " .. obj.team .. " MTeam "..myHero.team)
-		if string.find(obj.charName,"LuxBlitz_nova") then
-			Atimer=os.clock()+(1/myHero.attackspeed+0.1)-delay/myHero.attackspeed
-			Ecast=false
-            EObject=nil
-             EObjecttimer=0
+		if string.find(obj.charName,"LuxLightstrike_tar_green") and myHero.SpellNameE=="luxlightstriketoggle" then
+						--[[modu=(modu+1)%2
+						if modu==1 then
+						EObjecttimer=os.clock()
+						end                            
+						if modu==0 then--]]
+						EObject=obj
+					   -- end
+		end
+
+		if LuxConfig.combo and targetcombo ~= nil then
+			
+					if string.find(obj.charName,"LuxLightBinding") and GetD(targetcombo, obj) < 10 and GetD(myHero, targetcombo) < 1300 and os.clock() > eTimer then
+							AttackTarget(targetcombo)
+							CastSpellTarget("E",targetcombo)
+							eTimer = os.clock() + 5
+							AttackTarget(targetcombo)
+					end
+					if  string.find(obj.charName,"LuxLightstrike") and RRDY==1 then
+							CastSpellXYZ("R",targetcombo.x,0,targetcombo.z)
+							AttackTarget(targetcombo)
+					end
+					--if string.find(obj.charName,"Global_Silence") then
+						   
+					--end
+					if string.find(obj.charName,"LuxMaliceCannon") and ERDY==1 then
+							AttackTarget(targetcombo)
+							CastSpellTarget("E",targetcombo)
+							AttackTarget(targetcombo)
+					end
+					if string.find(obj.charName,"LuxBlitz_nova") then
+							AttackTarget(targetcombo)
+							EObject=nil
+							EObjecttimer=0
+					end
+				   
+			
+		elseif (LuxConfig.comboBB) and GetD(obj)<1000 then
+		--printtext("\nOName " .. obj.charName .. " Oteam " .. obj.team .. " MTeam "..myHero.team)
+			if string.find(obj.charName,"LuxBlitz_nova") then
+				Atimer=os.clock()+(1/myHero.attackspeed+0.1)-delay/myHero.attackspeed
+				Ecast=false
+				EObject=nil
+				 EObjecttimer=0
+			end
+			
+		elseif EObject~=nil and string.find(obj.charName,"LuxBlitz_nova") and GetD(obj,EObject)<300 then
+				EObject=nil
+				 EObjecttimer=0
+	   -- elseif GetD(obj)<1000 then      
+			--printtext("\n" .. obj.charName .. " T "..os.clock().." PLACE "..obj.x)
+		end
+	
+	
+		if obj.charName == 'EggTimer.troy' then
+				for i= 1,objManager:GetMaxHeroes(),1 do
+						local hero=objManager:GetHero(i)
+						if hero.name == 'Anivia' and GetDistance(obj, hero) < 10 then
+								if hero.team == myHero.team then egg = {team = GetTickCount(), enemy = egg.enemy}
+								else egg = {team = egg.team, enemy = GetTickCount()} end
+						end
+				end
+		elseif obj.charName == 'Aatrox_Passive_Death_Activate.troy' then
+				for i= 1,objManager:GetMaxHeroes(),1 do
+						local hero=objManager:GetHero(i)
+						if hero.name == 'Aatrox' and GetDistance(obj, hero) < 10 then
+								if hero.team == myHero.team then aatrox = {team = GetTickCount(), enemy = aatrox.enemy}
+								else aatrox = {team = aatrox.team, enemy = GetTickCount()} end
+						end
+				end
+		elseif obj.charName == 'ZacPassiveExplosion.troy' then
+				for i= 1,objManager:GetMaxHeroes(),1 do
+						local hero=objManager:GetHero(i)
+						if hero.name == 'Zac' and GetDistance(obj, hero) < 10 then
+								if hero.team == myHero.team then zac = {team = GetTickCount(), enemy = zac.enemy}
+								else zac = {team = zac.team, enemy = GetTickCount()} end
+						end
+				end
 		end
 		
-	elseif string.find(obj.charName,"LuxBlitz_nova") and GetD(obj)<1000 then
-            EObject=nil
-             EObjecttimer=0
-   -- elseif GetD(obj)<1000 then      
-		--printtext("\n" .. obj.charName .. " T "..os.clock().." PLACE "..obj.x)
-	end
-
 	end
 end
 
@@ -1350,6 +1403,46 @@ function OnDraw()
 		if targetult~=nil then
 			CustomCircle(150,10,2,targetult)
 		end
+		if LuxConfig.draw and RRDY==1 then
+			for i=1, objManager:GetMaxHeroes(), 1 do			
+				local hero = objManager:GetHero(i)
+				if hero~=nil and hero.dead~=1 and hero.visible==1 and hero.team~=myHero.team and GetD(hero)<3500 and IsInvulnerable(hero).status==0 then
+					local tufax,tufay,tufaz=GetFireahead(hero,6.5,0)
+					local tufa={x=tufax,y=tufay,z=tufaz}
+					if GetD(tufa)<3000 and hero.health<getDmg('R',hero,myHero)*RRDY then
+						local xx2,yy2,zz2=tufa.x,tufa.y,tufa.z
+						local cursor2={x=xx2,y=yy2,z=zz2}
+						local d2=zz2-myHero.z
+						local Theta2
+						if xx2>myHero.x then
+							Theta2=math.acos(d2/GetD(cursor2))
+						elseif xx2<=myHero.x then
+							Theta2=-math.acos(d2/GetD(cursor2))
+						end
+						local dist=GetD(tufa)
+						rList[hero.name]={obj=hero,distance=dist,angle=Theta2}
+						local rLine=0
+						for i, other in pairs(rList) do
+							if other~=nil and other.obj.dead==0 and IsInvulnerable(other.obj).status==0 and other.obj.visible==1 and other.name~=hero.name then
+								local oufax,oufay,oufaz=GetFireahead(other.obj,6.5,0)
+								local oufa={x=oufax,y=oufay,z=oufaz}
+								local odist=GetD(oufa)
+								if odist<3000 and math.abs(Theta2-other.angle)*math.max(odist,dist)<=200 then
+									rLine=rLine+1
+								end
+							end
+						end
+						if rLine>0 then --0xFF00FF00
+							DrawLineObject(myHero,400,2,Theta2,150)
+							CustomCircle(150,10,4,hero)
+						else
+							DrawLineObject(myHero,400,1,Theta2,150)
+							CustomCircle(150,10,4,hero)
+						end
+					end
+				end
+			end
+		end
 	end
 end
 
@@ -1389,5 +1482,144 @@ function GetD(p1, p2)
                 return 99999
     end
 end
+function run_every(interval, fn, ...)
+    return internal_run({fn=fn, interval=interval}, ...)
+end
+
+function internal_run(t, ...)    
+    local fn = t.fn
+    local key = t.key or fn
+    
+    local now = os.clock()
+    local data = _registry[key]
+       
+    if data == nil or t.reset then
+        local args = {}
+        local n = select('#', ...)
+        local v
+        for i=1,n do
+            v = select(i, ...)
+            table.insert(args, v)
+        end   
+        -- the first t and args are stored in registry        
+        data = {count=0, last=0, complete=false, t=t, args=args}
+        _registry[key] = data
+    end
+        
+    --assert(data~=nil, 'data==nil')
+    --assert(data.count~=nil, 'data.count==nil')
+    --assert(now~=nil, 'now==nil')
+    --assert(data.t~=nil, 'data.t==nil')
+    --assert(data.t.start~=nil, 'data.t.start==nil')
+    --assert(data.last~=nil, 'data.last==nil')
+    -- run
+    local countCheck = (t.count==nil or data.count < t.count)
+    local startCheck = (data.t.start==nil or now >= data.t.start)
+    local intervalCheck = (t.interval==nil or now-data.last >= t.interval)
+    --print('', 'countCheck', tostring(countCheck))
+    --print('', 'startCheck', tostring(startCheck))
+    --print('', 'intervalCheck', tostring(intervalCheck))
+    --print('')
+    if not data.complete and countCheck and startCheck and intervalCheck then                
+        if t.count ~= nil then -- only increment count if count matters
+            data.count = data.count + 1
+        end
+        data.last = now        
+        
+        if t._while==nil and t._until==nil then
+            return fn(...)
+        else
+            -- while/until handling
+            local signal = t._until ~= nil
+            local checker = t._while or t._until
+            local result
+            if fn == checker then            
+                result = fn(...)
+                if result == signal then
+                    data.complete = true
+                end
+                return result
+            else
+                result = checker(...)
+                if result == signal then
+                    data.complete = true
+                else
+                    return fn(...)
+                end
+            end            
+        end
+    end    
+end
+
+function IsInvulnerable(target)
+        if target ~= nil and target.dead == 0 then
+                if target.invulnerable == 1 then return {status = 3, name = nil, amount = nil, type = nil}
+                else for i=1, objManager:GetMaxObjects(), 1 do
+                                local object = objManager:GetObject(i)
+                                if object ~= nil then
+                                        if string.find(object.charName,"eyeforaneye") ~= nil and GetDistance(target,object) <= 20 then return {status = 3, name = 'Intervention', amount = 0, type = 'ALL'}
+                                        elseif string.find(object.charName,"nickoftime") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Chrono Shift', amount = 0, type = 'REVIVE'}
+                                        elseif target.name == 'Poppy' and string.find(object.charName,"DiplomaticImmunity_tar") ~= nil and GetDistance(myHero,object) > 20 then
+                                                for i=1, objManager:GetMaxObjects(), 1 do
+                                                        local diObject = objManager:GetObject(i)
+                                                        if diObject ~= nil and string.find(diObject.charName,"DiplomaticImmunity_buf") ~= nil and GetDistance(target,diObject) <= 20 then return {status = 3, name = 'Diplomatic Immunity', amount = 0, type = 'ALL'} end
+                                                end
+                                        elseif target.name == 'Vladimir' and string.find(object.charName,"VladSanguinePool_buf") ~= nil and GetDistance(myHero,object) <= 20 then return {status = 3, name = 'Sanguine Pool', amount = 0, type = 'ALL'}
+--                                      elseif string.find(object.charName,"Summoner_Barrier") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+                                        elseif string.find(object.charName,"Global_Spellimmunity") ~= nil or string.find(object.charName,"Morgana_Blackthorn_Blackshield") ~= nil and GetDistance(target,object) <= 20 then
+                                                local amount = 0
+                                                for i= 1,objManager:GetMaxHeroes(),1 do
+                                                        local hero=objManager:GetHero(i)
+                                                        if hero.team == target.team and hero.name == 'Morgana' then
+                                                                amount = 30+(65*hero.SpellLevelE)+(hero.ap*0.7)
+                                                                return {status = 2, name = 'Black Shield', amount = amount, type = 'MAGIC'}
+                                                        end
+                                                end
+                                        elseif string.find(object.charName,"bansheesveil_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Banshees Veil', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Undying Rage', amount = 0, type = 'NONE'}
+                                        elseif target.name == 'Anivia' then
+                                                if target.team == myHero.team then
+                                                        if egg.team ~= 0 and GetTickCount()-egg.team > 240000 or egg.team == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if egg.enemy ~= 0 and GetTickCount()-egg.enemy > 240000 or egg.enemy == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+                                        elseif target.name == 'Aatrox' then
+                                                if target.team == myHero.team then
+                                                        if aatrox.team ~= 0 and GetTickCount()-aatrox.team > 225000 or aatrox.team == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if aatrox.enemy ~= 0 and GetTickCount()-aatrox.enemy > 225000 or aatrox.enemy == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+                                        elseif target.name == 'Zac' then
+                                                if target.team == myHero.team then
+                                                        if zac.team ~= 0 and GetTickCount()-zac.team > 300000 or zac.team == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if zac.enemy ~= 0 and GetTickCount()-zac.enemy > 300000 or zac.enemy == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+--                                      elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetDistance(target,object) <= 30 then return 2--, 'NONE'
+                                        elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
+--                                      elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+                                        end
+                                end
+                        end
+                end
+        end
+        return {status = 0, name = nil, amount = nil, type = nil}
+end
+
+
 
 SetTimerCallback("Run")
