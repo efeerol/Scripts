@@ -1,5 +1,5 @@
 require 'Utils'
-local version = '1.5'
+local version = '1.7'
 --[[
 	---------------
 	--- GENERAL ---
@@ -8,9 +8,8 @@ local version = '1.5'
 	- Add at the top of your script: 				local Q,W,E,R = 'Q','W','E','R'
 	- GetCD() 										Add into your main function to get cooldowns; 
 	- QRDY,WRDY,ERDY,RRDY: 							Returns 0 or 1 whether the skill is on cooldown or ready
-	- GetAA()										Returns true for each successful autoattack (only for melee champs)
+	- GetAA()										Returns true for each successful autoattack
 	- IsLolActive()									Returns true if the LoL-window in the foreground and the chat window is closed
-	- IsSheenRdy()									Returns true if Sheen, Trinity Force, Iceborn Gauntlet, Lichbane passive is ready
 	- IsBuffed(target,name)							Returns true if the target has a buff/debuff. Example: IsBuffed(myHero,'Annie_E_buf')
 	- IsBetween(a,b,c,dist)							Returns true if b is in a line between a and c. Example: IsBetween(myHero,minion,target,125)
 	
@@ -107,7 +106,7 @@ end
 function SpellPred(spell,cd,a,b,range,delay,speed,block,blockradius)
 	if (cd == 1 or cd) and a ~= nil and b ~= nil and delay ~= nil and speed ~= nil and GetDistance(a,b)<range then
 		local FX,FY,FZ = GetFireahead(b,delay,speed)
-		if distXYZ(a.x,a.z,FX,FZ)<range and distXYZ(b.x,b.z,FX,FZ)<((b.movespeed/1000)*(((delay*100)+100)+((speed/10)/GetDistance(a,b)))) then
+		if distXYZ(a.x,a.z,FX,FZ)<range then
 			if block == 1 and blockradius==nil then
 				if CreepBlock(a.x,a.y,a.z,FX,FY,FZ) == 0 then
 					CastSpellXYZ(spell,FX,FY,FZ)
@@ -177,7 +176,7 @@ function GetAA()
         endPos1.z=a1[8]
         spell1.target=a1[12]
         spell1.startPos1=startPos1
-        spell1.endPo1s=endPos1
+        spell1.endPos1=endPos1
         table.insert(spells1, spell1)
         a1={GetCastSpell()}
         g1=g1+1
@@ -191,6 +190,186 @@ function GetAA()
 			if targetaa~=nil and attackstart and string.find(obj.charName,'globalhit') and GetDistance(obj, targetaa) < 50 then
 				attackstart = false
 				return true
+			end
+		end
+	end
+end
+
+function Bullseye(spellslot,Range)
+    local spells2={}
+    local a2={GetCastSpell()}    
+    local g2=0
+    while (a2~=nil and a2[1] ~= nil and g2<200) do
+        local spell2={}
+        local startPos2={}
+        local endPos2={}
+        spell2.unit=a2[1]
+        spell2.name=a2[2]
+        startPos2.x=a2[3]
+        startPos2.y=a2[4]
+        startPos2.z=a2[5]
+        endPos2.x=a2[6]
+        endPos2.y=a2[7]
+        endPos2.z=a2[8]
+        spell2.target=a2[12]
+        spell2.startPos2=startPos2
+        spell2.endPos=endPos2
+        table.insert(spells2, spell2)
+        a2={GetCastSpell()}
+        g2=g2+1
+		if unit ~= nil and spell2 ~= nil and unit.team ~= myHero.team then
+			for i = 1, objManager:GetMaxHeroes() do
+				local champ = objManager:GetHero(i)
+				if (champ ~= nil and champ.visible == 1 and champ.dead == 0) then
+				-- Target Gapcloser
+					if (spell2.name == 'AkaliShadowDance' or
+						spell2.name == 'Headbutt' or
+						spell2.name == 'DariusExecute' or
+						spell2.name == 'DianaTeleport' or
+						spell2.name == 'EliseSpiderQCast' or
+						spell2.name == 'FioraQ' or
+						spell2.name == 'Urchin Strike' or
+						spell2.name == 'IreliaGatotsu' or
+						spell2.name == 'JarvanIVCataclysm' or
+						spell2.name == 'JaxLeapStrike' or
+						spell2.name == 'JayceToTheSkies' or
+						spell2.name == 'blindmonkqtwo' or
+						spell2.name == 'BlindMonkWOne' or
+						spell2.name == 'MaokaiUnstableGrowth' or
+						spell2.name == 'AlphaStrike' or
+						spell2.name == 'NocturneParanoia' or
+						spell2.name == 'Pantheon_LeapBash' or
+						spell2.name == 'MonkeyKingNimbus' or
+						spell2.name == 'XenZhaoSweep' or
+						spell2.name == 'ViR' or
+						spell2.name == 'YasuoDashWrapper' or
+						spell2.name == 'TalonCutthroat' or
+						spell2.name == 'KatarinaE' or
+						spell2.name == 'InfiniteDuress') and 
+						spell2.target~=nil and spell2.target.name == champ.name and GetDistance(champ)<Range then
+						CastSpellXYZ(spellslot,champ.x,0,champ.z)
+					end
+				end
+			end
+			-- No target dashes	
+			if spell2.name == 'AatroxQ' then range = 650 end
+			if spell2.name == 'AhriTumble' then range = 550 end
+			if spell2.name == 'CarpetBomb' then range = 800 end
+			if spell2.name == 'GragasBodySlam' then range = 600 end
+			if spell2.name == 'GravesMove' then range = 425 end
+			if spell2.name == 'LucianE' then range = 425 end
+			if spell2.name == 'RenektonSliceAndDice' then range = 450 end
+			if spell2.name == 'SejuaniArcticAssault' then range = 650 end
+			if spell2.name == 'ShenShadowDash' then range = 600 end
+			if spell2.name == 'ShyvanaTransformCast' then range = 1000 end
+			if spell2.name == 'slashCast' then range = 660 end
+			if spell2.name == 'ViQ' then range = 725 end
+			if spell2.name == 'FizzJump' then range = 400 end
+			if spell2.name == 'HecarimUlt' then range = 1000 end
+			if spell2.name == 'KhazixE' then range = 600 end
+			if spell2.name == 'khazixelong' then range = 900 end
+			if spell2.name == 'LeblancSlide' then range = 600 end
+			if spell2.name == 'LeblancSlideM' then range = 600 end
+			if spell2.name == 'UFSlash' then range = 1000 end
+			if spell2.name == 'Pounce' then range = 375 end
+			if spell2.name == 'Deceive' then range = 400 end
+			if spell2.name == 'ZacE' and unit.name == 'Zac' then range = (unit.SpellLevelE*100)+1050 end
+			if spell2.name == 'VayneTumble' then range = 300 end
+			if spell2.name == 'RivenTriCleave' then range = 260 end
+			if spell2.name == 'RivenFeint' then range = 325 end
+			if spell2.name == 'EzrealArcaneShift' then range = 475 end
+			if spell2.name == 'RiftWalk' then range = 700 end
+			if spell2.name == 'RocketJump' then range = 900 end
+				
+			if 	spell2.name == 'AatroxQ' or
+				spell2.name == 'AhriTumble' or
+				spell2.name == 'CarpetBomb' or
+				spell2.name == 'GragasBodySlam' or
+				spell2.name == 'GravesMove' or
+				spell2.name == 'LucianE' or
+				spell2.name == 'RenektonSliceAndDice' or
+				spell2.name == 'SejuaniArcticAssault' or
+				spell2.name == 'ShenShadowDash' or
+				spell2.name == 'ShyvanaTransformCast' or
+				spell2.name == 'slashCast' or
+				spell2.name == 'ViQ' or
+				spell2.name == 'FizzJump' or
+				spell2.name == 'HecarimUlt' or
+				spell2.name == 'KhazixE' or
+				spell2.name == 'khazixelong' or
+				spell2.name == 'LeblancSlide' or
+				spell2.name == 'LeblancSlideM' or
+				spell2.name == 'UFSlash' or
+				spell2.name == 'Pounce' or
+				spell2.name == 'Deceive' or
+				spell2.name == 'ZacE' or
+				spell2.name == 'VayneTumble' or
+				spell2.name == 'RivenTriCleave' or
+				spell2.name == 'RivenFeint' or
+				spell2.name == 'EzrealArcaneShift' or
+				spell2.name == 'RiftWalk' or
+				spell2.name == 'RocketJump' then
+				if distXYZ(unit.x,unit.z,spell2.endPos.x,spell2.endPos.z)>range then
+					EnemyPos = Vector(unit.x,unit.y,unit.z)
+					SpellPos = Vector(spell2.endPos.x,spell2.endPos.y,spell2.endPos.z)
+					TruePos = EnemyPos + ( EnemyPos - SpellPos )*(-range/GetDistance(unit, spell2.endPos))
+				elseif distXYZ(unit.x,unit.z,spell2.endPos.x,spell2.endPos.z)<range then
+					TruePos = spell2.endPos
+				end
+				timer = 750
+				if TruePos~=nil and GetDistance(TruePos)<Range and myHero.SpellTimeQ > 1 and GetTickCount()>timer then CastSpellXYZ(spellslot,TruePos.x,0,TruePos.z) end
+			end
+				-- Movement stopper
+			if (spell2.name == 'katarinar' or
+				spell2.name == 'drain' or
+				spell2.name == 'crowstorm' or
+				spell2.name == 'consume' or
+				spell2.name == 'absolutezero' or
+				spell2.name == 'rocketgrab' or
+				spell2.name == 'staticfield' or
+				spell2.name == 'cassiopeiapetrifyinggaze' or
+				spell2.name == 'ezrealtrueshotbarrage' or
+				spell2.name == 'galioidolofdurand' or
+				spell2.name == 'gragasdrunkenrage' or
+				spell2.name == 'luxmalicecannon' or
+				spell2.name == 'reapthewhirlwind' or
+				spell2.name == 'jinxw' or
+				spell2.name == 'jinxr' or
+				spell2.name == 'missfortunebullettime' or
+				spell2.name == 'shenstandunited' or
+				spell2.name == 'threshe' or
+				spell2.name == 'threshrpenta' or
+				spell2.name == 'infiniteduress' or
+				spell2.name == 'meditate') and GetDistance(unit)<Range then
+				CastSpellXYZ(spellslot,unit.x,0,unit.z)
+			end
+		end
+	end
+	for i = 1, objManager:GetMaxHeroes() do
+		local enemy = objManager:GetHero(i)
+		if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable==0 and enemy.dead == 0) then
+			if (IsBuffed(enemy,'LOC_Stun') or 
+				IsBuffed(enemy,'LOC_Suppress') or 
+				IsBuffed(enemy,'LOC_Taunt') or 
+				IsBuffed(enemy,'LuxLightBinding') or 
+				IsBuffed(enemy,'DarkBinding_tar') or 
+				IsBuffed(enemy,'RunePrison') or 
+				IsBuffed(enemy,'Zyra_E_sequence_root') or 
+				IsBuffed(enemy,'monkey_king_ult_unit_tar_02') or 
+				IsBuffed(enemy,'xenZiou_ChainAttack_03') or 
+				IsBuffed(enemy,'xenZiou_ChainAttack_03') or 
+				IsBuffed(enemy,'tempkarma_spiritbindroot_tar')) and 
+				GetDistance(enemy)<Range then
+				CastSpellXYZ(spellslot,enemy.x,enemy.y,enemy.z)
+			end
+		end
+	end
+	for i = 1, objManager:GetMaxHeroes() do
+		local ally = objManager:GetHero(i)
+		if (ally ~= nil and ally.team == myHero.team and ally.visible == 1 and ally.dead == 0) then
+			if (IsBuffed(ally,'CurseBandages')) and
+				GetDistance(ally)<Range then
+				CastSpellXYZ(spellslot,ally.x,ally.y,ally.z)
 			end
 		end
 	end
@@ -291,19 +470,19 @@ end
 -- IT'S NECESSARY TO USE A COOLDOWN HANDLING FUNCTION LIKE THIS:
 
 function GetCD()
-	if myHero.SpellTimeQ > 0 and GetSpellLevel('Q') > 0 then 
+	if myHero.SpellTimeQ > 1 and GetSpellLevel('Q') > 0 then 
 		QRDY = 1
 		else QRDY = 0 
 	end
-	if myHero.SpellTimeW > 0 and GetSpellLevel('W') > 0 then 
+	if myHero.SpellTimeW > 1 and GetSpellLevel('W') > 0 then 
 		WRDY = 1
 		else WRDY = 0 
 	end
-	if myHero.SpellTimeE > 0 and GetSpellLevel('E') > 0 then 
+	if myHero.SpellTimeE > 1 and GetSpellLevel('E') > 0 then 
 		ERDY = 1
 		else ERDY = 0 
 	end
-	if myHero.SpellTimeR > 0 and GetSpellLevel('R') > 0 then 
+	if myHero.SpellTimeR > 1 and GetSpellLevel('R') > 0 then 
 		RRDY = 1
 	else RRDY = 0 end
 end
