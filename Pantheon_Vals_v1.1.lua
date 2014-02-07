@@ -5,7 +5,7 @@ require 'vals_lib'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.0'
+local version = '1.1'
 local timer = nil
 local dodgetimer = 0
 local skillshotArray = {}
@@ -31,7 +31,8 @@ local cc = 0
 
 function Main()
 	if IsLolActive() then
-		target = GetWeakEnemy('PHYS',600)
+		target = GetWeakEnemy('PHYS',600,'NEARMOUSE')
+		minion = GetLowestHealthEnemyMinion(1000)
 		send.tick()
 		cc=cc+1
 		if cc==30 then LoadTable() end
@@ -55,10 +56,9 @@ function Combo()
 	if target~=nil then
 		if timer==nil then
 			if PantheonConf.UseItems then UseAllItems(target) end 
-			if QRDY==1 then CastSpellTarget('Q',target) end
 			if WRDY==1 then CastSpellTarget('W',target) end
+			if QRDY==1 then CastSpellTarget('Q',target) end
 			AttackTarget(target)
-			if dodgetimer == 0 then MoveTarget(target) end
 		end
 	else
 		if dodgetimer == 0 then MoveMouse() end
@@ -424,7 +424,6 @@ function LoadTable()
 			end
 			if enemy.name == 'Gragas' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 320, color= 0xFFFFFF00, time = 2.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 650, type = 2, radius = 60, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 3, radius = 400, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Graves' then
@@ -453,7 +452,6 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1, radius = 125, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Jinx' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1.5, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 3, radius = 225, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
