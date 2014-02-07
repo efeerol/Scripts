@@ -7,7 +7,7 @@ require 'spell_damage'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.3'
+local version = '1.6'
 local dodgetimer = 0
 local skillshotArray = {}
 local xa = 50/1920*GetScreenX()
@@ -42,10 +42,13 @@ local cc = 0
 function Main()
 	if IsLolActive() then
 		target = GetWeakEnemy('PHYS',650)
-		AArange = myHero.range+(GetDistance(GetMinBBox(myHero)))
+		AArange = myHero.range+(GetDistance(GetMinBBox(myHero))+50)
 		target2 = GetWeakEnemy('PHYS',AArange)
-		minion = GetLowestHealthEnemyMinion(1000)
+		minion = GetLowestHealthEnemyMinion(650)
 		minion2 = GetLowestHealthEnemyMinion(30000)
+		if myHero.SpellTimeR<-10 then
+			Ziel = nil
+		end
 		send.tick()
 		cc=cc+1
 		if cc==30 then LoadTable() end
@@ -83,16 +86,12 @@ function Combo()
 	else
 		MoveMouse()
 	end
-	if IreliaConfig.Ultimate then run_until(Ultimate2) end
 end
 
 function Ultimate()
 	local target3 = GetWeakEnemy('PHYS',1000)
 	if target3~=nil then
 		Ziel = target3
-	end
-	if myHero.SpellTimeR<0 then
-		Ziel = nil
 	end
 	if Ziel == nil then
 		return true
@@ -109,7 +108,7 @@ end
 
 function killsteal()
 	if target ~= nil then
-		local xQ = getDmg("Q",target,myHero)
+		local xQ = getDmg("Q",target,myHero)+getDmg("AD",target,myHero)
 		if target.health < xQ*QRDY and GetDistance(myHero, target)<650 then
 			CastSpellTarget('Q', target)
 		end
@@ -118,13 +117,13 @@ end
 
 function AutoFarm()
 	if minion ~= nil then
-	local xQ = getDmg("Q",minion,myHero)
+	local xQ = getDmg("Q",minion,myHero)+getDmg("AD",minion,myHero)
 		if minion.health < xQ and GetDistance(myHero, minion) < 650 then
 			CastSpellTarget("Q",minion)
 		end
 	end
 	if minion2~=nil then
-		local xQ2 = getDmg("Q",minion2,myHero)
+		local xQ2 = getDmg("Q",minion2,myHero)+getDmg("AD",minion2,myHero)
 		if minion2.health < xQ2 then
 			CustomCircle(75,1,5,minion2)
 		end

@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nMaster JedYi\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 5.3\n")
+printtext("\nVersion 5.4\n")
 
 local target
 local hasSheen = 0
@@ -91,6 +91,7 @@ local turret = {}
 
 	YiConfig = scriptConfig('Yi Config', 'Yiconfig')
 	YiConfig:addParam('teamfight', 'AutoTeamFight', SCRIPT_PARAM_ONKEYDOWN, false, 84)
+	YiConfig:addParam('fight', 'No Ult Fight', SCRIPT_PARAM_ONKEYDOWN, false, 88)
 	YiConfig:addParam('move', 'Move To Cursor', SCRIPT_PARAM_ONKEYDOWN, false, 65)
 	YiConfig:addParam('autoQ', 'AutoQ', SCRIPT_PARAM_ONKEYTOGGLE, false, 55)
 	YiConfig:addParam('autoW', 'AutoWHeal', SCRIPT_PARAM_ONKEYTOGGLE, true, 56)
@@ -100,6 +101,7 @@ local turret = {}
 	YiConfig:addParam('farm', 'AutoCreepFarm', SCRIPT_PARAM_ONKEYTOGGLE, false, 119)
 	YiConfig:addParam('drawQ', 'DrawQsOnEnemies', SCRIPT_PARAM_ONOFF, true)
 	YiConfig:addParam('autoQM3', 'AutoQminion3orLess', SCRIPT_PARAM_ONOFF, false)
+	YiConfig:addParam('hTF', 'Use Heal In Combos', SCRIPT_PARAM_ONOFF, true)
 	YiConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONOFF, true)
 	YiConfig:permaShow('farm')
 	YiConfig:permaShow('teamfight')
@@ -112,11 +114,11 @@ local turret = {}
 
 function Run()
 	        ------------
-        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 and myHero.mana>=(60+10*GetSpellLevel('Q')) then
                 QRDY = 1
                 else QRDY = 0
         end
-        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 and myHero.mana>=50 then
                 WRDY = 1
                 else WRDY = 0
         end
@@ -124,7 +126,7 @@ function Run()
                 ERDY = 1
                 else ERDY = 0
         end
-        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 and myHero.mana>=100 then
                 RRDY = 1
         else RRDY = 0 end
         --------------------------
@@ -140,7 +142,7 @@ function Run()
     end
 	
 	
-	target = GetWeakEnemy('PHYS',800)
+	target = GetWeakEnemy('PHYS',700)
 	targetQharass = GetWeakEnemy('PHYS',1200)
 	local w1 = (10+(20*GetSpellLevel('W'))+(myHero.ap*0.3))
 	local w2 = w1*2
@@ -156,9 +158,10 @@ function Run()
 	if YiConfig.farm and not isMed() then autofarm() end
         if YiConfig.smite then smitesteal() end
 	if IsChatOpen()==0 and YiConfig.teamfight then fight() end
+	if IsChatOpen()==0 and YiConfig.fight then fightNoUlt() end
 	if IsChatOpen()==0 and YiConfig.move then Move() end
 	if YiConfig.autoE and not isMed() then autoEattack() end
-	if YiConfig.autoW then autohealW() end
+	if YiConfig.autoW and not YiConfig.teamfight and not YiConfig.fight then autohealW() end
 	if YiConfig.autoQ then autoQ() end
 	if YiConfig.autoQMrange then autoQM() end
 	if YiConfig.dokillsteal then killsteal() end
@@ -645,9 +648,11 @@ end
 
 function fight()
 	if target ~= nil  then
-			UseAllItems(target)
-			CastSummonerExhaust(target)
-			if RRDY==1 and GetD(myHero, target) < 700 and not isMed() then
+			if GetD(target)<400 then
+				UseAllItems(target)
+				CastSummonerExhaust(target)
+			end
+			if RRDY==1 and not isMed() then
 				CastSpellTarget('R', target)
 				AttackTarget(target)
 			
@@ -662,12 +667,19 @@ function fight()
 				AttackTarget(target)
 			
 			
-			elseif WRDY==1 and myHero.health<myHero.maxHealth*25/100 and QRDY==0 then
+			elseif WRDY==1 and YiConfig.hTF and myHero.health<myHero.maxHealth*25/100 and QRDY==0 then
 				CastSpellTarget('W', myHero)
 			
 			
-			elseif GetD(myHero, target) < myHero.range+200 and not isMed() then
+			elseif not isMed() then
 				AttackTarget(target)
+				
+				
+			--[[elseif GetD(myHero, target) <= myHero.range+250 and not isMed() then
+				AttackTarget(target)
+				
+			elseif GetD(target)>myHero.range+250 and not isMed() then
+				MoveToMouse()--]]
 			end
 	
 
@@ -678,6 +690,44 @@ function fight()
 	
 end
 
+function fightNoUlt()
+	if target ~= nil  then
+			if GetD(target)<400 then
+				UseAllItems(target)
+				CastSummonerExhaust(target)
+			end
+			if ERDY==1 and GetD(myHero, target) < myHero.range+150 and not isMed() then
+				CastSpellTarget('E', target)
+				AttackTarget(target)
+			
+			
+			elseif QRDY==1 and GetD(myHero, target) < 600 and not isMed() then
+				CastSpellTarget('Q', target)
+				AttackTarget(target)
+			
+			
+			elseif WRDY==1 and YiConfig.hTF and myHero.health<myHero.maxHealth*25/100 and QRDY==0 then
+				CastSpellTarget('W', myHero)
+			
+			
+			elseif not isMed() then
+				AttackTarget(target)
+				
+				
+			--[[elseif GetD(myHero, target) <= myHero.range+250 and not isMed() then
+				AttackTarget(target)
+				
+			elseif GetD(target)>myHero.range+250 and not isMed() then
+				MoveToMouse()--]]
+			end
+	
+
+	elseif target == nil then
+	if not isMed() then MoveToMouse() end
+	end
+	
+	
+end
 
 function autoQ()
 
@@ -790,7 +840,7 @@ end
 
 function autohealW()
 
-		if WRDY==1 and (not IsMoving(myHero) or YiConfig.move or YiConfig.teamfight) and myHero.health<myHero.maxHealth*20/100 and os.clock()>CLOCKT+9 and os.clock()>CLOCKF+3 then
+		if WRDY==1 and (not IsMoving(myHero) or YiConfig.move or YiConfig.teamfight or YiConfig.fight) and myHero.health<myHero.maxHealth*20/100 and os.clock()>CLOCKT+9 and os.clock()>CLOCKF+3 then
 			CastSpellTarget('W', myHero)
 		end
 
