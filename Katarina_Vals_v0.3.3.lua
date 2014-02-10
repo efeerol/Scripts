@@ -6,7 +6,7 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '0.3.1'
+local version = '0.3.3'
 ----------------------------
 local toggle_timer = os.clock()
 local locus_timer,dodgetimer = 0,0
@@ -289,6 +289,9 @@ function Rspell(target)
             locus = true
         end
     end
+if target==nil or GetDistance(target)>Rrange then
+	locus = false
+end
 end
 
 function RspellKS(target)
@@ -296,14 +299,17 @@ function RspellKS(target)
 		CastSpellTarget("R",target)
 		locus = true
     end
+if target==nil or GetDistance(target)>Rrange  then
+	locus = false
+end
 end
 
 function Ispell(target)
 	if locus==false and QRDY*WRDY*ERDY==1 then
 		if BC == 1 and target~=nil then UseItemOnTarget(3144, target)
 		elseif HG == 1 and target~=nil then UseItemOnTarget(3146, target)
-		elseif BFT == 1 and target~=nil then UseItemOnTarget(3188, target)
-		elseif DFG == 1 and target~=nil then UseItemOnTarget(3128, target)
+		elseif BFT == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3188, target)
+		elseif DFG == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3128, target)
 		end
 	end
 end

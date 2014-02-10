@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 2.9\n")
+printtext("\nBeta 3.0\n")
 
 local target
 local stuntarget
@@ -227,7 +227,7 @@ end
 function OnProcessSpell(unit,spell)
 
 
-	if (RivConfig.teamfight or RivConfig.combo or RivConfig.an) and unit.name==myHero.name and unit.team==myHero.team then  
+	if unit.name==myHero.name and unit.team==myHero.team then  
 		if string.find(spell.name,"RivenTriCleave") ~= nil then
 		--print("\nCheck1")
 			Qmod=(Qmod+1)%3
@@ -252,17 +252,6 @@ function OnProcessSpell(unit,spell)
 		--[[if string.find(spell.name,"BasicAttack") ~= nil or string.find(spell.name,"CritAttack") ~= nil then  
 		--    Atimer=os.clock()+(1/myHero.attackspeed)
 		end--]]
-	elseif unit.name==myHero.name and unit.team==myHero.team then
-		if string.find(spell.name,"RivenFengShuiEngine") ~= nil then    
-			Ractive=true
-			Rtimer=os.clock()
-			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
-
-		elseif string.find(spell.name,"rivenizunablade") ~= nil then  
-			Ractive=false
-			castR=false
-			Atimer=os.clock()+(1/myHero.attackspeed)-(1-delay)/myHero.attackspeed
-		end 
 
 	end
 	

@@ -7,24 +7,11 @@ require 'vals_lib'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '2.2.1'
-local MarkTimer = nil
-local ls = nil
-local timer = 0
-local dodgetimer = 0
-local ShowRange = 2500
-local jumpspotrange = 50
-local jumpmouserange = 75
-local Erange = 800
-local Edelay = 1.5
-local Espeed = 15
-local Eradius = 75
+local version = '2.4.1'
+local MarkTimer,ls = nil,nil
+local timer,dodgetimer = 0,0
 local skillshotArray = {}
-local xa = 50/1920*GetScreenX()
-local xb = 1870/1920*GetScreenX()
-local ya = 50/1080*GetScreenY()
-local yb = 1030/1080*GetScreenY()
-local cc = 0
+local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY(),0
 
 	LBConf, menu = uiconfig.add_menu('LeBlanc Hotkeys', 250)
 	menu.keydown('Qkey', 'Q-Key', Keys.X)
@@ -54,26 +41,17 @@ local cc = 0
 	menu.permashow('DrawSkillShots')
 	menu.permashow('DodgeSkillShots')
 
-
 function Main()
 	if IsLolActive() then
-		send.tick()
-		cc=cc+1
-		if cc==30 then LoadTable() end
-		for i=1, #skillshotArray, 1 do
-			if os.clock() > (skillshotArray[i].lastshot + skillshotArray[i].time) then
-				skillshotArray[i].shot = 0
-			end
-		end
-		if GetTickCount()-dodgetimer>DodgeConfig.BlockTime then dodgetimer = 0 end
-		Skillshots()
 		SetVariables()
+		Skillshots()
 		GetSpells()
-		CheckSpells()
 		GetMark()
+		Distance()
 		Jump()
 		QspellOnce()
 		EspellOnce()
+		ComboAlwaysOn()
 		if LBConf.Combo then Combo() end
 		if LBConf.Harass then Harass() end
 		if LBSettings.KSNotes then KSNotifications() end
@@ -82,7 +60,6 @@ function Main()
 end
 
 function QSpell()
-	local target = GetWeakEnemy('MAGIC',700)
 	if LBConf.Qkey == true then
 		if Q1RDY==1 then
 			if MarkedEnemy~=nil then
@@ -108,20 +85,11 @@ function QspellOnce()
 end
 	
 function ESpell()
-	local targetE = GetWeakEnemy('MAGIC',800)
 	if LBConf.Ekey == true then
 		if E1RDY==1 then
-			if MarkedEnemy~=nil then
-				SpellPred(E,E1RDY,myHero,MarkedEnemy,Erange,Edelay,Espeed,1,Eradius)
-			elseif targetE~=nil then
-				SpellPred(E,E1RDY,myHero,targetE,Erange,Edelay,Espeed,1,Eradius)
-			end
+			if targetE~=nil then SpellPred(E,E1RDY,myHero,targetE,800,1.5,15,1,125) end
 		elseif E2RDY==1 then
-			if MarkedEnemy~=nil then 
-				SpellPred(R,E2RDY,myHero,MarkedEnemy,Erange,Edelay,Espeed,1,Eradius)
-			elseif targetE~=nil then
-				SpellPred(R,E2RDY,myHero,targetE,Erange,Edelay,Espeed,1,Eradius)
-			end
+			if targetE~=nil then SpellPred(R,E2RDY,myHero,targetE,800,1.5,15,1,125) end
 		end
 	end
 	if LBConf.Ekey == false then
@@ -131,14 +99,12 @@ end
 
 function EspellOnce()
 	run_many_reset(1, ESpell)
-end	
+end
 
 function Harass()
-	local target = GetWeakEnemy('MAGIC',700)
-	if target~=nil and Q1RDY==1 and W1RDY==1 and ls==nil then
+	if target~=nil and Q1RDY==1 and W1RDY==1 and ls==nil and Ziel==nil then
 		QWW = true
 		Ziel = target
-		target = nil
 	end
 	if QWW and Ziel~=nil then
 		if ls==nil then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
@@ -148,14 +114,17 @@ function Harass()
 			ls = nil
 			Ziel = nil
 			QWW = false
-			target = GetWeakEnemy('MAGIC',700)
 		end
 	end
 	if LBSettings.MouseMove and dodgetimer==0 then MoveMouse() end
 end
 
 function SetVariables()
-	if Ziel==nil or (Ziel~=nil and (Ziel.dead==1 or Ziel.invulnerable==1)) or myHero.dead==1 or (LBConf.Combo == false and LBConf.Harass == false) or (timer~=0 and GetTickCount()-timer>750) then
+	target = GetWeakEnemy('MAGIC',700)
+	targetE = GetWeakEnemy('MAGIC',800)
+	target2 = GetWeakEnemy('MAGIC',1200)
+	
+	if Ziel==nil or (Ziel~=nil and (Ziel.dead==1 or Ziel.invulnerable==1)) or myHero.dead==1 or (timer~=0 and GetTickCount()-timer>500) then
 		QRWE,QRE,QRW,QR,QWE,QE,QW,WQRE,WQR,WQE,xE,xQ,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false
 		ls,Ziel = nil,nil
 		timer = 0
@@ -169,7 +138,7 @@ function SetVariables()
 	elseif GetInventorySlot(3188)==6 and myHero.SpellTime6 >= 1 then BFT = 1
 	else BFT = 0
 	end
-
+	
 	if GetInventorySlot(3128)==1 and myHero.SpellTime1 >= 1 then DFG = 1
 	elseif GetInventorySlot(3128)==2 and myHero.SpellTime2 >= 1 then DFG = 1
 	elseif GetInventorySlot(3128)==3 and myHero.SpellTime3 >= 1 then DFG = 1
@@ -178,6 +147,16 @@ function SetVariables()
 	elseif GetInventorySlot(3128)==6 and myHero.SpellTime6 >= 1 then DFG = 1
 	else DFG = 0
 	end
+	
+	send.tick()
+	cc=cc+1
+	if cc==30 then LoadTable() end
+	for i=1, #skillshotArray, 1 do
+		if os.clock() > (skillshotArray[i].lastshot + skillshotArray[i].time) then
+			skillshotArray[i].shot = 0
+		end
+	end
+	if GetTickCount()-dodgetimer>DodgeConfig.BlockTime then dodgetimer = 0 end
 end
 
 function Wspell()
@@ -185,7 +164,7 @@ function Wspell()
 		if GetDistance(Ziel)<800 then
 			EnemyPos = Vector(Ziel.x, Ziel.y, Ziel.z)
 			HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-			WPos = EnemyPos+(EnemyPos-HeroPos)*(-100/GetDistance(EnemyPos, HeroPos))
+			WPos = EnemyPos+(EnemyPos-HeroPos)*(-150/GetDistance(EnemyPos, HeroPos))
 			SpellXYZ(W,W1RDY,myHero,Ziel,800,WPos.x,WPos.z)
 		else
 			SpellXYZ(W,W1RDY,myHero,Ziel,800,Ziel.x,Ziel.z)
@@ -203,41 +182,26 @@ function WLspell()
 	end
 end
 
-function CheckSpells()
-	if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR then
-		for i = 1, objManager:GetMaxObjects(), 1 do
-			obj = objManager:GetObject(i)
-			if obj~=nil then
-				if obj.charName == 'leBlanc_slide_impact_self.troy' and GetDistance(obj) < 100 and W1 == true then
-					ls = 'W1'
-					timer = GetTickCount()
-				end
-			end
-		end
-	end
-end
-
 function OnProcessSpell(unit, spell)
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
 		if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR or QWW then
 			if spell.name == 'LeblancChaosOrb' then
-				ls = 'Q1'
+				ls = 'Q1' 
 				timer = GetTickCount()
 			end
-			if spell.name == 'LeblancChaosOrbM' then
+			if spell.name == 'LeblancChaosOrbM' then 
 				ls = 'Q2'
 				timer = GetTickCount()
 			end
 			if spell.name == 'LeblancSlide' then
-				W1 = true
-			else
-				W1 = false	
+				ls = 'W1'
+				timer = GetTickCount()
 			end
 			if spell.name == 'LeblancSoulShackle' then
 				ls = 'E1'
 				timer = GetTickCount()
 			end
-			if spell.name == 'ItemBlackfireTorch' or spell.name == 'DeathfireGrasp' then
+			if spell.name == 'ItemBlackfireTorch' then
 				ls = 'item'
 				timer = GetTickCount()
 			end
@@ -307,400 +271,313 @@ function GetSpells()
 end
 
 function OnDraw()
-	local target = GetWeakEnemy('MAGIC',700)
-	local target2 = GetWeakEnemy('MAGIC',1150)
 	if myHero.dead == 0 and LBSettings.DrawCircles then
-		if Q1RDY==1 then
-			CustomCircle(700,1,2,myHero)
+		if Q1RDY==1 then CustomCircle(700,1,2,myHero) end
+		if Q1RDY==1 and W1RDY==1 then CustomCircle(1200,1,5,myHero) end
+		if target2~=nil and target==nil and Ziel==nil and GetDistance(target2)<1200 then CustomCircle(100,4,5,target2)
+		elseif target~=nil and GetDistance(target)<700 then CustomCircle(100,4,2,target) end
+		if Ziel~=nil then CustomCircle(75,30,2,Ziel) end
+		if	   Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and ls==nil then DrawTextObject('BURST',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and ls==nil then DrawTextObject('QRW',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and ls==nil then DrawTextObject('QRE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 and ls==nil then DrawTextObject('QR',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('QWE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('QE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and ls==nil then DrawTextObject('QW',myHero,Color.Yellow)
+		elseif Q1RDY==0 and W1RDY==0 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('E',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 and ls==nil then DrawTextObject('Q',myHero,Color.Yellow)
 		end
-		if Q1RDY==1 and W1RDY==1 then
-			CustomCircle(1250,1,5,myHero)
-		end
-		if target2~=nil and target==nil and Ziel==nil and GetDistance(target2)<1250 then
-			CustomCircle(100,4,5,target2)
-		elseif target~=nil and GetDistance(target)<700 then
-			CustomCircle(100,4,2,target)
-		end
-		if Ziel~=nil then
-			CustomCircle(100,4,1,Ziel)
-		end
-	end
-	if	   Q1RDY==1			 		and W1RDY==1 and W2RDY==0 and E1RDY==1 				and RRDY==1 	and ls==nil		then DrawTextObject('BURST',myHero,Color.Yellow)
-	elseif Q1RDY==1 				and W1RDY==1 and W2RDY==0 and E1RDY==0 				and RRDY==1		and ls==nil		then DrawTextObject('QRW',myHero,Color.Yellow)
-	elseif Q1RDY==1 				and W1RDY==0 and W2RDY==0 and E1RDY==1 				and RRDY==1		and ls==nil		then DrawTextObject('QRE',myHero,Color.Yellow)
-	elseif Q1RDY==1 				and W1RDY==0 and W2RDY==0 and E1RDY==0 				and RRDY==1		and ls==nil		then DrawTextObject('QR',myHero,Color.Yellow)
-	elseif Q1RDY==1 and Q2RDY==0 	and W1RDY==1 and W2RDY==0 and E1RDY==1 and E2RDY==0 and RRDY==0 	and ls==nil 	then DrawTextObject('QWE',myHero,Color.Yellow)
-	elseif Q1RDY==1 and Q2RDY==0 	and W1RDY==0 and W2RDY==0 and E1RDY==1 and E2RDY==0 and RRDY==0 	and ls==nil		then DrawTextObject('QE',myHero,Color.Yellow)
-	elseif Q1RDY==0 and Q2RDY==0 	and W1RDY==1 and W2RDY==0 and E1RDY==1 and E2RDY==0 and RRDY==0 	and ls==nil		then DrawTextObject('WE',myHero,Color.Yellow)
-	elseif Q1RDY==1 and Q2RDY==0 	and W1RDY==1 and W2RDY==0 and E1RDY==0 and E2RDY==0 and RRDY==0 	and ls==nil		then DrawTextObject('WQ',myHero,Color.Yellow)
-	elseif Q1RDY==0 and Q2RDY==0 	and W1RDY==0 and W2RDY==0 and E1RDY==1 and E2RDY==0 and RRDY==0 	and ls==nil		then DrawTextObject('E',myHero,Color.Yellow)
-	elseif Q1RDY==1 and Q2RDY==0 	and W1RDY==0 and W2RDY==0 and E1RDY==0 and E2RDY==0 and RRDY==0 	and ls==nil		then DrawTextObject('Q',myHero,Color.Yellow)
 	end
 end
 
 function KSNotifications()	
 	for i = 1, objManager:GetMaxHeroes() do
 		local enemy = objManager:GetHero(i)
-		if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable==0 and enemy.dead == 0) then	
+		if (enemy~=nil and enemy.team~=myHero.team and enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) and Ziel==nil then	
 
-			EnemyPos = Vector(enemy.x, enemy.y, enemy.z)
-			HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-			WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
-			EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos, EnemyPos))
-			if IsWall(WPos.x,WPos.y,WPos.z)==1 then
-				Wall = 1
-			else
-				Wall = 0
-			end
-			if CreepBlock(enemy.x, enemy.y, enemy.z,EPos.x,EPos.y,EPos.z)==1 then
-				Block = 1
-			else
-				Block = 0
-			end
+			EnemyPos = Vector(enemy.x,0,enemy.z)
+			HeroPos = Vector(myHero.x,0,myHero.z)
+			WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos,EnemyPos))
+			EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos,EnemyPos))
+			if IsWall(WPos.x,0,WPos.z)==1 then Wall = 1
+			else Wall = 0 end
+			if CreepBlock(enemy.x,0,enemy.z,EPos.x,0,EPos.z)==1 then Block = 1
+			else Block = 0 end
 			
 			local Qdam = getDmg("Q",enemy,myHero)
 			local Wdam = getDmg("W",enemy,myHero)
 			local Edam = getDmg("E",enemy,myHero)
 			local QMdam = getDmg("R",enemy,myHero,1)
-			local WMdam = getDmg("R",enemy,myHero,2)
-			local EMdam = getDmg("R",enemy,myHero,3)
-			local DFGdam = getDmg("DFG",enemy,myHero)*DFG
 			local BFTdam = getDmg("BLACKFIRE",enemy,myHero)*BFT
+			local DFGdam = getDmg("DFG",enemy,myHero)*DFG
 			
-			EnemyPos = Vector(enemy.x, enemy.y, enemy.z)
-			HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-			WPos = EnemyPos+(EnemyPos-HeroPos)*(-600/GetDistance(EnemyPos, HeroPos))
-			EPos = EnemyPos+(EnemyPos-HeroPos)*(-900/GetDistance(EnemyPos, HeroPos))
+			EnemyPos = Vector(enemy.x,0,enemy.z)
+			HeroPos = Vector(myHero.x,0,myHero.z)
+			WPos = EnemyPos+(EnemyPos-HeroPos)*(-600/GetDistance(EnemyPos,HeroPos))
+			EPos = EnemyPos+(EnemyPos-HeroPos)*(-900/GetDistance(EnemyPos,HeroPos))
 			
 --[[WQE]]	if enemy.health<(Qdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and GetDistance(enemy)>700 then
-				if Block==1 or Wall == 1 then
-					DrawTextObject('WQE (Long) KILL',enemy,Color.Red)
-				else
-					DrawTextObject('WQE (Long) KILL',enemy,Color.Yellow)
-				end
+				if Block==1 or Wall == 1 then DrawTextObject('WQE (Long) KILL',enemy,Color.Red)
+				else DrawTextObject('WQE (Long) KILL',enemy,Color.Yellow) end
 --[[WQR]]	elseif enemy.health<(Qdam*2)+(QMdam*2) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetDistance(enemy)>700 then
-				if Wall == 1 then
-					DrawTextObject('WQR (Long) KILL',enemy,Color.Red)
-				else
-					DrawTextObject('WQR (Long) KILL',enemy,Color.Yellow)
-				end
+				if Wall == 1 then DrawTextObject('WQR (Long) KILL',enemy,Color.Red)
+				else DrawTextObject('WQR (Long) KILL',enemy,Color.Yellow) end
 --[[WQRE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetDistance(enemy)>700 then
-				if Block==1 or Wall == 1 then
-					DrawTextObject('WQRE (Long) KILL',enemy,Color.Red)
-				else
-					DrawTextObject('WQRE (Long) KILL',enemy,Color.Yellow)
-				end
---[[IWQR]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetDistance(enemy)>700 then			
-				if Wall == 1 then
-					DrawTextObject('IWQR (Long) KILL',enemy,Color.Red)
-				else
-					DrawTextObject('IWQR (Long) KILL',enemy,Color.Yellow)
-				end
+				if Block==1 or Wall == 1 then DrawTextObject('WQRE (Long) KILL',enemy,Color.Red)
+				else DrawTextObject('WQRE (Long) KILL',enemy,Color.Yellow) end
+--[[IWQR]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetDistance(enemy)>700 then
+				if Wall == 1 then DrawTextObject('IWQR (Long) KILL',enemy,Color.Red)
+				else DrawTextObject('IWQR (Long) KILL',enemy,Color.Yellow) end
 --[[IWQRE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetDistance(enemy)>700 then
-				
-				if Block==1 or Wall == 1 then
-					DrawTextObject('IWQRE (Long) KILL',enemy,Color.Red)
-				else
-					DrawTextObject('IWQRE (Long) KILL',enemy,Color.Yellow)
-				end
---[[Q]]		elseif enemy.health<Qdam and Q1RDY==1 then
-				DrawTextObject('Q KILL',enemy,Color.Yellow)
---[[E]]		elseif enemy.health<Edam and E1RDY==1 then
-				if Block==1 then
-					DrawTextObject('E KILL',enemy,Color.Red)
-				else
-					DrawTextObject('E KILL',enemy,Color.Yellow)
-				end
+				if Block==1 or Wall == 1 then DrawTextObject('IWQRE (Long) KILL',enemy,Color.Red)
+				else DrawTextObject('IWQRE (Long) KILL',enemy,Color.Yellow) end
+--[[Q]]		elseif enemy.health<Qdam and Q1RDY==1 then DrawTextObject('Q KILL',enemy,Color.Yellow)
+--[[E]]		elseif enemy.health<Edam and E1RDY==1 then 
+				if Block==1 then DrawTextObject('E KILL',enemy,Color.Red)
+				else DrawTextObject('E KILL',enemy,Color.Yellow) end
 --[[QW]]	elseif enemy.health<(Qdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 then
-				if Wall == 1 then
-					DrawTextObject('QW KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QW KILL',enemy,Color.Yellow)
-				end
+				if Wall == 1 then DrawTextObject('QW KILL',enemy,Color.Red)
+				else DrawTextObject('QW KILL',enemy,Color.Yellow) end
 --[[QE]]	elseif enemy.health<(Qdam*2)+Edam and Q1RDY==1 and E1RDY==1 then 
-				if Block==1 then
-					DrawTextObject('QE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QE KILL',enemy,Color.Yellow)
-				end
+				if Block==1 then DrawTextObject('QE KILL',enemy,Color.Red)
+				else DrawTextObject('QE KILL',enemy,Color.Yellow) end
 --[[QWE]]	elseif enemy.health<(Qdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 then
-				if Block==1 or Wall == 1 then
-					DrawTextObject('QWE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QWE KILL',enemy,Color.Yellow)
-				end
---[[QR]]	elseif enemy.health<(Qdam*2)+QMdam and Q1RDY==1 and RRDY==1 then
-				DrawTextObject('QR KILL',enemy,Color.Yellow)
+				if Block==1 or Wall == 1 then DrawTextObject('QWE KILL',enemy,Color.Red)
+				else DrawTextObject('QWE KILL',enemy,Color.Yellow) end
+--[[QR]]	elseif enemy.health<(Qdam*2)+QMdam and Q1RDY==1 and RRDY==1 then DrawTextObject('QR KILL',enemy,Color.Yellow)
 --[[QRE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Edam and Q1RDY==1 and E1RDY==1 and RRDY==1 then
-				if Block==1 then
-					DrawTextObject('QRE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QRE KILL',enemy,Color.Yellow)
-				end
+				if Block==1 then DrawTextObject('QRE KILL',enemy,Color.Red)
+				else DrawTextObject('QRE KILL',enemy,Color.Yellow) end
 --[[QRW]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
-				if Wall == 1 then
-					DrawTextObject('QRW KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QRW KILL',enemy,Color.Yellow)
-				end
+				if Wall == 1 then DrawTextObject('QRW KILL',enemy,Color.Red)
+				else DrawTextObject('QRW KILL',enemy,Color.Yellow) end
 --[[QRWE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
-				if Block==1 or Wall == 1 then
-					DrawTextObject('QRWE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('QRWE KILL',enemy,Color.Yellow)
-				end
+				if Block==1 or Wall == 1 then DrawTextObject('QRWE KILL',enemy,Color.Red)
+				else DrawTextObject('QRWE KILL',enemy,Color.Yellow) end
 --[[IQR]]	elseif (enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+DFGdam)*DFG) and Q1RDY==1 and RRDY==1 then
-				DrawTextObject('IQR KILL',enemy,Color.Yellow)
 --[[IQRE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and E1RDY==1 and RRDY==1 then			
-				if Block==1 then
-					DrawTextObject('IQRE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('IQRE KILL',enemy,Color.Yellow)
-				end
+				if Block==1 then DrawTextObject('IQRE KILL',enemy,Color.Red)
+				else DrawTextObject('IQRE KILL',enemy,Color.Yellow) end
 --[[IQRW]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam)+(((Qdam*2)+(QMdam*2)+Wdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam)+(((Qdam*2)+(QMdam*2)+Wdam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
-				if Wall == 1 then
-					DrawTextObject('IQRW KILL',enemy,Color.Red)
-				else
-					DrawTextObject('IQRW KILL',enemy,Color.Yellow)
-				end
+				if Wall == 1 then DrawTextObject('IQRW KILL',enemy,Color.Red)
+				else DrawTextObject('IQRW KILL',enemy,Color.Yellow) end
 --[[IQRWE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
-				if Block==1 or Wall == 1 then
-					DrawTextObject('IQRWE KILL',enemy,Color.Red)
-				else
-					DrawTextObject('IQRWE KILL',enemy,Color.Yellow)
-				end
+				if Block==1 or Wall == 1 then DrawTextObject('IQRWE KILL',enemy,Color.Red)
+				else DrawTextObject('IQRWE KILL',enemy,Color.Yellow) end
 			end
 		end
 	end
 end
 
-function Combo()
-	local target = GetWeakEnemy('MAGIC',700)
-	local targetE = GetWeakEnemy('MAGIC',800)
-	local target2 = GetWeakEnemy('MAGIC',1100)
-	if target2~=nil then
-		EnemyPos = Vector(target2.x, target2.y, target2.z)
-		HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-		WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
-		if IsWall(WPos.x,WPos.y,WPos.z)==1 then
-			Wall = 1
-		else
-			Wall = 0
-		end
-	elseif target~=nil then
-		EnemyPos = Vector(target.x, target.y, target.z)
-		HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-		WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
-		if IsWall(WPos.x,WPos.y,WPos.z)==1 then
-			Wall = 1
-		else
-			Wall = 0
-		end
-	end
-	if target2~=nil then
-		EnemyPos = Vector(target2.x, target2.y, target2.z)
-		HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-		EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos, EnemyPos))
-		if CreepBlock(target2.x, target2.y, target2.z,EPos.x,EPos.y,EPos.z)==1 then
-			Block = 1
-		else
-			Block = 0
-		end
-	elseif target~=nil then
-		if CreepBlock(target.x, target.y, target.z)==1 then
-			Block = 1
-		else
-			Block = 0
-		end
-	end
+function Distance()
+	if target2~=nil and runningAway(target2) then distance = 1300-(384+((target2.movespeed/1000)*(384)))
+	else distance = 1150 end
+	return distance
+end
 
-		if ls==nil then
---[[QRWE]]	if target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then
-				QRWE = true
-				Ziel = target
-				target = nil
---[[QRE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and Block==0 then
-				QRE = true
-				Ziel = target
-				target = nil
---[[QRW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then
-				QRW = true
-				Ziel = target
-				target = nil
---[[QR]]	elseif target~=nil	and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then
-				QR = true
-				Ziel = target
-				target = nil
---[[QWE]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 then
-				QWE = true
-				Ziel = target
-				target = nil
---[[QE]]	elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and Block==0 then
-				QE = true
-				Ziel = target
-				target = nil
---[[QW]]	elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and  Wall==0 then
-				QW = true
-				Ziel = target
-				target = nil
---[[WQRE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and Wall==0 and Block==0 then
-				WQRE = true
-				Ziel = target2
-				target2 = nil
---[[WQR]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and Wall==0 then
-				WQR = true
-				Ziel = target2
-				target2 = nil
---[[WQE]]	elseif target2~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and Wall==0 and Block==0 then
-				WQE = true
-				Ziel = target2
-				target2 = nil
---[[E]]		elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and Block==0 then
-				xE = true
-				Ziel = targetE
-				targetE = nil
---[[Q]]		elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then
-				xQ = true
-				Ziel = target
-				target = nil
+function runningAway(slowtarget)
+   local d1 = GetDistance(slowtarget)
+   local x, y, z = GetFireahead(slowtarget,2,0)
+   local d2 = GetDistance({x=x, y=y, z=z})
+   local d3 = GetDistance({x=x, y=y, z=z},slowtarget)
+   local angle = math.acos((d2*d2-d3*d3-d1*d1)/(-2*d3*d1))
+   return angle%(2*math.pi)>math.pi/2 and angle%(2*math.pi)<math.pi*3/2
+end
+
+function Combo()
+	for i = 1, objManager:GetMaxHeroes() do
+		local enemy = objManager:GetHero(i)
+		if (enemy~=nil and enemy.team~=myHero.team and enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) then	
+
+			EnemyPos = Vector(enemy.x,0,enemy.z)
+			HeroPos = Vector(myHero.x,0,myHero.z)
+			WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos,EnemyPos))
+			EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos,EnemyPos))
+			if IsWall(WPos.x,0,WPos.z)==1 then Wall = 1
+			else Wall = 0 end
+			if CreepBlock(enemy.x,0,enemy.z,EPos.x,0,EPos.z)==1 then Block = 1
+			else Block = 0 end
+			
+			local Qdam = getDmg("Q",enemy,myHero)
+			local Wdam = getDmg("W",enemy,myHero)
+			local Edam = getDmg("E",enemy,myHero)
+			local QMdam = getDmg("R",enemy,myHero,1)
+			local BFTdam = getDmg("BLACKFIRE",enemy,myHero)*BFT
+			local DFGdam = getDmg("DFG",enemy,myHero)*DFG
+			
+			EnemyPos = Vector(enemy.x,0,enemy.z)
+			HeroPos = Vector(myHero.x,0,myHero.z)
+			WPos = EnemyPos+(EnemyPos-HeroPos)*(-600/GetDistance(EnemyPos,HeroPos))
+			EPos = EnemyPos+(EnemyPos-HeroPos)*(-900/GetDistance(EnemyPos,HeroPos))
+			
+			if target2~=nil then
+				EnemyPos = Vector(target2.x, target2.y, target2.z)
+				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
+				WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
+				if IsWall(WPos.x,WPos.y,WPos.z)==1 then WallT = 1
+				else WallT = 0 end
+			elseif target~=nil then
+				EnemyPos = Vector(target.x, target.y, target.z)
+				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
+				WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
+				if IsWall(WPos.x,WPos.y,WPos.z)==1 then WallT = 1
+				else WallT = 0 end
+			end
+			if target2~=nil then
+				EnemyPos = Vector(target2.x, target2.y, target2.z)
+				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
+				EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos, EnemyPos))
+				if CreepBlock(target2.x, target2.y, target2.z,EPos.x,EPos.y,EPos.z)==1 then BlockT = 1
+				else BlockT = 0 end
+			elseif target~=nil then
+				if CreepBlock(target.x, target.y, target.z)==1 then BlockT = 1
+				else BlockT = 0 end
+			end
+
+			if ls==nil and Ziel==nil then
+				if GetDistance(enemy)<675 and enemy.health<Qdam and Q1RDY==1 then xQ = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and enemy.health<Wdam and W1RDY==1 then CastSpellXYZ('W',enemy.x,0,enemy.z)
+				elseif GetDistance(enemy)<675 and enemy.health<Edam and E1RDY==1 and Block==0 then xE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and Wall==0 then QW = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Edam and Q1RDY==1 and E1RDY==1 and Block==0 then QE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and ((enemy.health<(Qdam*2)+QMdam ) or (enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+DFGdam)*DFG)) and Q1RDY==1 and RRDY==1 then QR = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Wdam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and Wall==0 then QRW = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then QWE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT)) and Q1RDY==1 and E1RDY==1 and RRDY==1 and  Block==0 then QRE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Wdam+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then QRWE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<1200 and enemy.health<(Qdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then WQE = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<1200 and (enemy.health<(Qdam*2)+(QMdam*2) or (enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and  Wall==0 then WQR = true
+					Ziel = enemy
+				elseif GetDistance(enemy)<1200 and (enemy.health<(Qdam*2)+(QMdam*2)+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then WQRE = true
+					Ziel = enemy
+				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then QRWE = true
+					Ziel = target
+				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and BlockT==0 then QRE = true
+					Ziel = target
+				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then QRW = true
+					Ziel = target
+				elseif target~=nil	and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then QR = true
+					Ziel = target
+				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 then QWE = true
+					Ziel = target
+				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and BlockT==0 then QE = true
+					Ziel = target
+				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and WallT==0 then QW = true
+					Ziel = target
+				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then WQRE = true
+					Ziel = target2
+				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then WQR = true
+					Ziel = target2
+				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 and BlockT==0 then WQE = true
+					Ziel = target2
+				elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and BlockT==0 then xE = true
+					Ziel = targetE
+				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then xQ = true
+					Ziel = target
+				end
+			end
+			if LBSettings.MouseMove and dodgetimer == 0 then
+				if Ziel==nil then MoveMouse() end
 			end
 		end
-		
---[[QRWE]]	if QRWE and Ziel~=nil then
-				if  ls==nil  then UseDFGBFT() end
-				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if 	ls=='Q2' then run_many_reset(1, Wspell) end
-				if 	ls=='W1' then Espell() end
-				if	ls=='E1' and LBSettings.AWB==false then
-					QRWE = false
-					target = GetWeakEnemy('MAGIC',700)
-				elseif	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then
-					QRWE = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QRE]]	elseif QRE and Ziel~=nil then
-				if  ls==nil  then UseDFGBFT() end
-				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if ls=='Q2' then Espell() end
-				if	ls=='E1' then
-					QRE = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QRW]]	elseif QRW and Ziel~=nil then
-				if  ls==nil  then UseDFGBFT() end
-				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if 	ls=='Q2' then run_many_reset(1, Wspell) end
-				if 	ls=='W1' and LBSettings.AWB==false then
-					QRW = false
-					target = GetWeakEnemy('MAGIC',700)
-				elseif 	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then
-					QWE = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QR]]	elseif QR and Ziel~=nil then
-				if  ls==nil  then UseDFGBFT() end
-				if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if 	ls=='Q2' then
-					QR = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QWE]]	elseif QWE and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then run_many_reset(1, Wspell) end
-				if 	ls=='W1' then Espell() end
-				if	ls=='E1' and LBSettings.AWB==false then
-					QWE = false
-					target = GetWeakEnemy('MAGIC',700)
-				elseif	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then
-					QWE = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QE]]	elseif QE and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then Espell() end
-				if 	ls=='E1' then
-					QE = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[QW]]	elseif QW and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then run_many_reset(1, Wspell) end
-				if	ls=='W1' and LBSettings.AWB==false then
-					QW = false
-					target = GetWeakEnemy('MAGIC',700)
-				elseif	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z)
-				elseif	ls=='W2' and LBSettings.AWB==true then
-					QW = false
-					target = GetWeakEnemy('MAGIC',700)
-				end
---[[WQRE]]	elseif WQRE and Ziel~=nil then
-				if	ls==nil  then run_many_reset(1, WLspell) end
-				if 	ls=='W1' then UseDFGBFT() end
-				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if 	ls=='Q2' then Espell() end
-				if	ls=='E1' then
-					WQRE = false
-					target2 = GetWeakEnemy('MAGIC',1150)
-				end
---[[WQR]]	elseif WQR and Ziel~=nil then
-				if		ls==nil  then run_many_reset(1, WLspell) end
-				if 	ls=='W1' then UseDFGBFT() end
-				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
-				if 	ls=='Q2' then
-					WQR = false
-					target2 = GetWeakEnemy('MAGIC',1150)
-				end
---[[WQE]]	elseif WQE and Ziel~=nil then
-				if		ls==nil  then run_many_reset(1, WLspell) end
-				if 	ls=='W1' then UseDFGBFT() end
-				if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if 	ls=='Q1' then Espell() end
-				if	ls=='E1' then
-					WQE = false
-					target2 = GetWeakEnemy('MAGIC',1150)
-				end
---[[xE]]	elseif xE and Ziel~=nil then
-				if		ls==nil  then Espell() end
-				if	ls=='E1' then
-					xE = false
-					targetE = GetWeakEnemy('MAGIC',800)
-				end
---[[xQ]]	elseif xQ and Ziel~=nil then
-				if		ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-				if	ls=='Q1' then
-					xQ = false 
-					target = GetWeakEnemy('MAGIC',700)
-				end
-			end
-	if (QRWE==false and QRE==false and QRW==false and QR==false and QWE==false and QE==false and QW==false and WQRE==false and WQR==false and WQE==false and xE==false and xQ==false) then
+	end
+end
+
+function ComboAlwaysOn()	
+	if QRWE and Ziel~=nil then
+		if 	ls==nil  then UseDFGBFT() end
+		if	((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then run_many_reset(1, Wspell) end
+		if 	ls=='W1' then Espell() end
+		if	ls=='E1' and LBSettings.AWB==false then QRWE = false end
+		if	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
+		if	ls=='W2' and LBSettings.AWB==true then QRWE = false end
+	elseif QRE and Ziel~=nil then
+		if  ls==nil  then UseDFGBFT() end
+		if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then Espell() end
+		if	ls=='E1' then QRE = false end
+	elseif QRW and Ziel~=nil then
+		if  ls==nil  then UseDFGBFT() end
+		if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then run_many_reset(1, Wspell) end
+		if 	ls=='W1' and LBSettings.AWB==false then QRW = false end
+		if 	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
+		if	ls=='W2' and LBSettings.AWB==true then QWE = false end
+	elseif QR and Ziel~=nil then
+		if 	ls==nil  then UseDFGBFT() end
+		if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then QR = false end
+	elseif QWE and Ziel~=nil then
+		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then run_many_reset(1, Wspell) end
+		if 	ls=='W1' then Espell() end
+		if	ls=='E1' and LBSettings.AWB==false then QWE = false end
+		if	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
+		if	ls=='W2' and LBSettings.AWB==true then QWE = false end
+	elseif QE and Ziel~=nil then
+		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then Espell() end
+		if 	ls=='E1' then QE = false end
+	elseif QW and Ziel~=nil then
+		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then run_many_reset(1, Wspell) end
+		if	ls=='W1' and LBSettings.AWB==false then QW = false end
+		if	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
+		if	ls=='W2' and LBSettings.AWB==true then QW = false end
+	elseif WQRE and Ziel~=nil then
+		if	ls==nil  then run_many_reset(1, WLspell) end
+		if 	ls=='W1' then UseDFGBFT() end
+		if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then Espell() end
+		if	ls=='E1' then WQRE = false end
+	elseif WQR and Ziel~=nil then
+		if	ls==nil  then run_many_reset(1, WLspell) end
+		if 	ls=='W1' then UseDFGBFT() end
+		if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
+		if 	ls=='Q2' then WQR = false end
+	elseif WQE and Ziel~=nil then
+		if	ls==nil  then run_many_reset(1, WLspell) end
+		if 	ls=='W1' then UseDFGBFT() end
+		if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if 	ls=='Q1' then Espell() end
+		if	ls=='E1' then WQE = false end
+	elseif xE and Ziel~=nil then
+		if		ls==nil  then Espell() end
+		if	ls=='E1' then xE = false end
+	elseif xQ and Ziel~=nil then
+		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
+		if	ls=='Q1' then xQ = false end
+	end
+	if (QRWE==false and QRE==false and QRW==false and QR==false and QWE==false and QE==false and QW==false and WQRE==false and WQR==false and WQE==false and xE==false and xQ==false and QWW==false) then
 		ls = nil
 		Ziel = nil
 	end
-	if LBSettings.MouseMove and dodgetimer == 0 then 
-		if Ziel~=nil then
-			MoveTarget(Ziel)
-		else
-			MoveMouse()
-		end
+	if dodgetimer == 0 then
+		if Ziel~=nil then MoveTarget(Ziel) end
 	end
 end
 
 function Espell()
-	if Ziel~=nil then
-		if GetDistance(Ziel)<250 then
-			SpellXYZ(E,E1RDY,myHero,Ziel,250,Ziel.x,Ziel.z)
-		else
-			SpellPred(E,E1RDY,myHero,Ziel,Erange,Edelay,Espeed,1,Eradius)
-		end
+	for i = 1, objManager:GetMaxObjects(), 1 do
+		obj = objManager:GetObject(i)
+		if Ziel~=nil and obj~=nil and obj.charName == 'leBlanc_slide_impact_self.troy' and GetDistance(obj) < 100 then SpellPredSimple(E,E1RDY,myHero,Ziel,800,1.5,15,1,125) end
 	end
 end
 
@@ -713,14 +590,8 @@ end
 function ReturnPad()
 	for i = 1, objManager:GetMaxObjects(), 1 do
         obj = objManager:GetObject(i)
-        if obj~=nil then
-			if obj.charName == 'Leblanc_displacement_blink_indicator.troy' then
-				DrawSphere(85,30,5,obj.x,obj.y,obj.z)
-			end
-			if obj.charName == 'Leblanc_displacement_blink_indicator_ult.troy' then
-				DrawSphere(85,30,4,obj.x,obj.y,obj.z)
-			end
-		end
+		if obj~=nil and obj.charName == 'Leblanc_displacement_blink_indicator.troy' then DrawSphere(85,30,5,obj.x,obj.y,obj.z) end
+		if obj~=nil and obj.charName == 'Leblanc_displacement_blink_indicator_ult.troy' then DrawSphere(85,30,4,obj.x,obj.y,obj.z) end
 	end
 end
 
@@ -765,8 +636,6 @@ local JumpSpots = {
 {x = 3831, y = -189, z = 2475},
 {x = 4408, y = -189, z = 1402},
 {x = 4467, y = -189, z = 1985},
-{x = 5107, y = -189, z = 3207},
-{x = 5081, y = -189, z = 2625},
 {x = 5911, y = -189, z = 2893},
 {x = 5731, y = -189, z = 2375},
 {x = 7785, y = -189, z = 2751},
@@ -785,8 +654,6 @@ local JumpSpots = {
 {x = 9677, y = -189, z = 3181},
 {x = 12186, y = -189, z = 6703},
 {x = 12179, y = -189, z = 6119},
-{x = 12000, y = -189, z = 7743},
-{x = 12129, y = -189, z = 7173},
 {x = 9579, y = -189, z = 8923},
 {x = 9869, y = -189, z = 9405},
 {x = 8690, y = -189, z = 10255},
@@ -801,12 +668,10 @@ local JumpSpots = {
 {x = 6947, y = -190, z = 11479},
 {x = 6191, y = -189, z = 10031},
 {x = 5881, y = -189, z = 9523},
-{x = 5308, y = -189, z = 10244},
-{x = 5431, y = -189, z = 9673},
+{x = 5368, y = -189, z = 9673},
+{x = 5094, y = -189, z = 10138},
 {x = 3780, y = -189, z = 9213},
 {x = 4267, y = -189, z = 8873},
-{x = 3303, y = -189, z = 8628},
-{x = 3701, y = -189, z = 8203},
 {x = 1645, y = -189, z = 8813},
 {x = 1731, y = -189, z = 8273},
 {x = 6717, y = -189, z = 3229},
@@ -817,10 +682,6 @@ local JumpSpots = {
 {x = 6143, y = -189, z = 4667},
 {x = 5111, y = -189, z = 5386},
 {x = 4605, y = -189, z = 5501},
-{x = 7243, y = -189, z = 8329},
-{x = 6681, y = -189, z = 8323},
-{x = 7545, y = -189, z = 7359},
-{x = 7400, y = -189, z = 7933},
 {x = 6109, y = -189, z = 5565},
 {x = 5581, y = -189, z = 5687},
 {x = 7753, y = -189, z = 5897},
@@ -840,10 +701,6 @@ function Jump()
 	local b3x,b3z = 8329,5725
 	local a4x,a4z = 6109,5565
 	local b4x,b4z = 5581,5687
-	local a5x,a5z = 7545,7359
-	local b5x,b5z = 7400,7933
-	local a9x,a9z = 7243,8329
-	local b9x,b9z = 6681,8323
 	local a10x,a10z = 5111,5386
 	local b10x,b10z = 4605,5501
 	local a11x,a11z = 6481,4295
@@ -854,12 +711,10 @@ function Jump()
 	local b13x,b13z = 6781,3825
 	local a14x,a14z = 1645,8813
 	local b14x,b14z = 1731,8273
-	local a15x,a15z = 3303,8628
-	local b15x,b15z = 3701,8203
 	local a16x,a16z = 3780,9213
 	local b16x,b16z = 4267,8873
-	local a17x,a17z = 5308,10244
-	local b17x,b17z = 5431,9673
+	local a17x,a17z = 5368,9673
+	local b17x,b17z = 5094,10138
 	local a18x,a18z = 6191,10031
 	local b18x,b18z = 5881,9523
 	local a19x,a19z = 6949,11887
@@ -874,8 +729,6 @@ function Jump()
 	local b23x,b23z = 8613,9679
 	local a24x,a24z = 9579,8923
 	local b24x,b24z = 9869,9405
-	local a25x,a25z = 12000,7743
-	local b25x,b25z = 12129,7173
 	local a26x,a26z = 12186,6703
 	local b26x,b26z = 12179,6119
 	local a27x,a27z = 9191,3468
@@ -894,8 +747,6 @@ function Jump()
 	local b33x,b33z = 8009,2295
 	local a34x,a34z = 5911,2893
 	local b34x,b34z = 5731,2375
-	local a35x,a35z = 5107,3207
-	local b35x,b35z = 5081,2625
 	local a36x,a36z = 4408,1402
 	local b36x,b36z = 4467,1985
 	local a37x,a37z = 3384,2221
@@ -905,17 +756,17 @@ function Jump()
 		
 	for _, JumpSpot in pairs(JumpSpots) do
 		if LBSettings.jumphelper and GetMap() == 2 then
-			if GetDistance(JumpSpot,myHero) <= ShowRange then
-				if GetDistance(JumpSpot,mousePos) <= jumpmouserange then
-					DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, jumpmouserange, 0xFFFF0000)
-				else DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, jumpmouserange, 0xFFFF8000)
+			if GetDistance(JumpSpot,myHero) <= 2500 then
+				if GetDistance(JumpSpot,mousePos) <= 75 then
+					DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, 75, 0xFFFF0000)
+				else DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, 75, 0xFFFF8000)
 				end
 			end
 		end
 	end
        
 	for _, JumpSpot in pairs(JumpSpots) do
-		if GetDistance(JumpSpot,mousePos) <= jumpmouserange and KeyDown(1) and LBSettings.jumphelper and GetMap() == 2 then
+		if GetDistance(JumpSpot,mousePos) <= 75 and KeyDown(1) and LBSettings.jumphelper and GetMap() == 2 then
 			MoveToXYZ(JumpSpot.x,JumpSpot.y,JumpSpot.z)
 			jump2 = true
 		end
@@ -926,147 +777,66 @@ function Jump()
 	end
        
 	if jump2 == true and LBSettings.jumphelper and W1RDY == 1 and GetMap() == 2 then
-		local p = myHero
-		if distXYZ(a1x,a1z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b1x,-189,b1z)
-		elseif distXYZ(b1x,b1z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a1x,-189,a1z)
-		elseif distXYZ(a2x,a2z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b2x,-189,b2z)
-		elseif distXYZ(b2x,b2z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a2x,-189,a2z)
-		elseif distXYZ(a3x,a3z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b3x,-189,b3z)
-		elseif distXYZ(b3x,b3z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a3x,-189,a3z)
-		elseif distXYZ(a4x,a4z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b4x,-189,b4z)
-		elseif distXYZ(b4x,b4z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a4x,-189,a4z)
-		elseif distXYZ(a5x,a5z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b5x,-189,b5z)
-		elseif distXYZ(b5x,b5z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a5x,-189,a5z)
-		elseif distXYZ(a9x,a9z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b9x,-189,b9z)
-		elseif distXYZ(b9x,b9z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a9x,-189,a9z)
-		elseif distXYZ(a10x,a10z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b10x,-189,b10z)
-		elseif distXYZ(b10x,b10z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a10x,-189,a10z)
-		elseif distXYZ(a11x,a11z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b11x,-189,b11z)
-		elseif distXYZ(b11x,b11z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a11x,-189,a11z)
-		elseif distXYZ(a12x,a12z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b12x,-189,b12z)
-		elseif distXYZ(b12x,b12z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a12x,-189,a12z)
-		elseif distXYZ(a13x,a13z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b13x,-189,b13z)
-		elseif distXYZ(b13x,b13z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a13x,-189,a13z)
-		elseif distXYZ(a14x,a14z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b14x,-189,b14z)
-		elseif distXYZ(b14x,b14z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a14x,-189,a14z)
-		elseif distXYZ(a15x,a15z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b15x,-189,b15z)
-		elseif distXYZ(b15x,b15z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a15x,-189,a15z)
-		elseif distXYZ(a16x,a16z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b16x,-189,b16z)
-		elseif distXYZ(b16x,b16z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a16x,-189,a16z)
-		elseif distXYZ(a17x,a17z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b17x,-189,b17z)
-		elseif distXYZ(b17x,b17z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a17x,-189,a17z)
-		elseif distXYZ(a18x,a18z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b18x,-189,b18z)
-		elseif distXYZ(b18x,b18z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a18x,-189,a18z)
-		elseif distXYZ(a19x,a19z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b19x,-189,b19z)
-		elseif distXYZ(b19x,b19z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a19x,-189,a19z)
-		elseif distXYZ(a20x,a20z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b20x,-189,b20z)
-		elseif distXYZ(b20x,b20z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a20x,-189,a20z)
-		elseif distXYZ(a21x,a21z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b21x,-189,b21z)
-		elseif distXYZ(b21x,b21z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a21x,-189,a21z)
-		elseif distXYZ(a22x,a22z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b22x,-189,b22z)
-		elseif distXYZ(b22x,b22z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a22x,-189,a22z)
-		elseif distXYZ(a23x,a23z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b23x,-189,b23z)
-		elseif distXYZ(b23x,b23z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a23x,-189,a23z)
-		elseif distXYZ(a24x,a24z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b24x,-189,b24z)
-		elseif distXYZ(b24x,b24z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a24x,-189,a24z)
-		elseif distXYZ(a25x,a25z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b25x,-189,b25z)
-		elseif distXYZ(b25x,b25z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a25x,-189,a25z)
-		elseif distXYZ(a26x,a26z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b26x,-189,b26z)
-		elseif distXYZ(b26x,b26z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a26x,-189,a26z)
-		elseif distXYZ(a27x,a27z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b27x,-189,b27z)
-		elseif distXYZ(b27x,b27z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a27x,-189,a27z)
-		elseif distXYZ(a28x,a28z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b28x,-189,b28z)
-		elseif distXYZ(b28x,b28z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a28x,-189,a28z)
-		elseif distXYZ(a29x,a29z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b29x,-189,b29z)
-		elseif distXYZ(b29x,b29z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a29x,-189,a29z)
-		elseif distXYZ(a30x,a30z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b30x,-189,b30z)
-		elseif distXYZ(b30x,b30z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a30x,-189,a30z)
-		elseif distXYZ(a31x,a31z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b31x,-189,b31z)       
-		elseif distXYZ(b31x,b31z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a31x,-189,a31z)
-		elseif distXYZ(a32x,a32z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b32x,-189,b32z)
-		elseif distXYZ(b32x,b32z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a32x,-189,a32z)
-		elseif distXYZ(a33x,a33z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b33x,-189,b33z)       
-		elseif distXYZ(b33x,b33z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a33x,-189,a33z)
-		elseif distXYZ(a34x,a34z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b34x,-189,b34z)               
-		elseif distXYZ(b34x,b34z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a34x,-189,a34z)       
-		elseif distXYZ(a35x,a35z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b35x,-189,b35z)               
-		elseif distXYZ(b35x,b35z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a35x,-189,a35z)       
-		elseif distXYZ(a36x,a36z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b36x,-189,b36z)               
-		elseif distXYZ(b36x,b36z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a36x,-189,a36z)               
-		elseif distXYZ(a37x,a37z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b37x,-189,b37z)                       
-		elseif distXYZ(b37x,b37z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a37x,-189,a37z)       
-		elseif distXYZ(a38x,a38z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',b38x,-189,b38z)               
-		elseif distXYZ(b38x,b38z,p.x,p.z)<jumpspotrange then
-				CastSpellXYZ('W',a38x,-189,a38z)       
+		if distXYZ(a1x,a1z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b1x,-189,b1z)
+		elseif distXYZ(b1x,b1z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a1x,-189,a1z)
+		elseif distXYZ(a2x,a2z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b2x,-189,b2z)
+		elseif distXYZ(b2x,b2z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a2x,-189,a2z)
+		elseif distXYZ(a3x,a3z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b3x,-189,b3z)
+		elseif distXYZ(b3x,b3z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a3x,-189,a3z)
+		elseif distXYZ(a4x,a4z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b4x,-189,b4z)
+		elseif distXYZ(b4x,b4z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a4x,-189,a4z)
+		elseif distXYZ(a10x,a10z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b10x,-189,b10z)
+		elseif distXYZ(b10x,b10z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a10x,-189,a10z)
+		elseif distXYZ(a11x,a11z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b11x,-189,b11z)
+		elseif distXYZ(b11x,b11z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a11x,-189,a11z)
+		elseif distXYZ(a12x,a12z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b12x,-189,b12z)
+		elseif distXYZ(b12x,b12z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a12x,-189,a12z)
+		elseif distXYZ(a13x,a13z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b13x,-189,b13z)
+		elseif distXYZ(b13x,b13z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a13x,-189,a13z)
+		elseif distXYZ(a14x,a14z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b14x,-189,b14z)
+		elseif distXYZ(b14x,b14z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a14x,-189,a14z)
+		elseif distXYZ(a16x,a16z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b16x,-189,b16z)
+		elseif distXYZ(b16x,b16z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a16x,-189,a16z)
+		elseif distXYZ(a17x,a17z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b17x,-189,b17z)
+		elseif distXYZ(b17x,b17z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a17x,-189,a17z)
+		elseif distXYZ(a18x,a18z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b18x,-189,b18z)
+		elseif distXYZ(b18x,b18z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a18x,-189,a18z)
+		elseif distXYZ(a19x,a19z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b19x,-189,b19z)
+		elseif distXYZ(b19x,b19z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a19x,-189,a19z)
+		elseif distXYZ(a20x,a20z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b20x,-189,b20z)
+		elseif distXYZ(b20x,b20z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a20x,-189,a20z)
+		elseif distXYZ(a21x,a21z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b21x,-189,b21z)
+		elseif distXYZ(b21x,b21z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a21x,-189,a21z)
+		elseif distXYZ(a22x,a22z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b22x,-189,b22z)
+		elseif distXYZ(b22x,b22z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a22x,-189,a22z)
+		elseif distXYZ(a23x,a23z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b23x,-189,b23z)
+		elseif distXYZ(b23x,b23z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a23x,-189,a23z)
+		elseif distXYZ(a24x,a24z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b24x,-189,b24z)
+		elseif distXYZ(b24x,b24z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a24x,-189,a24z)
+		elseif distXYZ(a26x,a26z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b26x,-189,b26z)
+		elseif distXYZ(b26x,b26z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a26x,-189,a26z)
+		elseif distXYZ(a27x,a27z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b27x,-189,b27z)
+		elseif distXYZ(b27x,b27z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a27x,-189,a27z)
+		elseif distXYZ(a28x,a28z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b28x,-189,b28z)
+		elseif distXYZ(b28x,b28z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a28x,-189,a28z)
+		elseif distXYZ(a29x,a29z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b29x,-189,b29z)
+		elseif distXYZ(b29x,b29z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a29x,-189,a29z)
+		elseif distXYZ(a30x,a30z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b30x,-189,b30z)
+		elseif distXYZ(b30x,b30z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a30x,-189,a30z)
+		elseif distXYZ(a31x,a31z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b31x,-189,b31z)
+		elseif distXYZ(b31x,b31z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a31x,-189,a31z)
+		elseif distXYZ(a32x,a32z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b32x,-189,b32z)
+		elseif distXYZ(b32x,b32z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a32x,-189,a32z)
+		elseif distXYZ(a33x,a33z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b33x,-189,b33z)
+		elseif distXYZ(b33x,b33z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a33x,-189,a33z)
+		elseif distXYZ(a34x,a34z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b34x,-189,b34z)
+		elseif distXYZ(b34x,b34z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a34x,-189,a34z)
+		elseif distXYZ(a36x,a36z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b36x,-189,b36z)
+		elseif distXYZ(b36x,b36z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a36x,-189,a36z)
+		elseif distXYZ(a37x,a37z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b37x,-189,b37z)
+		elseif distXYZ(b37x,b37z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a37x,-189,a37z)
+		elseif distXYZ(a38x,a38z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',b38x,-189,b38z)
+		elseif distXYZ(b38x,b38z,myHero.x,myHero.z)<50 then CastSpellXYZ('W',a38x,-189,a38z)
 		end
 	end
 end
@@ -1270,25 +1040,15 @@ function LoadTable()
 	for i = 1, objManager:GetMaxHeroes() do
 		local enemy = objManager:GetHero(i)
 		if (enemy ~= nil and enemy.team ~= myHero.team) then
-			if enemy.name == 'Aatrox' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 650, type = 3, radius = 225, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 125, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
 			if enemy.name == 'Ahri' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 880, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 975, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Alistar' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 50, type = 3, radius = 200, color= 0x0000FFFF, time = 0.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
 			end
 			if enemy.name == 'Amumu' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
 			end
 			if enemy.name == 'Anivia' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 90, color= 0x0000FFFF, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Annie' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 3, radius = 300, color= 0x0000FFFF, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
 			end
 			if enemy.name == 'Ashe' then
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 50000, type = 4, radius = 120, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
@@ -1301,7 +1061,6 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Cassiopeia' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 175, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 125, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Caitlyn' then
@@ -1309,13 +1068,9 @@ function LoadTable()
 			end
 			if enemy.name == 'Corki' then
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1225, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 2, radius = 150, color= 0x0000FFFF, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Chogath' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 275, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Darius' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 540, type = 1, radius = 125, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Diana' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 205, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1325,22 +1080,20 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 1, radius = 100, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'DrMundo' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Elise' and enemy.range>300 then
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Ezreal' then
-				table.insert(skillshotArray,{name= enemy.SpellNameWe, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
+				if enemy.ap>enemy.addDamage then
+					table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
+				elseif enemy.ap<enemy.addDamage then
+					table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
+				end
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 4, radius = 150, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
 			end
-			if enemy.name == 'FiddleSticks' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 600, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
 			if enemy.name == 'Fizz' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 400, type = 3, radius = 300, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })				
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 550, type = 1, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1275, type = 2, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Galio' then
@@ -1349,13 +1102,10 @@ function LoadTable()
 			end
 			if enemy.name == 'Gragas' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 320, color= 0xFFFFFF00, time = 2.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 650, type = 2, radius = 60, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 3, radius = 400, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Graves' then
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 110, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 750, type = 1, radius = 50, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 3, radius = 275, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Hecarim' then
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 125, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1364,21 +1114,13 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 225, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
-			--[[if enemy.name == 'Irelia' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1200, type = 1, radius = 80, color= 0x0000FFFF, time = 0.8, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end]]
 			if enemy.name == 'Janna' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1700, type = 1, radius = 100, color= 0x0000FFFF, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'JarvanIV' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 830, type = 3, radius = 150, color= 0xFFFFFF00, time = 2, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 770, type = 1, radius = 70, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Jayce' and enemy.range>300 then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1, radius = 125, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Jinx' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1.5, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 3, radius = 225, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
@@ -1386,17 +1128,13 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Karthus' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 875, type = 3, radius = 150, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Kassadin' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 5, radius = 150, color= 0xFF00FF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 875, type = 3, radius = 75, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Kennen' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 75, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Khazix' then	
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 75, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })	
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 310, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'KogMaw' then
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1115, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1404,18 +1142,15 @@ function LoadTable()
 			end
 			if enemy.name == 'Leblanc' then
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'LeeSin' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 975, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Leona' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 160, color= 0x0000FFFF, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Lissandra' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 725, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 120, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Lucian' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 100, color= 0x0000FFFF, time = 0.75, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1429,9 +1164,6 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 300, color= 0xFFFFFF00, time = 2.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 3000, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
-			if enemy.name == 'Malphite' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 3, radius = 325, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
 			if enemy.name == 'Malzahar' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 100 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 250 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1440,12 +1172,8 @@ function LoadTable()
 				table.insert(skillshotArray,{name= 'MaokaiTrunkLineMissile', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 350 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
-			if enemy.name == 'MissFortune' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 400, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
 			if enemy.name == 'Morgana' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1300, type = 1, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 350, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
 			end
 			if enemy.name == 'Nami' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 875, type = 3, radius = 210, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
@@ -1457,20 +1185,11 @@ function LoadTable()
 			if enemy.name == 'Nidalee' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
 			end
-			if enemy.name == 'Nocturne' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1200, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
 			if enemy.name == 'Olaf' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 2, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Orianna' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 825, type = 3, radius = 150, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Quinn' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1025, type = 1, radius = 150, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Renekton' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 450, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
 			end
 			if enemy.name == 'Rumble' then
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
@@ -1505,12 +1224,6 @@ function LoadTable()
 			end
 			if enemy.name == 'Thresh' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 160, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Tristana' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 200, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Tryndamere' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 2, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'TwistedFate' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
