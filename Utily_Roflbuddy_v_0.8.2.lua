@@ -1,6 +1,6 @@
 --[[
 ==================================================
- RoflBuddy Version 0.8 by EZGAMER, Lua - A Gameplay Assistant Tool 
+ RoflBuddy Version 0.8.2 by EZGAMER, Lua - A Gameplay Assistant Tool 
  
  Features:
 			GUI: Sleek graphical display to display data
@@ -36,7 +36,7 @@
 require "Utils"
 require "spell_damage"
 local uiconfig = require "uiconfig"
-local version = 0.8
+local version = '0.8.2'
 
 local menuX = GetScreenX()-450
 local menuY = 100
@@ -502,6 +502,7 @@ end
 
 
 
+
 function DrawJungle()
 local team = 0
 local teamColor = 0
@@ -536,22 +537,22 @@ local jungleMove = 0
 			for i, jungle in pairs(jungle) do
 				if jungle.name == "Worm" then
 					if jungle.death - GetClock() > 0 then
-						DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+60,position.y + 43,Color.Purple)							
+						DrawText(JungleTime(jungle.death), position.x+60,position.y + 43,Color.Purple)							
 					else
 						DrawText("ALIVE", position.x+50,position.y + 43,Color.Purple)
 					end
 				elseif jungle.name == "Dragon" then
 					if jungle.death - GetClock() > 0 then
-						DrawText(math.floor((jungle.death - GetClock())/1000), position.x+60,position.y + 77,Color.LightBlue)							
+						DrawText(JungleTime(jungle.death), position.x+60,position.y + 77,Color.LightBlue)
 					else
 						DrawText("ALIVE", position.x+50,position.y + 77,Color.LightBlue)
 					end
 				elseif jungle.name == "LizardElder" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 95,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 95,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 95,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 95,Color.Red)
 						end
 					elseif jungle.team == myHero.team then
 						DrawText("ALIVE", position.x+60,position.y + 95,Color.Green) 
@@ -561,9 +562,9 @@ local jungleMove = 0
 				elseif jungle.name == "AncientGolem" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 110,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 110,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 110,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 110,Color.Red)
 						end
 					elseif jungle.team == myHero.team then
 						DrawText("ALIVE", position.x+60,position.y + 110,Color.Green) 
@@ -573,9 +574,9 @@ local jungleMove = 0
 				elseif jungle.name == "Wraith" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 125,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 125,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 125,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 125,Color.Red)
 						end
 					elseif jungle.team == myHero.team then
 						DrawText("ALIVE", position.x+60,position.y + 125,Color.Green) 
@@ -585,9 +586,9 @@ local jungleMove = 0
 				elseif jungle.name == "GiantWolf" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 140,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 140,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 140,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 140,Color.Red)
 						end
 					elseif jungle.team == myHero.team then
 						DrawText("ALIVE", position.x+60,position.y + 140,Color.Green) 
@@ -597,9 +598,9 @@ local jungleMove = 0
 				elseif jungle.name == "Golem" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 155,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 155,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 155,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 155,Color.Red)
 						end
 					elseif jungle.team == myHero.team then
 						DrawText("ALIVE", position.x+60,position.y + 155,Color.Green) 
@@ -609,18 +610,30 @@ local jungleMove = 0
 				elseif jungle.name == "GreatWraith" then
 					if jungle.death - GetClock() > 0 then
 						if jungle.team == myHero.team then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+70,position.y + 170,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+70,position.y + 170,Color.Red)
 						elseif jungle.team == TEAM_ENEMY then
-							DrawText(math.floor((jungle.death -  GetClock())/1000), position.x+120,position.y + 170,Color.Red)
+							DrawText(JungleTime(jungle.death), position.x+120,position.y + 170,Color.Red)
 						end
-					elseif jungle.team == myHero.team then
-						DrawText("ALIVE", position.x+60,position.y + 170,Color.Green) 
-					elseif jungle.team == TEAM_ENEMY then
-						DrawText("ALIVE", position.x+110,position.y + 170,Color.Red) 
 					end
 				end
 			end
 		end
+	end
+end
+
+function JungleTime(Time)
+	if Time ~= nil then
+		Seconds = math.floor((Time - GetClock())/1000)
+        if Seconds > 59 then
+			Minutes = math.floor(Seconds/60)
+			Seconds = math.floor(Seconds-(math.floor(Seconds/60)*60))
+			if Seconds < 10 then Seconds = "0"..Seconds end
+			Result = Minutes..":"..Seconds
+        else
+			if Seconds < 10 then Seconds = "0"..Seconds end
+			Result = "0:"..Seconds
+        end
+        return Result
 	end
 end
 

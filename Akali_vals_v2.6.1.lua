@@ -110,7 +110,7 @@ function OnDraw()
 			local xE= getDmg("E",enemy,myHero)*ERDY
 			local xR = getDmg("R",enemy,myHero)
 				if enemy.health < (AA+xQ+xE+xR)*RRDY then
-					CustomCircle(100,4,2,enemy)
+					CustomCircle(75,30,2,enemy)
 					DrawTextObject('KILL',enemy,Color.Yellow)
 				end
 			end
