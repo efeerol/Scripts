@@ -33,14 +33,14 @@ RenektonConfig = scriptConfig("Renekton Config", "Renektonconfg")
 RenektonConfig:addParam("combo", "Combo (X)", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
 RenektonConfig:addParam("useItems", "Use Items", SCRIPT_PARAM_ONKEYTOGGLE, true, 112)
 RenektonConfig:addParam("ignite", "Auto Ignite", SCRIPT_PARAM_ONKEYTOGGLE, true, 113)
-AnnieConfig:addParam("autoult", "Auto Ult", SCRIPT_PARAM_ONKEYDOWN, true, 116)
-AnnieConfig:addParam("autoulti", "Auto Ult Percent", SCRIPT_PARAM_NUMERICUPDOWN, 15, 117, 5, 20, 1)
+RenektonConfig:addParam("autoult", "Auto Ult", SCRIPT_PARAM_ONKEYDOWN, true, 116)
+RenektonConfig:addParam("autoulti", "Auto Ult Percent", SCRIPT_PARAM_NUMERICUPDOWN, 15, 117, 5, 20, 1)
  
 RenektonConfig:permaShow("combo")
 RenektonConfig:permaShow("useItems")
 RenektonConfig:permaShow("ignite")
-AnnieConfig:permaShow("autoult")
-AnnieConfig:permaShow("autoulti")
+RenektonConfig:permaShow("autoult")
+RenektonConfig:permaShow("autoulti")
 
 function combo()
 	if target ~= nil then
