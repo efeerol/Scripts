@@ -1,17 +1,17 @@
 require 'Utils'
 require 'winapi'
 require 'SKeys'
-require 'spell_damage'
 require 'runrunrun'
 require 'vals_lib'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '2.4.1'
+local version = '2.5.1'
 local MarkTimer,ls = nil,nil
 local timer,dodgetimer = 0,0
 local skillshotArray = {}
 local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY(),0
+local Damage_Multipicator = 100
 
 	LBConf, menu = uiconfig.add_menu('LeBlanc Hotkeys', 250)
 	menu.keydown('Qkey', 'Q-Key', Keys.X)
@@ -42,6 +42,10 @@ local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetSc
 	menu.permashow('DodgeSkillShots')
 
 function Main()
+	if (timer~=0 and GetTickCount()-timer>500) then
+		Ziel = nil
+		timer = 0
+	end
 	if IsLolActive() then
 		SetVariables()
 		Skillshots()
@@ -52,10 +56,12 @@ function Main()
 		QspellOnce()
 		EspellOnce()
 		ComboAlwaysOn()
+		if QWE then DrawText('QWE',70,170,Color.Yellow) end
 		if LBConf.Combo then Combo() end
-		if LBConf.Harass then Harass() end
+		if LBConf.Harass and myHero.mana>=(Qm+Wm) then Harass() end
 		if LBSettings.KSNotes then KSNotifications() end
 		if LBSettings.ReturnPad then ReturnPad() end
+		
 	end
 end
 
@@ -120,15 +126,20 @@ function Harass()
 end
 
 function SetVariables()
+	
+	if Ziel==nil or (Ziel~=nil and (Ziel.dead==1 or Ziel.invulnerable==1)) or myHero.dead==1 or (timer~=0 and GetTickCount()-timer>500) then
+		QRWE,QRE,QRW,QR,QWE,QE,QW,WQRE,WQR,WQE,_E,_Q,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false
+		ls = nil
+		Ziel = nil
+		timer = 0
+	end
 	target = GetWeakEnemy('MAGIC',700)
 	targetE = GetWeakEnemy('MAGIC',800)
 	target2 = GetWeakEnemy('MAGIC',1200)
 	
-	if Ziel==nil or (Ziel~=nil and (Ziel.dead==1 or Ziel.invulnerable==1)) or myHero.dead==1 or (timer~=0 and GetTickCount()-timer>500) then
-		QRWE,QRE,QRW,QR,QWE,QE,QW,WQRE,WQR,WQE,xE,xQ,QWW = false,false,false,false,false,false,false,false,false,false,false,false,false
-		ls,Ziel = nil,nil
-		timer = 0
-	end
+	Qm = (myHero.SpellLevelQ*10)+40
+	Wm = (myHero.SpellLevelW*10)+70
+	Em = 80
 
 	if GetInventorySlot(3188)==1 and myHero.SpellTime1 >= 1 then BFT = 1
 	elseif GetInventorySlot(3188)==2 and myHero.SpellTime2 >= 1 then BFT = 1
@@ -161,10 +172,10 @@ end
 
 function Wspell()
 	if Ziel~=nil and W2RDY==0 then
-		if GetDistance(Ziel)<800 then
-			EnemyPos = Vector(Ziel.x, Ziel.y, Ziel.z)
-			HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-			WPos = EnemyPos+(EnemyPos-HeroPos)*(-150/GetDistance(EnemyPos, HeroPos))
+		if GetD(Ziel)<800 then
+			EPos = Vector(Ziel.x, Ziel.y, Ziel.z)
+			HPos = Vector(myHero.x, myHero.y, myHero.z)
+			WPos = EPos+(EPos-HPos)*(-150/GetD(EPos, HPos))
 			SpellXYZ(W,W1RDY,myHero,Ziel,800,WPos.x,WPos.z)
 		else
 			SpellXYZ(W,W1RDY,myHero,Ziel,800,Ziel.x,Ziel.z)
@@ -184,7 +195,6 @@ end
 
 function OnProcessSpell(unit, spell)
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
-		if QRWE or QRW or QRE or QR or QWE or QE or QW or xE or xQ or WQRE or WQE or WQR or QWW then
 			if spell.name == 'LeblancChaosOrb' then
 				ls = 'Q1' 
 				timer = GetTickCount()
@@ -206,7 +216,6 @@ function OnProcessSpell(unit, spell)
 				timer = GetTickCount()
 			end
 		end
-	end
 	local P1 = spell.startPos
 	local P2 = spell.endPos
 	local calc = (math.floor(math.sqrt((P2.x-unit.x)^2 + (P2.z-unit.z)^2)))
@@ -274,18 +283,18 @@ function OnDraw()
 	if myHero.dead == 0 and LBSettings.DrawCircles then
 		if Q1RDY==1 then CustomCircle(700,1,2,myHero) end
 		if Q1RDY==1 and W1RDY==1 then CustomCircle(1200,1,5,myHero) end
-		if target2~=nil and target==nil and Ziel==nil and GetDistance(target2)<1200 then CustomCircle(100,4,5,target2)
-		elseif target~=nil and GetDistance(target)<700 then CustomCircle(100,4,2,target) end
-		if Ziel~=nil then CustomCircle(75,30,2,Ziel) end
-		if	   Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and ls==nil then DrawTextObject('BURST',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and ls==nil then DrawTextObject('QRW',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and ls==nil then DrawTextObject('QRE',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 and ls==nil then DrawTextObject('QR',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('QWE',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('QE',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and ls==nil then DrawTextObject('QW',myHero,Color.Yellow)
-		elseif Q1RDY==0 and W1RDY==0 and E1RDY==1 and RRDY==0 and ls==nil then DrawTextObject('E',myHero,Color.Yellow)
-		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 and ls==nil then DrawTextObject('Q',myHero,Color.Yellow)
+		if target2~=nil and target==nil and Ziel==nil and GetD(target2)<1200 then CustomCircle(100,4,5,target2)
+		elseif target~=nil and GetD(target)<700 then CustomCircle(100,4,2,target) end
+		if Ziel~=nil then CustomCircle(75,30,2,Ziel) end	
+		if	   Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and myHero.mana>=(Qm+Wm+Em) 	and ls==nil then DrawTextObject('BURST',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and myHero.mana>=(Qm+Wm) 		and ls==nil then DrawTextObject('QRW',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and myHero.mana>=(Qm+Em) 		and ls==nil then DrawTextObject('QRE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 							and ls==nil then DrawTextObject('QR',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and myHero.mana>=(Qm+Wm+Em) 	and ls==nil then DrawTextObject('QWE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and myHero.mana>=(Qm+Em)		and ls==nil then DrawTextObject('QE',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and myHero.mana>=(Qm+Wm)		and ls==nil then DrawTextObject('QW',myHero,Color.Yellow)
+		elseif Q1RDY==0 and W1RDY==0 and E1RDY==1 and RRDY==0 							and ls==nil then DrawTextObject('E',myHero,Color.Yellow)
+		elseif Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 							and ls==nil then DrawTextObject('Q',myHero,Color.Yellow)
 		end
 	end
 end
@@ -294,76 +303,122 @@ function KSNotifications()
 	for i = 1, objManager:GetMaxHeroes() do
 		local enemy = objManager:GetHero(i)
 		if (enemy~=nil and enemy.team~=myHero.team and enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) and Ziel==nil then	
-
-			EnemyPos = Vector(enemy.x,0,enemy.z)
-			HeroPos = Vector(myHero.x,0,myHero.z)
-			WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos,EnemyPos))
-			EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos,EnemyPos))
+		
+			EPos = Vector(enemy.x,0,enemy.z)
+			HPos = Vector(myHero.x,0,myHero.z)
+			WPos = HPos+(HPos-EPos)*(-600/GetD(HPos,EPos))
+			EPos = HPos+(HPos-EPos)*(-800/GetD(HPos,EPos))
+			
 			if IsWall(WPos.x,0,WPos.z)==1 then Wall = 1
 			else Wall = 0 end
 			if CreepBlock(enemy.x,0,enemy.z,EPos.x,0,EPos.z)==1 then Block = 1
 			else Block = 0 end
 			
-			local Qdam = getDmg("Q",enemy,myHero)
-			local Wdam = getDmg("W",enemy,myHero)
-			local Edam = getDmg("E",enemy,myHero)
-			local QMdam = getDmg("R",enemy,myHero,1)
-			local BFTdam = getDmg("BLACKFIRE",enemy,myHero)*BFT
-			local DFGdam = getDmg("DFG",enemy,myHero)*DFG
-			
-			EnemyPos = Vector(enemy.x,0,enemy.z)
-			HeroPos = Vector(myHero.x,0,myHero.z)
-			WPos = EnemyPos+(EnemyPos-HeroPos)*(-600/GetDistance(EnemyPos,HeroPos))
-			EPos = EnemyPos+(EnemyPos-HeroPos)*(-900/GetDistance(EnemyPos,HeroPos))
-			
---[[WQE]]	if enemy.health<(Qdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and GetDistance(enemy)>700 then
-				if Block==1 or Wall == 1 then DrawTextObject('WQE (Long) KILL',enemy,Color.Red)
-				else DrawTextObject('WQE (Long) KILL',enemy,Color.Yellow) end
---[[WQR]]	elseif enemy.health<(Qdam*2)+(QMdam*2) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetDistance(enemy)>700 then
-				if Wall == 1 then DrawTextObject('WQR (Long) KILL',enemy,Color.Red)
-				else DrawTextObject('WQR (Long) KILL',enemy,Color.Yellow) end
---[[WQRE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetDistance(enemy)>700 then
-				if Block==1 or Wall == 1 then DrawTextObject('WQRE (Long) KILL',enemy,Color.Red)
-				else DrawTextObject('WQRE (Long) KILL',enemy,Color.Yellow) end
---[[IWQR]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetDistance(enemy)>700 then
-				if Wall == 1 then DrawTextObject('IWQR (Long) KILL',enemy,Color.Red)
-				else DrawTextObject('IWQR (Long) KILL',enemy,Color.Yellow) end
---[[IWQRE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetDistance(enemy)>700 then
-				if Block==1 or Wall == 1 then DrawTextObject('IWQRE (Long) KILL',enemy,Color.Red)
-				else DrawTextObject('IWQRE (Long) KILL',enemy,Color.Yellow) end
---[[Q]]		elseif enemy.health<Qdam and Q1RDY==1 then DrawTextObject('Q KILL',enemy,Color.Yellow)
---[[E]]		elseif enemy.health<Edam and E1RDY==1 then 
-				if Block==1 then DrawTextObject('E KILL',enemy,Color.Red)
-				else DrawTextObject('E KILL',enemy,Color.Yellow) end
---[[QW]]	elseif enemy.health<(Qdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 then
-				if Wall == 1 then DrawTextObject('QW KILL',enemy,Color.Red)
-				else DrawTextObject('QW KILL',enemy,Color.Yellow) end
---[[QE]]	elseif enemy.health<(Qdam*2)+Edam and Q1RDY==1 and E1RDY==1 then 
-				if Block==1 then DrawTextObject('QE KILL',enemy,Color.Red)
-				else DrawTextObject('QE KILL',enemy,Color.Yellow) end
---[[QWE]]	elseif enemy.health<(Qdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 then
-				if Block==1 or Wall == 1 then DrawTextObject('QWE KILL',enemy,Color.Red)
-				else DrawTextObject('QWE KILL',enemy,Color.Yellow) end
---[[QR]]	elseif enemy.health<(Qdam*2)+QMdam and Q1RDY==1 and RRDY==1 then DrawTextObject('QR KILL',enemy,Color.Yellow)
---[[QRE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Edam and Q1RDY==1 and E1RDY==1 and RRDY==1 then
-				if Block==1 then DrawTextObject('QRE KILL',enemy,Color.Red)
-				else DrawTextObject('QRE KILL',enemy,Color.Yellow) end
---[[QRW]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
-				if Wall == 1 then DrawTextObject('QRW KILL',enemy,Color.Red)
-				else DrawTextObject('QRW KILL',enemy,Color.Yellow) end
---[[QRWE]]	elseif enemy.health<(Qdam*2)+(QMdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
-				if Block==1 or Wall == 1 then DrawTextObject('QRWE KILL',enemy,Color.Red)
-				else DrawTextObject('QRWE KILL',enemy,Color.Yellow) end
---[[IQR]]	elseif (enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+DFGdam)*DFG) and Q1RDY==1 and RRDY==1 then
---[[IQRE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and E1RDY==1 and RRDY==1 then			
-				if Block==1 then DrawTextObject('IQRE KILL',enemy,Color.Red)
-				else DrawTextObject('IQRE KILL',enemy,Color.Yellow) end
---[[IQRW]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam)+(((Qdam*2)+(QMdam*2)+Wdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam)+(((Qdam*2)+(QMdam*2)+Wdam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
-				if Wall == 1 then DrawTextObject('IQRW KILL',enemy,Color.Red)
-				else DrawTextObject('IQRW KILL',enemy,Color.Yellow) end
---[[IQRWE]]	elseif (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+DFGdam)*DFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
-				if Block==1 or Wall == 1 then DrawTextObject('IQRWE KILL',enemy,Color.Red)
-				else DrawTextObject('IQRWE KILL',enemy,Color.Yellow) end
+			local effhealth = enemy.health*(1+(((enemy.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
+			local xQ = (((30+(25*myHero.SpellLevelQ))+(.4*myHero.ap)))
+			local xQ2 = xQ*2
+			local xW = (((45+(40*myHero.SpellLevelW))+(.6*myHero.ap)))
+			local xE = ((((15+(25*myHero.SpellLevelE))+(.5*myHero.ap))*2))
+			local xR = (((100*myHero.SpellLevelR)+(.65*myHero.ap)))
+			local xR2 = xR*2
+			local xBFT = ((enemy.maxHealth*.2)*BFT)
+			local xDFG = ((enemy.maxHealth*.15)*DFG)
+		
+--[[WQE]]	if effhealth<xQ2+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and GetD(enemy)>700 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('WQE (Long) KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('WQE (Long) KILL',enemy,Color.Yellow) 
+				end
+--[[WQR]]	elseif effhealth<xQ2+xR2 and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetD(enemy)>700 then
+				if Wall == 1 then 
+					DrawTextObject('WQR (Long) KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('WQR (Long) KILL',enemy,Color.Yellow) 
+				end
+--[[WQRE]]	elseif effhealth<xQ2+xR2+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetD(enemy)>700 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('WQRE (Long) KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('WQRE (Long) KILL',enemy,Color.Yellow)
+				end
+--[[IWQR]]	elseif effhealth<((xQ2+xR)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and GetD(enemy)>700 then
+				if 
+					Wall == 1 then DrawTextObject('IWQR (Long) KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('IWQR (Long) KILL',enemy,Color.Yellow) 
+				end
+--[[IWQRE]]	elseif effhealth<((xQ2+xR2+xE)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and GetD(enemy)>700 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('IWQRE (Long) KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('IWQRE (Long) KILL',enemy,Color.Yellow) 
+				end			
+--[[Q]]		elseif effhealth<xQ and Q1RDY==1 then 
+					DrawTextObject('Q KILL',enemy,Color.Yellow)
+--[[E]]		elseif effhealth<xE and E1RDY==1 then 
+				if Block==1 then 
+					DrawTextObject('E KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('E KILL',enemy,Color.Yellow) 
+				end
+--[[QW]]	elseif myHero.mana>=(Qm+Wm) and effhealth<xQ2+xW and Q1RDY==1 and W1RDY==1 and W2RDY==0 then
+				if Wall == 1 then 
+					DrawTextObject('QW KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QW KILL',enemy,Color.Yellow) 
+				end
+--[[QE]]	elseif myHero.mana>=(Qm+Em) and effhealth<xQ2+xE and Q1RDY==1 and E1RDY==1 then 
+				if Block==1 then 
+					DrawTextObject('QE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QE KILL',enemy,Color.Yellow) 
+				end
+--[[QWE]]	elseif myHero.mana>=(Qm+Wm+Em) and effhealth<xQ2+xW+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('QWE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QWE KILL',enemy,Color.Yellow) 
+				end
+--[[QR]]	elseif effhealth<xQ2+xR and Q1RDY==1 and RRDY==1 then 
+					DrawTextObject('QR KILL',enemy,Color.Yellow)
+--[[QRE]]	elseif myHero.mana>=(Qm+Em) and effhealth<xQ2+xR2+xE and Q1RDY==1 and E1RDY==1 and RRDY==1 then
+				if Block==1 then 
+					DrawTextObject('QRE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QRE KILL',enemy,Color.Yellow) end
+--[[QRW]]	elseif myHero.mana>=(Qm+Wm) and effhealth<xQ2+xR2+xW and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
+				if Wall == 1 then 
+					DrawTextObject('QRW KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QRW KILL',enemy,Color.Yellow) 
+				end
+--[[QRWE]]	elseif myHero.mana>=(Qm+Wm+Em) and effhealth<xQ2+xR2+xW+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('QRWE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('QRWE KILL',enemy,Color.Yellow) 
+				end
+--[[IQR]]	elseif effhealth<((xQ2+xR)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and RRDY==1 then
+					DrawTextObject('IQR KILL',enemy,Color.Yellow) 
+--[[IQRE]]	elseif myHero.mana>=(Qm+Em) and effhealth<((xQ2+xR2+xE)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and E1RDY==1 and RRDY==1 then			
+				if Block==1 then 
+					DrawTextObject('IQRE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('IQRE KILL',enemy,Color.Yellow) 
+				end
+--[[IQRW]]	elseif myHero.mana>=(Qm+Wm) and effhealth<((xQ2+xR2+xW)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 then
+				if Wall == 1 then 
+					DrawTextObject('IQRW KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('IQRW KILL',enemy,Color.Yellow) 
+				end
+--[[IQRWE]]	elseif myHero.mana>=(Qm+Wm+Em) and effhealth<((xQ2+xR2+xW+xE)*1.2*(BFT+DFG))+xBFT+xDFG and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 then
+				if Block==1 or Wall == 1 then 
+					DrawTextObject('IQRWE KILL',enemy,Color.Red)
+				else 
+					DrawTextObject('IQRWE KILL',enemy,Color.Yellow) 
+				end
 			end
 		end
 	end
@@ -376,10 +431,10 @@ function Distance()
 end
 
 function runningAway(slowtarget)
-   local d1 = GetDistance(slowtarget)
+   local d1 = GetD(slowtarget)
    local x, y, z = GetFireahead(slowtarget,2,0)
-   local d2 = GetDistance({x=x, y=y, z=z})
-   local d3 = GetDistance({x=x, y=y, z=z},slowtarget)
+   local d2 = GetD({x=x, y=y, z=z})
+   local d3 = GetD({x=x, y=y, z=z},slowtarget)
    local angle = math.acos((d2*d2-d3*d3-d1*d1)/(-2*d3*d1))
    return angle%(2*math.pi)>math.pi/2 and angle%(2*math.pi)<math.pi*3/2
 end
@@ -389,44 +444,47 @@ function Combo()
 		local enemy = objManager:GetHero(i)
 		if (enemy~=nil and enemy.team~=myHero.team and enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) then	
 
-			EnemyPos = Vector(enemy.x,0,enemy.z)
-			HeroPos = Vector(myHero.x,0,myHero.z)
-			WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos,EnemyPos))
-			EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos,EnemyPos))
+			EPos = Vector(enemy.x,0,enemy.z)
+			HPos = Vector(myHero.x,0,myHero.z)
+			WPos = HPos+(HPos-EPos)*(-600/GetD(HPos,EPos))
+			EPos = HPos+(HPos-EPos)*(-800/GetD(HPos,EPos))
 			if IsWall(WPos.x,0,WPos.z)==1 then Wall = 1
 			else Wall = 0 end
 			if CreepBlock(enemy.x,0,enemy.z,EPos.x,0,EPos.z)==1 then Block = 1
 			else Block = 0 end
 			
-			local Qdam = getDmg("Q",enemy,myHero)
-			local Wdam = getDmg("W",enemy,myHero)
-			local Edam = getDmg("E",enemy,myHero)
-			local QMdam = getDmg("R",enemy,myHero,1)
-			local BFTdam = getDmg("BLACKFIRE",enemy,myHero)*BFT
-			local DFGdam = getDmg("DFG",enemy,myHero)*DFG
+			local effhealth = enemy.health*(1+(((enemy.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
+			local xQ = (((30+(25*myHero.SpellLevelQ))+(.4*myHero.ap)))
+			local xQ2 = xQ*2
+			local xW = (((45+(40*myHero.SpellLevelW))+(.6*myHero.ap)))
+			local xE = ((((15+(25*myHero.SpellLevelE))+(.5*myHero.ap))*2))
+			local xR = (((100*myHero.SpellLevelR)+(.65*myHero.ap)))
+			local xR2 = xR*2
+			local xBFT = ((enemy.maxHealth*.2)*BFT)
+			local xDFG = ((enemy.maxHealth*.15)*DFG)
 			
-			EnemyPos = Vector(enemy.x,0,enemy.z)
-			HeroPos = Vector(myHero.x,0,myHero.z)
-			WPos = EnemyPos+(EnemyPos-HeroPos)*(-600/GetDistance(EnemyPos,HeroPos))
-			EPos = EnemyPos+(EnemyPos-HeroPos)*(-900/GetDistance(EnemyPos,HeroPos))
+			EPos = Vector(enemy.x,0,enemy.z)
+			HPos = Vector(myHero.x,0,myHero.z)
+			WPos = EPos+(EPos-HPos)*(-600/GetD(EPos,HPos))
+			EPos = EPos+(EPos-HPos)*(-900/GetD(EPos,HPos))
 			
 			if target2~=nil then
-				EnemyPos = Vector(target2.x, target2.y, target2.z)
-				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-				WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
+				EPos = Vector(target2.x, target2.y, target2.z)
+				HPos = Vector(myHero.x, myHero.y, myHero.z)
+				WPos = HPos+(HPos-EPos)*(-600/GetD(HPos, EPos))
 				if IsWall(WPos.x,WPos.y,WPos.z)==1 then WallT = 1
 				else WallT = 0 end
 			elseif target~=nil then
-				EnemyPos = Vector(target.x, target.y, target.z)
-				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-				WPos = HeroPos+(HeroPos-EnemyPos)*(-600/GetDistance(HeroPos, EnemyPos))
+				EPos = Vector(target.x, target.y, target.z)
+				HPos = Vector(myHero.x, myHero.y, myHero.z)
+				WPos = HPos+(HPos-EPos)*(-600/GetD(HPos, EPos))
 				if IsWall(WPos.x,WPos.y,WPos.z)==1 then WallT = 1
 				else WallT = 0 end
 			end
 			if target2~=nil then
-				EnemyPos = Vector(target2.x, target2.y, target2.z)
-				HeroPos = Vector(myHero.x, myHero.y, myHero.z)
-				EPos = HeroPos+(HeroPos-EnemyPos)*(-800/GetDistance(HeroPos, EnemyPos))
+				EPos = Vector(target2.x, target2.y, target2.z)
+				HPos = Vector(myHero.x, myHero.y, myHero.z)
+				EPos = HPos+(HPos-EPos)*(-800/GetD(HPos, EPos))
 				if CreepBlock(target2.x, target2.y, target2.z,EPos.x,EPos.y,EPos.z)==1 then BlockT = 1
 				else BlockT = 0 end
 			elseif target~=nil then
@@ -435,54 +493,77 @@ function Combo()
 			end
 
 			if ls==nil and Ziel==nil then
-				if GetDistance(enemy)<675 and enemy.health<Qdam and Q1RDY==1 then xQ = true
+				if GetD(enemy)<675 and effhealth<xQ and Q1RDY==1 then 
+					_Q = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and enemy.health<Wdam and W1RDY==1 then CastSpellXYZ('W',enemy.x,0,enemy.z)
-				elseif GetDistance(enemy)<675 and enemy.health<Edam and E1RDY==1 and Block==0 then xE = true
+				elseif GetD(enemy)<675 and effhealth<xW and W1RDY==1 then 
+					CastSpellXYZ('W',enemy.x,0,enemy.z)
+				elseif GetD(enemy)<675 and effhealth<xE and E1RDY==1 and Block==0 then 
+					_E = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Wdam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and Wall==0 then QW = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Wm) and effhealth<xQ2+xW and Q1RDY==1 and W1RDY==1 and W2RDY==0 and Wall==0 then 
+					QW = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Edam and Q1RDY==1 and E1RDY==1 and Block==0 then QE = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Em) and effhealth<xQ2+xE and Q1RDY==1 and E1RDY==1 and Block==0 then 
+					QE = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and ((enemy.health<(Qdam*2)+QMdam ) or (enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+QMdam)+(((Qdam*2)+QMdam)/5)+DFGdam)*DFG)) and Q1RDY==1 and RRDY==1 then QR = true
+				elseif GetD(enemy)<675 and (effhealth<xQ2+xR or effhealth<((xQ2+xR)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and RRDY==1 then 
+					QR = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Wdam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and Wall==0 then QRW = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Wm) and (effhealth<xQ2+xR2+xW or effhealth<((xQ2+xR2+xW)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and Wall==0 then 
+					QRW = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and enemy.health<(Qdam*2)+Wdam+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then QWE = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Wm+Em) and effhealth<xQ2+xW+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then 
+					QWE = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT)) and Q1RDY==1 and E1RDY==1 and RRDY==1 and  Block==0 then QRE = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Em) and (effhealth<xQ2+xR2+xE or effhealth<((xQ2+xR2+xE)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and E1RDY==1 and RRDY==1 and  Block==0 then 
+					QRE = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<675 and (enemy.health<(Qdam*2)+(QMdam*2)+Wdam+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Wdam+Edam)+(((Qdam*2)+(QMdam*2)+Wdam+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then QRWE = true
+				elseif GetD(enemy)<675 and myHero.mana>=(Qm+Wm+Em) and (effhealth<xQ2+xR2+xW+xE or effhealth<((xQ2+xR2+xW+xE)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then 
+					QRWE = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<1200 and enemy.health<(Qdam*2)+Edam and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then WQE = true
+				elseif GetD(enemy)<1200 and myHero.mana>=(Qm+Wm+Em) and effhealth<xQ2+xE and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and Block==0 and Wall==0 then 
+					WQE = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<1200 and (enemy.health<(Qdam*2)+(QMdam*2) or (enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2))+(((Qdam*2)+(QMdam*2))/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and  Wall==0 then WQR = true
+				elseif GetD(enemy)<1200 and myHero.mana>=(Qm+Wm) and (effhealth<xQ2+xR2 or effhealth<((xQ2+xR)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and RRDY==1 and  Wall==0 then 
+					WQR = true
 					Ziel = enemy
-				elseif GetDistance(enemy)<1200 and (enemy.health<(Qdam*2)+(QMdam*2)+Edam or (enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+BFTdam)*BFT or enemy.health<(((Qdam*2)+(QMdam*2)+Edam)+(((Qdam*2)+(QMdam*2)+Edam)/5)+DFGdam)*DFG)) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then WQRE = true
+				elseif GetD(enemy)<1200 and myHero.mana>=(Qm+Wm+Em) and (effhealth<xQ2+xR2+xE or effhealth<((xQ2+xR2+xE)*1.2*(BFT+DFG))+xBFT+xDFG) and Q1RDY==1 and W1RDY==1 and W2RDY==0 and E1RDY==1 and RRDY==1 and Block==0 and Wall==0 then 
+					WQRE = true
 					Ziel = enemy
-				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then QRWE = true
+				elseif target~=nil and myHero.mana>=(Qm+Wm+Em) and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then 
+					QRWE = true
 					Ziel = target
-				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and BlockT==0 then QRE = true
+				elseif target~=nil and myHero.mana>=(Qm+Em) and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==1 and BlockT==0 then 
+					QRE = true
 					Ziel = target
-				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then QRW = true
+				elseif target~=nil and myHero.mana>=(Qm+Wm) and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then 
+					QRW = true
 					Ziel = target
-				elseif target~=nil	and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then QR = true
+				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==1 then QR = true
 					Ziel = target
-				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 then QWE = true
+				elseif target~=nil and myHero.mana>=(Qm+Wm+Em) and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 then 
+					QWE = true
 					Ziel = target
-				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and BlockT==0 then QE = true
+				elseif target~=nil and myHero.mana>=(Qm+Em) and Q1RDY==1 and W1RDY==0 and E1RDY==1 and RRDY==0 and BlockT==0 then 
+					QE = true
 					Ziel = target
-				elseif target~=nil and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and WallT==0 then QW = true
+				elseif target~=nil and myHero.mana>=(Qm+Wm) and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==0 and WallT==0 then 
+					QW = true
 					Ziel = target
-				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then WQRE = true
+				elseif target2~=nil and myHero.mana>=(Qm+Wm+Em) and GetD(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==1 and WallT==0 and BlockT==0 then 
+					WQRE = true
 					Ziel = target2
-				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then WQR = true
+				elseif target2~=nil and myHero.mana>=(Qm+Wm) and GetD(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==0 and RRDY==1 and WallT==0 then 
+					WQR = true
 					Ziel = target2
-				elseif target2~=nil and GetDistance(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 and BlockT==0 then WQE = true
+				elseif target2~=nil and myHero.mana>=(Qm+Wm+Em) and GetD(target2)<distance and Q1RDY==1 and W1RDY==1 and E1RDY==1 and RRDY==0 and WallT==0 and BlockT==0 then 
+					WQE = true
 					Ziel = target2
-				elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and BlockT==0 then xE = true
+				elseif targetE~=nil and Q1RDY==0 and Q2RDY==0 and W1RDY==0 and E1RDY==1 and BlockT==0 then 	
+					_E = true
 					Ziel = targetE
-				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then xQ = true
+				elseif target~=nil and Q1RDY==1 and W1RDY==0 and E1RDY==0 and RRDY==0 then _Q = true
 					Ziel = target
 				end
 			end
@@ -500,15 +581,21 @@ function ComboAlwaysOn()
 		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
 		if 	ls=='Q2' then run_many_reset(1, Wspell) end
 		if 	ls=='W1' then Espell() end
-		if	ls=='E1' and LBSettings.AWB==false then QRWE = false end
+		if	ls=='E1' and LBSettings.AWB==false then QRWE = false 
+		
+		end
 		if	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
-		if	ls=='W2' and LBSettings.AWB==true then QRWE = false end
+		if	ls=='W2' and LBSettings.AWB==true then QRWE = false 
+		
+		end
 	elseif QRE and Ziel~=nil then
 		if  ls==nil  then UseDFGBFT() end
 		if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
 		if 	ls=='Q1' then SpellTarget(R,Q2RDY,myHero,Ziel,700) end
 		if 	ls=='Q2' then Espell() end
-		if	ls=='E1' then QRE = false end
+		if	ls=='E1' then QRE = false 
+		
+		end
 	elseif QRW and Ziel~=nil then
 		if  ls==nil  then UseDFGBFT() end
 		if  ((BFT==0 and ls==nil) or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
@@ -528,7 +615,9 @@ function ComboAlwaysOn()
 		if 	ls=='W1' then Espell() end
 		if	ls=='E1' and LBSettings.AWB==false then QWE = false end
 		if	ls=='E1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
-		if	ls=='W2' and LBSettings.AWB==true then QWE = false end
+		if	ls=='W2' and LBSettings.AWB==true then QWE = false 
+		
+		end
 	elseif QE and Ziel~=nil then
 		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
 		if 	ls=='Q1' then Espell() end
@@ -538,7 +627,9 @@ function ComboAlwaysOn()
 		if 	ls=='Q1' then run_many_reset(1, Wspell) end
 		if	ls=='W1' and LBSettings.AWB==false then QW = false end
 		if	ls=='W1' and LBSettings.AWB==true then SpellXYZ(W,W2RDY,myHero,myHero,1,myHero.x,myHero.z) end
-		if	ls=='W2' and LBSettings.AWB==true then QW = false end
+		if	ls=='W2' and LBSettings.AWB==true then QW = false 
+		
+		end
 	elseif WQRE and Ziel~=nil then
 		if	ls==nil  then run_many_reset(1, WLspell) end
 		if 	ls=='W1' then UseDFGBFT() end
@@ -558,26 +649,27 @@ function ComboAlwaysOn()
 		if  ((BFT==0 and ls=='W1') or ls=='item') then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
 		if 	ls=='Q1' then Espell() end
 		if	ls=='E1' then WQE = false end
-	elseif xE and Ziel~=nil then
+	elseif _E and Ziel~=nil then
 		if		ls==nil  then Espell() end
-		if	ls=='E1' then xE = false end
-	elseif xQ and Ziel~=nil then
+		if	ls=='E1' then _E = false end
+	elseif _Q and Ziel~=nil then
 		if	ls==nil  then SpellTarget(Q,Q1RDY,myHero,Ziel,700) end
-		if	ls=='Q1' then xQ = false end
+		if	ls=='Q1' then _Q = false end
 	end
-	if (QRWE==false and QRE==false and QRW==false and QR==false and QWE==false and QE==false and QW==false and WQRE==false and WQR==false and WQE==false and xE==false and xQ==false and QWW==false) then
+	if (QRWE==false and QRE==false and QRW==false and QR==false and QWE==false and QE==false and QW==false and WQRE==false and WQR==false and WQE==false and _E==false and _Q==false and QWW==false) then
 		ls = nil
 		Ziel = nil
+		timer = 0
 	end
 	if dodgetimer == 0 then
-		if Ziel~=nil then MoveTarget(Ziel) end
+		if Ziel~=nil then MoveToXYZ(Ziel.x,Ziel.y,Ziel.z) end
 	end
 end
 
 function Espell()
 	for i = 1, objManager:GetMaxObjects(), 1 do
 		obj = objManager:GetObject(i)
-		if Ziel~=nil and obj~=nil and obj.charName == 'leBlanc_slide_impact_self.troy' and GetDistance(obj) < 100 then SpellPredSimple(E,E1RDY,myHero,Ziel,800,1.5,15,1,125) end
+		if Ziel~=nil and obj~=nil and obj.charName == 'leBlanc_slide_impact_self.troy' and GetD(obj) < 100 then SpellPredSimple(E,E1RDY,myHero,Ziel,800,1.5,15,1,125) end
 	end
 end
 
@@ -602,7 +694,7 @@ function GetMark()
 			local enemy = objManager:GetHero(i)
 			if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable==0 and enemy.dead == 0) then
 				if obj~=nil and enemy~=nil then
-					if string.find(obj.charName,'leBlanc_chaosOrb_impact_small') and GetDistance(obj, enemy) < 50 then
+					if string.find(obj.charName,'leBlanc_chaosOrb_impact_small') and GetD(obj, enemy) < 50 then
 						MarkedEnemy = enemy
 						MarkTimer = GetTickCount()
 					end
@@ -611,7 +703,7 @@ function GetMark()
 					if 	string.find(obj.charName,'leBlanc_shackle_mis') or 
 						string.find(obj.charName,'leBlanc_slide_impact_unit') or 
 						string.find(obj.charName,'leBlanc_shackle_target_idle') and 
-						GetDistance(obj, MarkedEnemy) < 50 then
+						GetD(obj, MarkedEnemy) < 50 then
 						MarkedEnemy = nil
 						MarkTimer = nil
 					end
@@ -626,6 +718,41 @@ function GetMark()
 				MarkTimer = nil
 			end
 		end
+	end
+end
+
+function GetD(p1, p2)
+if p2 == nil then p2 = myHero end
+	if (p1.z == nil or p2.z == nil) and p1.x~=nil and p1.y ~=nil and p2.x~=nil and p2.y~=nil then
+		px=p1.x-p2.x
+		py=p1.y-p2.y
+		if px~=nil and py~=nil then
+			px2=px*px
+			py2=py*py
+			if px2~=nil and py2~=nil then
+				return math.sqrt(px2+py2)
+			else
+				return 99999
+			end
+		else
+			return 99999
+		end
+		elseif p1.x~=nil and p1.z ~=nil and p2.x~=nil and p2.z~=nil then
+			px=p1.x-p2.x
+			pz=p1.z-p2.z
+			if px~=nil and pz~=nil then
+				px2=px*px
+				pz2=pz*pz
+				if px2~=nil and pz2~=nil then
+					return math.sqrt(px2+pz2)
+				else
+					return 99999
+				end
+			else    
+				return 99999
+			end
+		else
+		return 99999
 	end
 end
 
@@ -756,8 +883,8 @@ function Jump()
 		
 	for _, JumpSpot in pairs(JumpSpots) do
 		if LBSettings.jumphelper and GetMap() == 2 then
-			if GetDistance(JumpSpot,myHero) <= 2500 then
-				if GetDistance(JumpSpot,mousePos) <= 75 then
+			if GetD(JumpSpot,myHero) <= 2500 then
+				if GetD(JumpSpot,mousePos) <= 75 then
 					DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, 75, 0xFFFF0000)
 				else DrawCircle(JumpSpot.x, JumpSpot.y, JumpSpot.z, 75, 0xFFFF8000)
 				end
@@ -766,7 +893,7 @@ function Jump()
 	end
        
 	for _, JumpSpot in pairs(JumpSpots) do
-		if GetDistance(JumpSpot,mousePos) <= 75 and KeyDown(1) and LBSettings.jumphelper and GetMap() == 2 then
+		if GetD(JumpSpot,mousePos) <= 75 and KeyDown(1) and LBSettings.jumphelper and GetMap() == 2 then
 			MoveToXYZ(JumpSpot.x,JumpSpot.y,JumpSpot.z)
 			jump2 = true
 		end
@@ -1029,7 +1156,7 @@ function Skillshots()
 						angle=theta
 					end
 					angle=((90-angle)*2*math.pi)/360
-					DrawLine(startVector.x, startVector.y, startVector.z, GetDistance(startVector, endVector)+170, 1,angle,radius)
+					DrawLine(startVector.x, startVector.y, startVector.z, GetD(startVector, endVector)+170, 1,angle,radius)
 				end
 			end
 		end
@@ -1246,10 +1373,10 @@ function LoadTable()
 				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 80, color= 0xFFFFFF00, time = 2})
 			end
 			if enemy.name == 'Xerath' then
-				table.insert(skillshotArray,{name= 'xeratharcanopulsedamage', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= 'xeratharcanopulsedamageextended', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1300, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= 'xeratharcanebarragewrapper', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= 'xeratharcanebarragewrapperext', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1300, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
+				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 125, color= 0xFFFFFF00, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 3, radius = 225, color= 0xFFFFFF00, time = 0.8, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= xerathrmissilewrapper, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 2000+(enemy.SpellLevelR+1200), type = 3, radius = 75, color= 0xFFFFFF00, time = 0.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Yasuo' then
 				table.insert(skillshotArray,{name= 'yasuoq3w', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 125, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
