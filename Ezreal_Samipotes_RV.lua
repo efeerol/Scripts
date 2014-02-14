@@ -1,24 +1,7 @@
---[[
-	====================================
-    |         IPJ Presents:            |
-	|	  ValEz-real Reinvisioned      |
-    |          Version 1.3             |
-    |     Let The good Times Roll      |
-    ====================================
- 
- 
-    ====================================
-    |            Version Log           |
-    ====================================
-	0.1 - First beta build! Exciting!
-		Features Included...Valz Ez, Reworked Auto-Carry, Red Elixer, and Tailored Auto-Dodge---All inside the fancy menues! Yay!
-		
-		]]--
-		
 require 'Utils'
 require 'winapi'
 require 'SKeys'
-require "spell_damage"
+require 'spell_damage'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
@@ -32,6 +15,9 @@ local bluePill = nil
 local dodgedelay = 500
 local targetac
 local target2
+local targetw
+local RtargetAP
+local RtargetAD
 local targetHero
 local startAttackSpeed
 local projSpeed = 1
@@ -51,6 +37,9 @@ local Qrange = 1100
 local Qspeed = 20
 local Wrange = 900
 local Wspeed = 15
+local Rspeed = 18
+local Rrange = 5500
+local Rdelay = 4
 local delay = 1.6
 local metakey = SKeys.Control
 local attempts = 0
@@ -78,6 +67,9 @@ function EzrealRun()
 	if IsChatOpen() == 0 and myHero.name == "Ezreal" then
 	target = GetWeakEnemy('PHYS',1100)
 	targetaa = GetWeakEnemy('PHYS',700)
+	targetW = GetWeakEnemy('MAGIC',900)
+	RtargetAD = GetWeakEnemy('PHYS',5500)
+	RtargetAP = GetWeakEnemy('MAGIC',5500)
 	--[[attRange()]]--
 	RedElixir()
 	Timer()
@@ -124,21 +116,33 @@ function EzrealRun()
 	else RRDY = 0
 	end
 	
-	if EzrealConfig.useQ and timer3 == 0 then
+	if EzrealConfig.useQ and timer3 == 0  then
 		SpellPred(Q,QRDY,myHero,target,Qrange,delay,Qspeed,1)
+		
+		elseif EzrealConfig.Killsteal and getDmg("Q", myHero, target) >= target.health  and target.invulnerable == 0 then
+		SpellPred(Q,QRDY,myHero,target,Qrange,delay,Qspeed,1)	
 	end
 	
 	if EzrealConfig.useW and timer3 == 0 then
-		SpellPred(W,WRDY,myHero,target,Wrange,delay,Wspeed,0)
+		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
+		
+		elseif ErealConfig.Killsteal and getDmg("W", myHero, targetW) >= targetW.health  and target.invulnerable == 0 then
+		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
 	end
 	if EzrealConfig.useQW and timer3 == 0 then
 		SpellPred(Q,QRDY,myHero,target,Wrange,delay,Wspeed,1)
-		SpellPred(W,WRDY,myHero,target,Wrange,delay,Wspeed,1)	
+		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,1)	
 	end
 	if EzrealConfig.useE then
 		SpellXYZ(E,ERDY,myHero,myHero,100,mousePos.x,mousePos.z)
 		moveToCursor()
 	end
+	if EzrealConfig.autoR and RtargetAD~=nil and getDmg("R", myHero, RtargetAD) >= RtargetAD.health and target.invulnerable == 0 then 
+	    SpellPred(R,RRDY,myHero,RtargetAD,Rrange,Rdelay,Rspeed,0)
+		
+		elseif EzrealConfig.autoR and RtargetAP~=nil and getDmg("R", myHero, RtargetAP) >= RtargetAP.health and target.invulnerable == 0 then
+		SpellPred(R,RRDY,myHero,RtargetAP,Rrange,Rdelay,Rspeed,0)
+		end
 	
 	if EzrealConfig.Autolevel then Autolevel() end
 	if EzrealConfig.drawskillshots then Skillshots() end
@@ -163,6 +167,8 @@ end
 	menu.keydown('useE', 'Use E', Keys.X)
 	menu.keydown('AutoCarry', 'AutoCarry', Keys.A)
 	menu.keydown('Hybrid', 'Hybrid', Keys.Space)
+	menu.checkbutton('Killsteal', 'Killsteal',true)
+	menu.checkbutton('autoR', 'Auto-Ult',true)
 	menu.checkbutton('autoq', 'Auto-Q after AA', true)
 	menu.checkbutton('autow', 'Auto-W after AA', true)
 	menu.checkbutton('Autolevel', 'Auto Level', true)
