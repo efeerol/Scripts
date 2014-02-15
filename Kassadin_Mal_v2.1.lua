@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nA-Void Me\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.9\n")
+printtext("\nVersion 2.1\n")
 
 local target
 local targetclose
@@ -19,20 +19,26 @@ local enemyIndex=1
 local enemies={}
 local heros={}
 local EStacks=0
+local RiftWalk=0
+local RiftTimer=0
 
 KassConfig = scriptConfig("Kass", "Kass Config")
 KassConfig:addParam("h", " Harass", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 KassConfig:addParam("r", " R Escape", SCRIPT_PARAM_ONKEYDOWN, false, 90)
 KassConfig:addParam('teamfight', 'TeamFight', SCRIPT_PARAM_ONKEYDOWN, false, 84)
+KassConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONOFF, true, 56)
 KassConfig:addParam("mode", "Harass Mode", SCRIPT_PARAM_DOMAINUPDOWN, 1, 187, {"Use Ult","No Ult"})
 KassConfig:addParam('distanceR', "RA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 500, 57,100,700,50)
 KassConfig:addParam('distanceNR', "NRA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 700, 48,100,700,50)
-KassConfig:addParam('distanceNM', "NM Distance", SCRIPT_PARAM_NUMERICUPDOWN, 650, 48,100,700,50)
-KassConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONOFF, true)
+KassConfig:addParam('distanceNM', "NM Distance", SCRIPT_PARAM_NUMERICUPDOWN, 650, 189,100,700,50)
+KassConfig:addParam('ksnf', 'Killsteal Notifications', SCRIPT_PARAM_ONKEYTOGGLE)
 KassConfig:addParam('rks', 'R KS ON/OFF', SCRIPT_PARAM_ONOFF, true)
 KassConfig:addParam('nm', 'NearMouse Targetting', SCRIPT_PARAM_ONOFF, true)
 KassConfig:permaShow('mode')
 KassConfig:permaShow('dokillsteal')
+KassConfig:permaShow('ksnf')
+KassConfig:permaShow('rks')
+KassConfig:permaShow('nm')
 	
 function Run()
 
@@ -57,20 +63,23 @@ function Run()
 		targetkslongrange = GetWeakEnemy("MAGIC", 1400)
 		targetks = GetWeakEnemy("MAGIC", 700)
 		
+	if RiftWalk>0 and RiftTimer<=os.clock() then
+		RiftWalk=0
+	end
 		
-	if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 then
+	if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 and myHero.mana>=65+5*(GetSpellLevel("Q")) then
 			QRDY = 1
 			else QRDY = 0
 	end
-	if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 then
+	if myHero.SpellTimeW > 1.0 and GetSpellLevel('W') > 0 and myHero.mana>=25 then
 			WRDY = 1
 			else WRDY = 0
 	end
-	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 and EStacks==6 then
+	if myHero.SpellTimeE > 1.0 and GetSpellLevel('E') > 0 and EStacks==6 and myHero.mana>=80 then
 			ERDY = 1
 			else ERDY = 0
 	end
-	if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 then
+	if myHero.SpellTimeR > 1.0 and GetSpellLevel('R') > 0 and myHero.mana>=100+100*(RiftWalk) then
 			RRDY = 1
 			else RRDY = 0 
 	end
@@ -91,7 +100,7 @@ function Run()
 	if IsChatOpen() == 0 and KassConfig.h then harass() end
 	if IsChatOpen() == 0 and KassConfig.r then ultEsc() end
 	if IsChatOpen() == 0 and KassConfig.teamfight then Teamfight() end
-	if KassConfig.dokillsteal then killsteal() end
+	if KassConfig.ksnf or KassConfig.dokillsteal then killsteal() end
 	ignite()
 
 	
@@ -101,18 +110,23 @@ function OnProcessSpell(unit,spell)
 
 	
 	
-	if unit~=nil and unit.name==myHero.name and spell~=nil and string.find(spell.name,"Kassadin_ForcePulse") then
+	if unit~=nil and unit.name==myHero.name and spell~=nil and string.find(spell.name,"ForcePulse") then
 		EStacks=0
 	elseif unit~=nil and heros[spell.name] and GetD(unit)<1750 then  
 		EStacks=math.max(EStacks,(EStacks+1)%7)
+	end
+	
+	if unit~=nil and unit.name==myHero.name and spell~=nil and string.find(spell.name,"RiftWalk") then
+		RiftWalk=RiftWalk+1
+		RiftTimer=os.clock()+8
 	end
 
 end
 
 function ignite()
-		if myHero.SummonerD == 'SummonerDot' then
+		if myHero.SummonerD == 'SummonerDot' and targetks~=nil and GetD(targetks)<600 then
 			ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('D')
-		elseif myHero.SummonerF == 'SummonerDot' then
+		elseif myHero.SummonerF == 'SummonerDot' and targetks~=nil and GetD(targetks)<600 then
 				ignitedamage = ((myHero.selflevel*20)+50)*IsSpellReady('F')
 		else
 				ignitedamage=0
@@ -275,25 +289,35 @@ function harass()
 		
 			if ERDY==1 then
 				if GetD(target,myHero)<650 then
+					if QRDY==1 then
 					CastSpellTarget('Q',target)
+					end
+					if ERDY==1 then
 					CastSpellXYZ('E',target.x,0,target.z)
+					end
+					MoveToMouse()
 				elseif GetD(target,myHero)<1200 then
 				
 					
 					local t = GetUltSpot(target)
 					CastSpellXYZ('R',t.x,0,t.z)
+					if QRDY==1 then
 					CastSpellTarget('Q',target)
-					if GetD(target,myHero)<650 then CastSpellXYZ('E',target.x,0,target.z) end
+					end
+					if ERDY==1 and GetD(target,myHero)<650 then CastSpellXYZ('E',target.x,0,target.z) end
+					MoveToMouse()
 				end
 				
 			elseif ERDY==0 and QRDY==1 then
 				if GetD(target,myHero)<700 then
 					CastSpellTarget('Q',target)
+					MoveToMouse()
 				elseif GetD(target,myHero)<1200 then
 				
 					local t = GetUltSpot(target)
 					CastSpellXYZ('R',t.x,0,t.z)
 					CastSpellTarget('Q',target)
+					MoveToMouse()
 				end
 			else 
 				MoveToMouse()
@@ -301,12 +325,13 @@ function harass()
 
 		elseif RRDY==0 or KassConfig.mode==2 then
 			if GetD(target,myHero)<650 then
-				if QRDY==1 or ERDY==1 then
+				if QRDY==1 then
 					CastSpellTarget('Q',target)
-					CastSpellXYZ('E',target.x,0,target.z)
-				else
-					MoveToMouse()
 				end
+				if ERDY==1 then
+					CastSpellXYZ('E',target.x,0,target.z)
+				end
+					MoveToMouse()
 				
 			elseif GetD(target,myHero)>=650 and QRDY==1 and GetD(target)<700 then
 				CastSpellTarget('Q',target)
@@ -337,7 +362,7 @@ function Teamfight()
 			 CastSpellXYZ('E',target.x,0,target.z)
 		elseif RRDY==1 and GetD(target)<=700 then
 			CastSpellXYZ('R',target.x,0,target.z) 
-		elseif WRDY==1 and GetD(target)<250 then
+		elseif WRDY==1 and GetD(target)<275 then
 			CastSpellTarget('W',myHero) 
 			AttackTarget(target)
 		end
@@ -357,7 +382,7 @@ function Teamfight()
 			if ERDY==1 and GetD(targetclose)<650 then
 				  CastSpellXYZ('E',targetclose.x,0,targetclose.z)
 			end
-			
+			MoveToMouse()
 		end
 	else
 		MoveToMouse()
@@ -394,14 +419,30 @@ function killsteal()
 		local R = getDmg("R",targetks,myHero)*RRDY
 		local AA = getDmg("AD",targetks,myHero)
 		
-	
 		if targetks.health<(Q+E+W+R+AA+ignitedamage)*RRDY and GetD(targetks)<720 then
-			if RRDY==1 then CastSpellXYZ('R',targetks.x,0,targetks.z) end
-			if QRDY==1 then CastSpellTarget('Q',targetks) end
-			if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
-			if WRDY==1 then CastSpellTarget('W',myHero) end
-			AttackTarget(targetks)
-			if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+			if KassConfig.ksnf then 
+				CustomCircle(200,50,3,hero)
+			end
+			if KassConfig.dokillsteal and KassConfig.rks then
+				if RRDY==1 then CastSpellXYZ('R',targetks.x,0,targetks.z) end
+				if QRDY==1 then CastSpellTarget('Q',targetks) end
+				if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
+				if WRDY==1 then CastSpellTarget('W',myHero) end
+				AttackTarget(targetks)
+				if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+			end
+		elseif targetks.health<(Q+E+W+R+AA+ignitedamage) and GetD(targetks)<280 then
+			if KassConfig.ksnf then 
+				CustomCircle(200,50,4,hero)
+			end
+			if KassConfig.dokillsteal then
+				if RRDY==1 then CastSpellXYZ('R',targetks.x,0,targetks.z) end
+				if QRDY==1 then CastSpellTarget('Q',targetks) end
+				if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
+				if WRDY==1 then CastSpellTarget('W',myHero) end
+				AttackTarget(targetks)
+				if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+			end
 		elseif targetkslongrange~=nil then
 			local QQ = getDmg("Q",targetkslongrange,myHero)*QRDY
 			local EE = getDmg("E",targetkslongrange,myHero)*ERDY
@@ -409,15 +450,10 @@ function killsteal()
 			local RR = getDmg("R",targetkslongrange,myHero)*RRDY
 			local AAA = getDmg("AD",targetkslongrange,myHero)
 			if targetkslongrange.health<(Q+E+ignitedamage)*RRDY and GetD(targetkslongrange)<1200 then
-				local tx,tz
-				if ERDY==1 then
-					if GetD(targetkslongrange,myHero)<1200 then
-						
-						local t = GetUltSpot(targetkslongrange)
-						CastSpellXYZ('R',t.x,0,t.z)
-					end
-					
-				elseif ERDY==0 and QRDY==1 then
+				if KassConfig.ksnf then 
+					CustomCircle(200,50,3,hero)
+				end
+				if KassConfig.dokillsteal and KassConfig.rks then
 					if GetD(targetkslongrange,myHero)<1200 then
 						local t = GetUltSpot(targetkslongrange)
 						CastSpellXYZ('R',t.x,0,t.z)
@@ -426,40 +462,42 @@ function killsteal()
 			end
 		end
 		
-		if targetks.health<Q+E+ignitedamage and GetD(targetks)<600 then
-			if QRDY==1 then CastSpellTarget('Q',targetks) end
-			if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
-			if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+		if targetks.health<Q+E+ignitedamage and GetD(targetks)<650 then
+			if KassConfig.ksnf then 
+				CustomCircle(200,50,4,hero)
+			end
+			if KassConfig.dokillsteal then
+				if QRDY==1 then CastSpellTarget('Q',targetks) end
+				if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
+				if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+			end
 		end
-		if targetks.health<Q+E+ignitedamage+AA and GetD(targetks)<250 then
-			if QRDY==1 then CastSpellTarget('Q',targetks) end
-			if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
-			if ignitedamage~=0 then CastSummonerIgnite(targetks) end
-			AttackTarget(targetks)
+		if targetks.health<Q+E+ignitedamage+AA and GetD(targetks)<280 then
+			if KassConfig.ksnf then 
+				CustomCircle(200,50,4,hero)
+			end
+			if KassConfig.dokillsteal then
+				if QRDY==1 then CastSpellTarget('Q',targetks) end
+				if ERDY==1 then CastSpellXYZ('E',targetks.x,0,targetks.z) end
+				if ignitedamage~=0 then CastSummonerIgnite(targetks) end
+				if WRDY==1 then CastSpellTarget('W',myHero) end
+				AttackTarget(targetks)
+			end
 		end
 		
-	elseif targetkslongrange~=nil then
+	elseif targetkslongrange~=nil and targetkslongrange.dead~=1 then
 		local Q = getDmg("Q",targetkslongrange,myHero)*QRDY
 		local E = getDmg("E",targetkslongrange,myHero)*ERDY
-		local W = getDmg("W",targetkslongrange,myHero)*WRDY
 		local R = getDmg("R",targetkslongrange,myHero)*RRDY
-		local AA = getDmg("AD",targetkslongrange,myHero)
-		local tx,tz
-			if targetkslongrange.health<(Q+E+ignitedamage)*RRDY and GetD(targetkslongrange)<1300 then
-				if ERDY==1 then
-				if GetD(targetkslongrange,myHero)<1200 then
-					local t = GetUltSpot(targetkslongrange)
-					CastSpellXYZ('R',t.x,0,t.z)
-				end
-				
-			elseif ERDY==0 and QRDY==1 then
-				if GetD(targetkslongrange,myHero)<1200 then
-						local t = GetUltSpot(targetkslongrange)
-						CastSpellXYZ('R',t.x,0,t.z)
-					
-					end
-				end
+		if targetkslongrange.health<(Q+E+ignitedamage)*RRDY and GetD(targetkslongrange)<1300 then
+			if KassConfig.ksnf then 
+				CustomCircle(200,50,3,hero)
 			end
+			if KassConfig.dokillsteal and KassConfig.rks then
+				local t = GetUltSpot(targetkslongrange)
+				CastSpellXYZ('R',t.x,0,t.z)
+			end
+		end
 	end
 end
 
