@@ -116,17 +116,17 @@ function EzrealRun()
 	else RRDY = 0
 	end
 	
-	if EzrealConfig.useQ and timer3 == 0  then
+	if EzrealConfig.useQ and timer3 == 0 and target ~= nil then
 		SpellPred(Q,QRDY,myHero,target,Qrange,delay,Qspeed,1)
 		
-		elseif EzrealConfig.Killsteal and getDmg("Q", myHero, target) >= target.health  and target.invulnerable == 0 then
+		elseif EzrealConfig.Killsteal and target ~= nil and getDmg("Q", myHero, target) >= target.health  then
 		SpellPred(Q,QRDY,myHero,target,Qrange,delay,Qspeed,1)	
 	end
 	
-	if EzrealConfig.useW and timer3 == 0 then
+	if EzrealConfig.useW and timer3 == 0  and  targetW ~= nil then
 		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
 		
-		elseif ErealConfig.Killsteal and getDmg("W", myHero, targetW) >= targetW.health  and target.invulnerable == 0 then
+		elseif EzrealConfig.Killsteal and targetW ~= nil and getDmg("W", myHero, targetW) >= targetW.health then
 		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
 	end
 	if EzrealConfig.useQW and timer3 == 0 then
@@ -137,10 +137,10 @@ function EzrealRun()
 		SpellXYZ(E,ERDY,myHero,myHero,100,mousePos.x,mousePos.z)
 		moveToCursor()
 	end
-	if EzrealConfig.autoR and RtargetAD~=nil and getDmg("R", myHero, RtargetAD) >= RtargetAD.health and target.invulnerable == 0 then 
+	if EzrealConfig.autoR and RtargetAD~=nil and getDmg("R", myHero, RtargetAD) >= RtargetAD.health  then 
 	    SpellPred(R,RRDY,myHero,RtargetAD,Rrange,Rdelay,Rspeed,0)
 		
-		elseif EzrealConfig.autoR and RtargetAP~=nil and getDmg("R", myHero, RtargetAP) >= RtargetAP.health and target.invulnerable == 0 then
+		elseif EzrealConfig.autoR and RtargetAP~=nil and getDmg("R", myHero, RtargetAP) >= RtargetAP.health  then
 		SpellPred(R,RRDY,myHero,RtargetAP,Rrange,Rdelay,Rspeed,0)
 		end
 	
@@ -161,10 +161,10 @@ end
 end
 	
 	EzrealConfig, menu = uiconfig.add_menu('Valezreal Config', 200)
-    menu.keydown('useQ', 'Use Q', Keys.Space)
-	menu.keydown('useW', 'Use W', Keys.Space)
-	menu.keydown('useQW', 'Use QW', Keys.W)
-	menu.keydown('useE', 'Use E', Keys.X)
+    menu.keydown('useQ', 'Use Q', Keys.Q)
+	menu.keydown('useW', 'Use W', Keys.W)
+	menu.keydown('useQW', 'Use QW', Keys.X)
+	menu.keydown('useE', 'Use E', Keys.E)
 	menu.keydown('AutoCarry', 'AutoCarry', Keys.A)
 	menu.keydown('Hybrid', 'Hybrid', Keys.Space)
 	menu.checkbutton('Killsteal', 'Killsteal',true)
