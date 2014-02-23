@@ -7,8 +7,7 @@ local send = require 'SendInputScheduled'
 local metakey = SKeys.Control
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 3.6")
-local version = '3.6'
+print("\nVersion 3.8")
 local target
 local targeti
 local target2
@@ -72,6 +71,10 @@ LeeConfig:addParam("ultKS", "Ult KS", SCRIPT_PARAM_ONKEYTOGGLE, true, string.byt
 LeeConfig:addParam("ultC", "Stylish Ult in Combo", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("0")) 
 LeeConfig:addParam("PU", "Prioritize InSec", SCRIPT_PARAM_NUMERICUPDOWN, 1,189,1,objManager:GetMaxHeroes()/2+1,1)-- "-" objManager:GetMaxHeroes()/2+1
 LeeConfig:addParam("iskey", "What to Insec To", SCRIPT_PARAM_DOMAINUPDOWN, 1, 187, {"Inventory Wards","Minions & Placed Wards","Both"})
+
+LeeConfig:addParam('distanceR', "RA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 350, 219,100,700,50)
+LeeConfig:addParam('distanceNR', "NRA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 450, 221,100,700,50)
+LeeConfig:addParam('distanceNM', "NM Distance", SCRIPT_PARAM_NUMERICUPDOWN, 400, 191,100,700,50)
 LeeConfig:addParam("wardH", "Harass Can Use Ward", SCRIPT_PARAM_ONOFF, false) 
 LeeConfig:addParam("wardF", "Ward Farthest", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("mqi", "Manual Q Insec", SCRIPT_PARAM_ONOFF, true)
@@ -218,7 +221,7 @@ function Combo()
         if myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and CreepBlock(target.x,target.y,target.z) == 0 and (PMod>2 or PTimer<os.clock()) then 
 			CastSpellXYZ('Q',GetFireahead(target,2.4,16)) 
 			--printtext("\nQ1") 
-		elseif myHero.SpellNameQ == "blindmonkqtwo" and RRDY==1 and LeeConfig.ultC and eye~=nil and eye.unit~=nil and eye.unit.x~=nil and GetD(eye.unit,target)<100 then 
+		elseif myHero.SpellNameQ == "blindmonkqtwo" and RRDY==1 and LeeConfig.ultC and GetD(target)<400 and eye~=nil and eye.unit~=nil and eye.unit.x~=nil and GetD(eye.unit,target)<100 then 
 			CastSpellTarget("R",target) --printtext("\nR") 
 		elseif myHero.SpellNameQ == "blindmonkqtwo" and QRDY==1 and (PMod>2 or PTimer<os.clock() or GetD(target) > 350 or LeeConfig.ultC) and eye~=nil and eye.unit~=nil and eye.unit.x~=nil and GetD(eye.unit,target)<50 then 
 			CastSpellTarget("Q",target)  
@@ -228,10 +231,10 @@ function Combo()
 		elseif ERDY==1 and myHero.SpellNameE == "blindmonketwo" and (PMod>2 or PTimer<os.clock() or GetD(target) > 350 ) then 
 			CastSpellXYZ('E',myHero.x,myHero.y,myHero.z) --printtext("\nE") 
 		elseif myHero.SpellNameW == "BlindMonkWOne" and WRDY==1 and GetD(target) < 350 and (PMod>2 or PTimer<os.clock()) then 
-			run_every(1,WSpell,myHero)  
+			run_every(0.2,WSpell,myHero)  
 		end
 		if myHero.SpellNameW == "blindmonkwtwo" and WRDY==1 and GetD(target) < 350 and (PMod>2  or PTimer<os.clock()) then 
-			run_every(1,WSpell,myHero)  
+			run_every(0.2,WSpell,myHero)  
 		end
 		if RRDY==1 then
 			local rdmg = getDmg("R",target,myHero)*RRDY
@@ -291,14 +294,15 @@ function ward(hx,hy,hz)
 			
 			if www~=nil and os.clock() > lastWardJump then
 				--print("\nHere40")
-				CastSpellXYZ(www, getWardSpot(hx,hy,hz))
+				local wx,wy,wz=getWardSpot(hx,hy,hz)
+				CastSpellXYZ(www,wx,wy,wz,0)
 				lastWardJump=os.clock()+3
 				wardsuccess=true
 			end	
 		end
 		
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and wardsuccess==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-			run_every(1,WSpell, lastWardObject)
+			run_every(0.2,WSpell, lastWardObject)
 		
 		end
 
@@ -314,7 +318,7 @@ function ward(hx,hy,hz)
 			--wx,wy,wz=GetFireahead(myHero,5,0)
 			if www~=nil and os.clock() > lastWardJump then
 				--print("\nHere43")
-				CastSpellXYZ(www, mousePos.x,mousePos.y,mousePos.z)
+				CastSpellXYZ(www, mousePos.x,mousePos.y,mousePos.z,0)
 				lastWardJump=os.clock()+3
 				wardsuccess=true
 			end	
@@ -322,7 +326,7 @@ function ward(hx,hy,hz)
 		end
 		
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and wardsuccess==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-			run_every(1,WSpell, lastWardObject)
+			run_every(0.2,WSpell, lastWardObject)
 		
 		end
 		if ( WRDY==0 or myHero.SpellNameW=="blindmonkwtwo" or not gotAWard()) then
@@ -352,12 +356,12 @@ function Harass()
 		end
 		if startHarass==true and  QRDY==0 and WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and something~=nil and something.dead~=1 then
 			if ERDY==1 then CastSpellTarget('E',myHero) end
-			run_every(1,WSpell, something)
+			run_every(0.2,WSpell, something)
 		elseif startHarass==true and  QRDY==0 and WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and (LeeConfig.wardH and gotAWard()) then
 			ward(wardhx,wardhy,wardhz)
 			if ERDY==1 then CastSpellTarget('E',myHero) end
 			if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and wardsuccess==true and lastWardObject~=nil and GetD(lastWardObject)<700 then
-				run_every(1,WSpell, lastWardObject)
+				run_every(0.2,WSpell, lastWardObject)
 			end
 		end
 		
@@ -514,12 +518,12 @@ function initiate()
 		end
 		if startCombo==true and wardz==nil and TI~=nil and GetD(TI)<250 and QRDY==0 then
 		--print("\nQ6")
-			inSec()
+			inSec(TI)
 		elseif WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and QRDY==0 and os.clock() > lastWardJump and startCombo==true and wardz~=nil and TI~=nil and TI.x~=nil then						
 			--print("\nQ9")
 			if www~=nil then
 				--print("\nQ10")
-				CastSpellXYZ(www, wardx,wardy,wardz)
+				CastSpellXYZ(www, wardx,wardy,wardz,0)
 				success=true
 				wardFound=true
 				lastWardJump=os.clock()+5
@@ -533,7 +537,7 @@ function initiate()
 			--end
 		end
 		if WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and QRDY==0 and success==true and lastWardJump>os.clock() and wardObject~=nil and GetD(wardObject)<600 then
-			run_every(1,WSpell, wardObject)
+			run_every(0.2,WSpell, wardObject)
 		end
 		if TI~=nil and TI.x~=nil and RRDY==1 and (myHero.SpellNameW=="blindmonkwtwo" or WRDY==0) then
 			CastSpellTarget('R',TI)
@@ -562,141 +566,147 @@ function findWard()
 	return wO
 end
 
-function inSec()
+function inSec(enemy)
 	if WRDY==1 then
 	--print("\nQ8")
-		local dist=GetD(TI,myHero)
-		if runningAway(TI) and isMoving(TI) then
-		--print("\nR1")
-			if TI.x==myHero.x then
-					tx = TI.x
-					if TI.z>myHero.z then
-							tz = TI.z-(-1.7*TI.movespeed)
+		if enemy~=nil then
+			local RDIST=LeeConfig.distanceR*340/enemy.movespeed
+			local NRDIST=LeeConfig.distanceNR*enemy.movespeed/340
+			local NMDIST=LeeConfig.distanceNM
+			local angle
+			local dist=GetD(enemy,myHero)
+			local tx,tz
+			if not isMoving(enemy) then
+				if enemy.x==myHero.x then
+					tx = enemy.x
+					if enemy.z>myHero.z then
+						tz = enemy.z+NMDIST
 					else
-							tz = TI.z+(-1.7*TI.movespeed)
+						tz = enemy.z-NMDIST
 					end
-		   
-			elseif TI.z==myHero.z then
-					tz = TI.z
-					if TI.x>myHero.x then
-							tx = TI.x-(-1.7*TI.movespeed)
+				
+				elseif enemy.z==myHero.z then
+					tz = enemy.z
+					if enemy.x>myHero.x then
+						tx = enemy.x+NMDIST
 					else
-							tx = TI.x+(-1.7*TI.movespeed)
+						tx = enemy.x-NMDIST
 					end
-		   
-			elseif TI.x>myHero.x then
-					angle = math.asin((TI.x-myHero.x)/dist)
-					zs = (-1.7*TI.movespeed)*math.cos(angle)
-					xs = (-1.7*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x-xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x-xs
-							tz = TI.z+zs
+				
+				elseif enemy.x>myHero.x then
+					angle = math.asin((enemy.x-myHero.x)/dist)
+					zs = NRDIST*math.cos(angle)
+					xs = NRDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z-zs
 					end
-		   
-			elseif TI.x<myHero.x then
-					angle = math.asin((myHero.x-TI.x)/dist)
-					zs = (-1.7*TI.movespeed)*math.cos(angle)
-					xs = (-1.7*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x+xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x+xs
-							tz = TI.z+zs
-					end 
+				
+				elseif enemy.x<myHero.x then
+					angle = math.asin((myHero.x-enemy.x)/dist)
+					zs = NRDIST*math.cos(angle)
+					xs = NRDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z-zs
+					end						
+				end
+			elseif not runningAway(enemy) then
+				if enemy.x==myHero.x then
+					tx = enemy.x
+					if enemy.z>myHero.z then
+						tz = enemy.z+NRDIST
+					else
+						tz = enemy.z-NRDIST
+					end
+				
+				elseif enemy.z==myHero.z then
+					tz = enemy.z
+					if enemy.x>myHero.x then
+						tx = enemy.x+NRDIST
+					else
+						tx = enemy.x-NRDIST
+					end
+				
+				elseif enemy.x>myHero.x then
+					angle = math.asin((enemy.x-myHero.x)/dist)
+					zs = NRDIST*math.cos(angle)
+					xs = NRDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z-zs
+					end
+				
+				elseif enemy.x<myHero.x then
+					angle = math.asin((myHero.x-enemy.x)/dist)
+					zs = NRDIST*math.cos(angle)
+					xs = NRDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z-zs
+					end						
+				end
+			elseif runningAway(enemy) then	
+				if enemy.x==myHero.x then
+					tx = enemy.x
+					if enemy.z>myHero.z then
+						tz = enemy.z+RDIST
+					else
+						tz = enemy.z-RDIST
+					end
+				
+				elseif enemy.z==myHero.z then
+					tz = enemy.z
+					if enemy.x>myHero.x then
+						tx = enemy.x+RDIST
+					else
+						tx = enemy.x-RDIST
+					end
+				
+				elseif enemy.x>myHero.x then
+					angle = math.asin((enemy.x-myHero.x)/dist)
+					zs = RDIST*math.cos(angle)
+					xs = RDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x+xs
+						tz = enemy.z-zs
+					end
+				
+				elseif enemy.x<myHero.x then
+					angle = math.asin((myHero.x-enemy.x)/dist)
+					zs = RDIST*math.cos(angle)
+					xs = RDIST*math.sin(angle)
+					if enemy.z>myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z+zs
+					elseif enemy.z<myHero.z then
+						tx = enemy.x-xs
+						tz = enemy.z-zs
+					end						
+				end					
+			
 			end
-		elseif not runningAway(TI) and isMoving(TI) then
-		--print("\nR2")
-			if TI.x==myHero.x then
-					tx = TI.x
-					if TI.z>myHero.z then
-							tz = TI.z-(-0.45*TI.movespeed)
-					else
-							tz = TI.z+(-0.45*TI.movespeed)
-					end
-		   
-			elseif TI.z==myHero.z then
-					tz = TI.z
-					if TI.x>myHero.x then
-							tx = TI.x-(-0.45*TI.movespeed)
-					else
-							tx = TI.x+(-0.45*TI.movespeed)
-					end
-		   
-			elseif TI.x>myHero.x then
-					angle = math.asin((TI.x-myHero.x)/dist)
-					zs = (-0.45*TI.movespeed)*math.cos(angle)
-					xs = (-0.45*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x-xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x-xs
-							tz = TI.z+zs
-					end
-		   
-			elseif TI.x<myHero.x then
-					angle = math.asin((myHero.x-TI.x)/dist)
-					zs = (-0.45*TI.movespeed)*math.cos(angle)
-					xs = (-0.45*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x+xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x+xs
-							tz = TI.z+zs
-					end 
-			end
-		elseif not isMoving(TI) then
-		--print("\nR3")
-			if TI.x==myHero.x then
-					tx = TI.x
-					if TI.z>myHero.z then
-							tz = TI.z-(-0.75*TI.movespeed)
-					else
-							tz = TI.z+(-0.75*TI.movespeed)
-					end
-		   
-			elseif TI.z==myHero.z then
-					tz = TI.z
-					if TI.x>myHero.x then
-							tx = TI.x-(-0.75*TI.movespeed)
-					else
-							tx = TI.x+(-0.75*TI.movespeed)
-					end
-		   
-			elseif TI.x>myHero.x then
-					angle = math.asin((TI.x-myHero.x)/dist)
-					zs = (-0.75*TI.movespeed)*math.cos(angle)
-					xs = (-0.75*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x-xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x-xs
-							tz = TI.z+zs
-					end
-		   
-			elseif TI.x<myHero.x then
-					angle = math.asin((myHero.x-TI.x)/dist)
-					zs = (-0.75*TI.movespeed)*math.cos(angle)
-					xs = (-0.75*TI.movespeed)*math.sin(angle)
-					if TI.z>myHero.z then
-							tx = TI.x+xs
-							tz = TI.z-zs
-					elseif TI.z<myHero.z then
-							tx = TI.x+xs
-							tz = TI.z+zs
-					end 
-			end
-		end
+		
 		wardx=tx
-		wardy=TI.y
+		wardy=enemy.y
 		wardz=tz
 		wardNear={x=wardx,y=wardy,z=wardz}
+		end
 	end
 end
 
@@ -713,13 +723,12 @@ function gotAWard()
 end
 
 function isMoving(unitM)
-	local mx,my,mz=GetFireahead(unitM,5,0)
-	if mx==unitM.x and mz==unitM.z then
-		return false
-	else
-		return true
-	end
-
+        local mx,my,mz=GetFireahead(unitM,5,0)
+        if math.abs(mx-unitM.x)<20 and math.abs(mz-unitM.z)<20 then
+                return false
+        else
+                return true
+        end
 end
 
 function Smite()
@@ -767,12 +776,10 @@ function OnCreateObj(obj)
 		eye.z=obj.z
 	end
 	
-	if LeeConfig.initiate and GetD(obj)<700 and (string.find(obj.charName,"SightWard") or string.find(obj.charName,"VisionWard")) then
+	if LeeConfig.initiate and GetD(obj)<800 and (string.find(obj.charName,"SightWard") or string.find(obj.charName,"VisionWard")) then
 		wardObject=obj		
 		lastWardJump = os.clock()+5
-	end
-		
-	if (LeeConfig.ward or LeeConfig.harass) and GetD(obj)<700 and (string.find(obj.charName,"SightWard") or string.find(obj.charName,"VisionWard")) then
+	elseif (LeeConfig.ward or LeeConfig.harass) and GetD(obj)<800 and (string.find(obj.charName,"SightWard") or string.find(obj.charName,"VisionWard")) then
 		lastWardObject=obj
 		lastWardJump = os.clock()+5
 	end
@@ -987,7 +994,7 @@ function GetWardSlot(item)
 							--print("\nHere5")
 							return nil end
                 else
-						print("\nHere6")
+						--print("\nHere6")
                         return 1
                 end
     elseif GetInventoryItem(2) == item then

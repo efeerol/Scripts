@@ -2,7 +2,7 @@ require "Utils"
 require "spell_damage"
 print("\nMalbert's")
 print("\nOil and Veigar")
-print("\nVersion 2.2")
+print("\nVersion 2.4")
 
 local target
 local targetrange
@@ -42,6 +42,7 @@ local WRDY=0
 local ERDY=0
 local RRDY=0
 local WTimer=0
+local DFG=3128
 
 VeigConfig = scriptConfig("Veigar", "Vinegar Hotkeys")
 VeigConfig:addParam("e", "Stun and Run", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("Z"))--Z
@@ -129,19 +130,19 @@ function VeigRun()
         end
 		
 			------------
-	if myHero.SpellTimeQ > 1.0 and GetSpellLevel("Q") > 0 then
+	if myHero.SpellTimeQ > 1.0 and GetSpellLevel("Q") > 0 and myHero.mana>=55+5*GetSpellLevel("Q") then
                 QRDY = 1
                 else QRDY = 0
         end
-        if myHero.SpellTimeW > 1.0 and GetSpellLevel("W") > 0 then
+        if myHero.SpellTimeW > 1.0 and GetSpellLevel("W") > 0 and myHero.mana>=60+10*GetSpellLevel("W") then
                 WRDY = 1
                 else WRDY = 0
         end
-        if myHero.SpellTimeE > 1.0 and GetSpellLevel("E") > 0 then
+        if myHero.SpellTimeE > 1.0 and GetSpellLevel("E") > 0  and myHero.mana>=70+10*GetSpellLevel("E") then
                 ERDY = 1
                 else ERDY = 0
         end
-        if myHero.SpellTimeR > 1.0 and GetSpellLevel("R") > 0 then
+        if myHero.SpellTimeR > 1.0 and GetSpellLevel("R") > 0  and myHero.mana>=75+25*GetSpellLevel("R") then
                 RRDY = 1
         else RRDY = 0 end
 	--------------------------
@@ -553,19 +554,17 @@ function C()
 				CastSpellXYZ("W",GetFireahead(target,2,0))
 			end
 		end
-		if GetD(target)<650 and QRDY==1 then
+		if GetInventorySlot(3128)~=nil and myHero["SpellTime"..GetInventorySlot(3128)]>1.0 and GetD(target)<600 then
+            CastSpellTarget(tostring(GetInventorySlot(3128)),target)
+		end
+		if QRDY==1 and GetD(target)<650 then
 			CastSpellTarget("Q",target)
-		elseif GetD(target)<650 and RRDY==1 and VeigConfig.ult then
+		elseif RRDY==1 and VeigConfig.ult and GetD(target)<650 then
 			CastSpellTarget("R",target)
 		end
-		if GetD(twfa)<900 and WRDY==1 and VeigConfig.OS then
+		if WRDY==1 and VeigConfig.OS and GetD(twfa)<900 then
 			CastSpellXYZ("W",twfx,0,twfz)
 		else
-			if GetD(target)<400 then
-			UseAllItems(target)
-		elseif GetD(target)<600 then
-			UseTargetItems(target)
-		end
 			AttackTarget(target)
 		end
 	else
@@ -771,7 +770,7 @@ end
 
 function isMoving(unitM)
 	local mx,my,mz=GetFireahead(unitM,5,0)
-	if math.abs(mx-unitM.x<20) and math.abs(mz-unitM.z<20) then
+	if math.abs(mx-unitM.x)<20 and math.abs(mz-unitM.z)<20 then
 		return false
 	else
 		return true

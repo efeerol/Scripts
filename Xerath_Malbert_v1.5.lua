@@ -8,7 +8,7 @@ local metakey = SKeys.Control
 print=printtext
 printtext("\nXerox The Kill Copier\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.4\n")
+printtext("\nVersion 1.5\n")
 
 local targetAA
 local target
@@ -58,7 +58,7 @@ XerathConfig = scriptConfig('Mals Xerath Config', 'Xerathconfig')
 XerathConfig:addParam('teamfight', 'AutoTeamFight', SCRIPT_PARAM_ONKEYDOWN, false, 84)
 XerathConfig:addParam('harass', 'Harass', SCRIPT_PARAM_ONKEYDOWN, false, 88)
 
-XerathConfig:addParam('ch', 'Check', SCRIPT_PARAM_ONKEYDOWN, true, 56)
+XerathConfig:addParam('ch', 'Check', SCRIPT_PARAM_ONKEYDOWN, false, 56)
 XerathConfig:addParam('ult', 'Ult in TF', SCRIPT_PARAM_ONKEYTOGGLE, true, 57)
 XerathConfig:addParam('ks', 'Killsteal', SCRIPT_PARAM_ONKEYTOGGLE, true, 48)
 XerathConfig:addParam('uks', 'Ult Killsteal', SCRIPT_PARAM_ONKEYTOGGLE, true, 189)
@@ -122,9 +122,9 @@ function Run()
 		if XerathConfig.harass and IsChatOpen() == 0 then
 			Harass()
 		end
-		
+		local QQT=QTime+3
 		if XerathConfig.ch and IsChatOpen() == 0 then
-			print("\nQCH: "..q1.." R: "..r1.." QR: "..QRDY.." WR: "..WRDY.."\n")
+			print("\nQCH: "..q1.." R: "..r1.." QR: "..QRDY.." WR: "..WRDY.." QT: "..QQT.." T: "..os.clock().."\n")
 		end
 		
 		if XerathConfig.ks then
@@ -135,7 +135,7 @@ function Run()
 			UKillsteal()
 		end
 	        ------------
-        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 and myHero.mana>=(70+10*GetSpellLevel('Q')) then
+        if myHero.SpellTimeQ > 1.0 and GetSpellLevel('Q') > 0 and (myHero.mana>=(70+10*GetSpellLevel('Q')) or QCharging==true) then
                 QRDY = 1
                 else QRDY = 0
         end
@@ -186,8 +186,11 @@ function Fight()
 		if QCharging==true then
 			Q(tfa)
 		end
-		if ERDY==1 and CreepBlock(tefa.x,tefa.y,tefa.z,80) == 0 and GetD(tefa)<1050 then
+		if ERDY==1 and CreepBlock(tefa.x,tefa.y,tefa.z,90) == 0 and GetD(tefa)<1050 then
 			CastSpellXYZ("E",tefax,tefay,tefaz)
+		end
+		if GetInventorySlot(3128)~=nil and myHero["SpellTime"..GetInventorySlot(3128)]>1.0 and GetD(target)<600 then
+			CastSpellTarget(tostring(GetInventorySlot(3128)),target)
 		end
 		if WRDY==1 and GetD(tfa)<1100 then
 			local pos=GetMECFA(200,1050,target)
@@ -199,8 +202,6 @@ function Fight()
 		end
 		if QRDY==1 and GetD(tfa)<1400 then
 			Q(tfa)
-		elseif GetInventorySlot(3157)~=nil and myHero["SpellTime"..GetInventorySlot(3157)]>1.0 and GetD(target)<600 then
-			CastSpellTarget(tostring(GetInventorySlot(3157)),target)
 		elseif RRDY==1 and RActive==false and QCharging==false and XerathConfig.ult then
 			CastSpellTarget("R",myHero)
 		else
@@ -229,7 +230,7 @@ function Harass()
 		if QCharging==true then
 			Q(tfa)
 		end
-		if ERDY==1 and CreepBlock(tefa.x,tefa.y,tefa.z,80) == 0 and GetD(tefa)<1050 then
+		if ERDY==1 and CreepBlock(tefa.x,tefa.y,tefa.z,90) == 0 and GetD(tefa)<1050 then
 			CastSpellXYZ("E",tefax,tefay,tefaz)
 		end
 		if WRDY==1 and GetD(tfa)<1100 then
@@ -330,7 +331,7 @@ function Killsteal()
 			end
 			 local QDMG=(40*GetSpellLevel("Q")+40+.75*myHero.ap)*RegPen*QRDY
 			 local WDMG=(30*GetSpellLevel("E")+30+.6*myHero.ap)*RegPen*WRDY
-			 local EDMG=(50*GetSpellLevel("E")+30+.45*myHero.ap)*RegPen*ERDY*((CreepBlock(tfa2.x,tfa2.y,tfa2.z,80)+1)%2)
+			 local EDMG=(50*GetSpellLevel("E")+30+.45*myHero.ap)*RegPen*ERDY*((CreepBlock(tfa2.x,tfa2.y,tfa2.z,90)+1)%2)
 			 local RDMG=(55*GetSpellLevel("R")+135+.43*myHero.ap)*RegPen*RRDY
 	
 		-------------------------------------
@@ -416,7 +417,8 @@ function Q(enemy)
 				--QTime=os.clock()
 			elseif GetD(enemy)<=1000 then
 				--print("\nH4.5")
-				ClickSpellXYZ('M',enemy.x,enemy.y,enemy.z,0)
+				run_every(1,Click,enemy)
+				--ClickSpellXYZ('M',enemy.x,enemy.y,enemy.z,0)
 				send.key_up(0x74)
 			end
 		elseif GetD(enemy)>750 then
@@ -428,7 +430,8 @@ function Q(enemy)
 			elseif GetD(enemy)<1400 and QTime+(1.5*(GetD(enemy)-750)/650)<os.clock() then
 			
 			--print("\nH6")
-				ClickSpellXYZ('M',enemy.x,enemy.y,enemy.z,0)
+				run_every(1,Click,enemy)
+				--ClickSpellXYZ('M',enemy.x,enemy.y,enemy.z,0)
 				send.key_up(0x74)
 			end
 			
@@ -436,6 +439,10 @@ function Q(enemy)
 		
 	 send.tick() 
 	end
+end
+
+function Click(mm)
+	ClickSpellXYZ('M',mm.x,mm.y,mm.z,0)
 end
 
 function OnDraw()

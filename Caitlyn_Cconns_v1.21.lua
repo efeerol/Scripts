@@ -21,11 +21,14 @@
 |______/      |__|         \______| \______| \______/  |__| \__| |__| \__| 
                                                                            
                                                                          
-VERSION: 1.20
-UPDATED: 11/21/2013
+VERSION: 1.21
+UPDATED: 2/17/2014
 BY: CCONN
 
 CHANGELOG:		VERSION 1.20		initial release - complete rewrite of v1.1
+			VERSION 1.21		Tweaks to auto carry settings and farming,
+						updated SafeR to use CountUnit,
+						corected damage calc for ultimate
 ]]
 
 require 'Utils'
@@ -58,9 +61,9 @@ local projSpeed = 2.5
 local lastAttack = GetTickCount()
 local shotFired = false
 local range = myHero.range + GetDistance(GetMinBBox(myHero))
-local attackDelayOffset = 275
+local attackDelayOffset = 325
 local isMoving = false
-local startAttackSpeed = 0.625
+local startAttackSpeed = 0.628
 local tlow
 local thigh
 --FARMING VARIABLES------------------------------
@@ -71,7 +74,7 @@ if myHero.team == 100 then
 else
 	TEAM = "Red"
 end
-local Caitlyn = { projSpeed = 2.5, aaParticles = {"caitlyn_basicAttack_cas", "caitlyn_headshot_tar", "caitlyn_mis_04"}, aaSpellName = { "caitlynbasicattack" }, startAttackSpeed = "0.625" }
+local Caitlyn = { projSpeed = 2.5, aaParticles = {"caitlyn_basicAttack_cas", "caitlyn_headshot_tar", "caitlyn_mis_04"}, aaSpellName = { "caitlynbasicattack" }, startAttackSpeed = "0.668" }
 local MinionInfo = { }
 MinionInfo[TEAM.."_Minion_Basic"] 		= 	{ aaDelay = 400, projSpeed = 0		}
 MinionInfo[TEAM.."_Minion_Caster"] 		=	{ aaDelay = 484, projSpeed = 0.68	}
@@ -125,6 +128,15 @@ function HeadShotReady()
 end
 
 function SafeR()
+	if CountUnit(myHero,CfgCaitSettings.SafeR_Value) < 1 then
+		return true
+	else
+		return false
+	end
+end
+
+--[[  DEPREICATED
+function SafeR()
 	for i = 1, objManager:GetMaxHeroes()  do
     	local enemy = objManager:GetHero(i)
     	if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable == 0 and enemy.dead == 0) then
@@ -134,6 +146,7 @@ function SafeR()
 		end
 	end
 end
+]]
 
 function Mastery_Damage()
 	local Mast_ButcherDMG = 0
@@ -195,10 +208,8 @@ function Farm()
 			end
 				
 			if Minion.dead == 0 and Minion.health - PredictedDamage <= True_Attack_Damage_Against_Minions and Minion.health - PredictedDamage > 0 and GetDistance(Minion, myHero) < range then
-				if os.clock() > TimeToAA then AttackTarget(Minion)
+				if timeToShoot() then Action(Minion)
 				CustomCircle(100, 1, 2, Minion)
-				elseif target ~= nil then
-					--Harass()
 				end
 			end
 		end
@@ -298,7 +309,7 @@ function Killsteal() --15 KS Combinations
 			local qdmg = getDmg("Q",enemy,myHero)
 			local wdmg = getDmg("W",enemy,myHero)
     		local edmg = getDmg("E",enemy,myHero)
-			local rdmg = getDmg("R",enemy,myHero)
+			local rdmg = getDmg("R",enemy,myHero)-47
 			local ignitedmg = (myHero.selflevel*20)+50
 			if CfgCaitKillSteal.Q and qdmg > enemy.health and myHero.SpellTimeQ > 1.0 and GetDistance(myHero,enemy) <= 1300 then --Q KS
 				Q(enemy)
@@ -639,6 +650,20 @@ function BOTRK(BOTRKTarget)
 	end
 end	
 
+--lib functions
+function CountUnit(Center,Radius)
+	local UnitCount = 0
+	for i = 1, objManager:GetMaxHeroes()  do
+    	local enemy = objManager:GetHero(i)
+    	if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable == 0 and enemy.dead == 0) then
+			if GetDistance(enemy,Center) < Radius then
+				UnitCount = UnitCount + 1
+			end
+		end
+	end
+	return UnitCount
+end
+
 --POTIONS-----------------------------------------
 function CCONN_Potions()
 	if bluePill == nil then
@@ -795,7 +820,7 @@ end
 
 function GetAAData()
     return {  
-         Caitlyn = { projSpeed = 2.5, aaParticles = {"caitlyn_basicAttack_cas", "caitlyn_headshot_tar", "caitlyn_mis_04"}, aaSpellName = { "caitlynbasicattack" }, startAttackSpeed = "0.625" },
+         Caitlyn	=	{ projSpeed = 2.5, aaParticles = {"caitlyn_basicAttack_cas", "caitlyn_headshot_tar", "caitlyn_mis_04"}, aaSpellName = "caitlynbasicattack", startAttackSpeed = "0.668" },
     }
 end
 

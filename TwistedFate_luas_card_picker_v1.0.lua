@@ -1,4 +1,4 @@
---Lua's Little Card Picker v1.0
+--Lua's Little Card Picker v1.1
 
 require "Utils"
 local uiconfig = require 'uiconfig'
@@ -13,6 +13,8 @@ TFMenu, tfmenu = uiconfig.add_menu('PickACard Menu')
 tfmenu.keydown('TFRed', 'Pick @ Red', Keys.X)
 tfmenu.keydown('TFBlue', 'Pick @ Blue', Keys.T)
 tfmenu.keydown('TFGold', 'Pick @ Gold', Keys.C)
+tfmenu.checkbutton('RangeCircle', 'AA Range Circle', true)
+tfmenu.checkbutton('ShowPick', 'Shows Text while Pick a Card', true)
 tfmenu.permashow('TFRed')
 tfmenu.permashow('TFBlue')
 tfmenu.permashow('TFGold')
@@ -27,24 +29,29 @@ tfmenu.permashow('TFGold')
 --					Enjoy ._.
 
 function GimmeACard()
-	CustomCircle(AARange, 5, 3, myHero)
-	if Locked ~= nil and GetTickCount()-Locked > 4500 then Locked = nil end
-	if myHero.SpellTimeW > 0.9 and GetSpellLevel('W') > 0 and Locked == nil then WRDY = 1
-	else WRDY = 0 end
-	if IsChatOpen() == 0 and myHero.dead == 0 then
-		if PickBlock ~= nil and GetTickCount()-PickBlock > 1000 then PickBlock = nil end
-		if TFMenu.TFBlue and WRDY == 1 then NextCard = 'Blue'
-		elseif TFMenu.TFGold and WRDY == 1 then NextCard = 'Yellow'
-		elseif TFMenu.TFRed and WRDY == 1 then NextCard = 'Red' end
-		if WRDY == 1 and NextCard ~= nil and PickBlock == nil and myHero.SpellNameW == 'PickACard' then
-			PickBlock = GetTickCount()
-			CastSpellTarget('W',myHero)
+	if tostring(winapi.get_foreground_window()) == "League of Legends (TM) Client" and IsChatOpen() == 0 then
+		if TFMenu.RangeCircle then
+			AARange = myHero.range+(GetDistance(GetMinBBox(myHero)))
+			CustomCircle(AARange, 5, 3, myHero)
 		end
-		if NextCard ~= nil then
-			if NextCard ~= 'Yellow' then DrawTextObject(NextCard,myHero,Color[NextCard])
-			else DrawTextObject('Gold',myHero,Color.Yellow) end
+		if Locked ~= nil and GetTickCount()-Locked > 4500 then Locked = nil end
+		if myHero.SpellTimeW > 0.9 and GetSpellLevel('W') > 0 and Locked == nil then WRDY = 1
+		else WRDY = 0 end
+		if IsChatOpen() == 0 and myHero.dead == 0 then
+			if PickBlock ~= nil and GetTickCount()-PickBlock > 1000 then PickBlock = nil end
+			if TFMenu.TFBlue and WRDY == 1 then NextCard = 'Blue'
+			elseif TFMenu.TFGold and WRDY == 1 then NextCard = 'Yellow'
+			elseif TFMenu.TFRed and WRDY == 1 then NextCard = 'Red' end
+			if WRDY == 1 and NextCard ~= nil and PickBlock == nil and myHero.SpellNameW == 'PickACard' then
+				PickBlock = GetTickCount()
+				CastSpellTarget('W',myHero)
+			end
+			if TFMenu.ShowPick and NextCard ~= nil then
+				if NextCard ~= 'Yellow' then DrawTextObject(NextCard,myHero,Color[NextCard])
+				else DrawTextObject('Gold',myHero,Color.Yellow) end
+			end
+			if PickCard and Locked == nil then CastSpellTarget('W',myHero) end
 		end
-		if PickCard and Locked == nil then CastSpellTarget('W',myHero) end
 	end
 end
 

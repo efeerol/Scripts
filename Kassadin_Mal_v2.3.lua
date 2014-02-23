@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nA-Void Me\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 2.1\n")
+printtext("\nVersion 2.3\n")
 
 local target
 local targetclose
@@ -26,12 +26,12 @@ KassConfig = scriptConfig("Kass", "Kass Config")
 KassConfig:addParam("h", " Harass", SCRIPT_PARAM_ONKEYDOWN, false, 88)
 KassConfig:addParam("r", " R Escape", SCRIPT_PARAM_ONKEYDOWN, false, 90)
 KassConfig:addParam('teamfight', 'TeamFight', SCRIPT_PARAM_ONKEYDOWN, false, 84)
-KassConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONOFF, true, 56)
+KassConfig:addParam('dokillsteal', 'Killsteal', SCRIPT_PARAM_ONKEYTOGGLE, true, 56)
 KassConfig:addParam("mode", "Harass Mode", SCRIPT_PARAM_DOMAINUPDOWN, 1, 187, {"Use Ult","No Ult"})
 KassConfig:addParam('distanceR', "RA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 500, 57,100,700,50)
 KassConfig:addParam('distanceNR', "NRA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 700, 48,100,700,50)
 KassConfig:addParam('distanceNM', "NM Distance", SCRIPT_PARAM_NUMERICUPDOWN, 650, 189,100,700,50)
-KassConfig:addParam('ksnf', 'Killsteal Notifications', SCRIPT_PARAM_ONKEYTOGGLE)
+KassConfig:addParam('ksnf', 'Killsteal Notifications', SCRIPT_PARAM_ONOFF, true)
 KassConfig:addParam('rks', 'R KS ON/OFF', SCRIPT_PARAM_ONOFF, true)
 KassConfig:addParam('nm', 'NearMouse Targetting', SCRIPT_PARAM_ONOFF, true)
 KassConfig:permaShow('mode')
@@ -288,7 +288,7 @@ function harass()
 		if KassConfig.mode==1 and RRDY==1 then
 		
 			if ERDY==1 then
-				if GetD(target,myHero)<650 then
+				if GetD(target,myHero)<700 then
 					if QRDY==1 then
 					CastSpellTarget('Q',target)
 					end
@@ -304,7 +304,7 @@ function harass()
 					if QRDY==1 then
 					CastSpellTarget('Q',target)
 					end
-					if ERDY==1 and GetD(target,myHero)<650 then CastSpellXYZ('E',target.x,0,target.z) end
+					if ERDY==1 and GetD(target,myHero)<700 then CastSpellXYZ('E',target.x,0,target.z) end
 					MoveToMouse()
 				end
 				
@@ -324,7 +324,7 @@ function harass()
 			end
 
 		elseif RRDY==0 or KassConfig.mode==2 then
-			if GetD(target,myHero)<650 then
+			if GetD(target,myHero)<700 then
 				if QRDY==1 then
 					CastSpellTarget('Q',target)
 				end
@@ -333,7 +333,7 @@ function harass()
 				end
 					MoveToMouse()
 				
-			elseif GetD(target,myHero)>=650 and QRDY==1 and GetD(target)<700 then
+			elseif GetD(target,myHero)>=700 and QRDY==1 and GetD(target)<750 then
 				CastSpellTarget('Q',target)
 				if ERDY==1 then
 					MoveToXYZ(target.x,0,target.z)
@@ -421,7 +421,7 @@ function killsteal()
 		
 		if targetks.health<(Q+E+W+R+AA+ignitedamage)*RRDY and GetD(targetks)<720 then
 			if KassConfig.ksnf then 
-				CustomCircle(200,50,3,hero)
+				CustomCircle(200,50,3,targetks)
 			end
 			if KassConfig.dokillsteal and KassConfig.rks then
 				if RRDY==1 then CastSpellXYZ('R',targetks.x,0,targetks.z) end
@@ -433,7 +433,7 @@ function killsteal()
 			end
 		elseif targetks.health<(Q+E+W+R+AA+ignitedamage) and GetD(targetks)<280 then
 			if KassConfig.ksnf then 
-				CustomCircle(200,50,4,hero)
+				CustomCircle(200,50,4,targetks)
 			end
 			if KassConfig.dokillsteal then
 				if RRDY==1 then CastSpellXYZ('R',targetks.x,0,targetks.z) end
@@ -451,7 +451,7 @@ function killsteal()
 			local AAA = getDmg("AD",targetkslongrange,myHero)
 			if targetkslongrange.health<(Q+E+ignitedamage)*RRDY and GetD(targetkslongrange)<1200 then
 				if KassConfig.ksnf then 
-					CustomCircle(200,50,3,hero)
+					CustomCircle(200,50,3,targetkslongrange)
 				end
 				if KassConfig.dokillsteal and KassConfig.rks then
 					if GetD(targetkslongrange,myHero)<1200 then
@@ -464,7 +464,7 @@ function killsteal()
 		
 		if targetks.health<Q+E+ignitedamage and GetD(targetks)<650 then
 			if KassConfig.ksnf then 
-				CustomCircle(200,50,4,hero)
+				CustomCircle(200,50,4,targetks)
 			end
 			if KassConfig.dokillsteal then
 				if QRDY==1 then CastSpellTarget('Q',targetks) end
@@ -474,7 +474,7 @@ function killsteal()
 		end
 		if targetks.health<Q+E+ignitedamage+AA and GetD(targetks)<280 then
 			if KassConfig.ksnf then 
-				CustomCircle(200,50,4,hero)
+				CustomCircle(200,50,4,targetks)
 			end
 			if KassConfig.dokillsteal then
 				if QRDY==1 then CastSpellTarget('Q',targetks) end
@@ -491,7 +491,7 @@ function killsteal()
 		local R = getDmg("R",targetkslongrange,myHero)*RRDY
 		if targetkslongrange.health<(Q+E+ignitedamage)*RRDY and GetD(targetkslongrange)<1300 then
 			if KassConfig.ksnf then 
-				CustomCircle(200,50,3,hero)
+				CustomCircle(200,50,3,targetkslongrange)
 			end
 			if KassConfig.dokillsteal and KassConfig.rks then
 				local t = GetUltSpot(targetkslongrange)

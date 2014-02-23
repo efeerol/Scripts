@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nNono U Dead\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.7\n")
+printtext("\nVersion 1.8\n")
  
 local target
 local targetult
@@ -136,8 +136,8 @@ function Run()
 						enemies[hero.name]=hero
 				end
 		end
-		Consume=(50+40*GetSpellLevel('Q')+myHero.ap*75/100)*CanUseSpell('Q')
-		CDMG=(375+125*GetSpellLevel('Q'))*CanUseSpell('Q')
+		Consume=(25+45*GetSpellLevel('Q')+myHero.ap*75/100)*CanUseSpell('Q')
+		CDMG=(250+150*GetSpellLevel('Q'))*CanUseSpell('Q')
 		if RU==true then
 				if added==0 then
 			   
@@ -215,7 +215,15 @@ end
 function smitesteal()
 		if myHero.SummonerD == "SummonerSmite" then
 			if IsSpellReady('D')==1 then
-				smitedamage = 460+(30*myHero.selflevel)
+				if myHero.selflevel<=4 then
+					smitedamage = 390+(20*myHero.selflevel)
+				elseif myHero.selflevel<=9 then
+					smitedamage = 450+(30*(myHero.selflevel-4))
+				elseif myHero.selflevel<=14 then
+					smitedamage = 600+(40*(myHero.selflevel-9))
+				else
+					smitedamage = 800+(50*(myHero.selflevel-14))
+				end
 				smitekey="D"
 			else
 				smitedamage=0
@@ -225,7 +233,15 @@ function smitesteal()
 				return
 		elseif myHero.SummonerF == "SummonerSmite" then
 			if IsSpellReady('F')==1 then
-				smitedamage = 460+(30*myHero.selflevel)
+				if myHero.selflevel<=4 then
+					smitedamage = 390+(20*myHero.selflevel)
+				elseif myHero.selflevel<=9 then
+					smitedamage = 450+(30*(myHero.selflevel-4))
+				elseif myHero.selflevel<=14 then
+					smitedamage = 600+(40*(myHero.selflevel-9))
+				else
+					smitedamage = 800+(50*(myHero.selflevel-14))
+				end
 				smitekey="F"
 			else
 				smitedamage=0
