@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 3.2\n")
+printtext("\nBeta 3.4\n")
 
 local target
 local stuntarget
@@ -99,9 +99,9 @@ function Run()
 		
 		delay=RivConfig.s
 
-	targetult = GetWeakEnemy("PHYS", 1000)
-	target = GetWeakEnemy("PHYS", 500)
-	stuntarget = GetWeakEnemy("PHYS", 265)
+	targetult = GetBestEnemy("PHYS", 1000)
+	target = GetBestEnemy("PHYS", 500)
+	stuntarget = GetBestEnemy("PHYS", 265)
 	if target~=nil then
 		ufax,ufay,ufaz = GetFireahead(target,5,22)
 		ufa={x=ufax,y=ufay,z=ufaz}
@@ -169,7 +169,7 @@ function Run()
 	end
 
 	if IsChatOpen() == 0 and RivConfig.h then
-		AttackT(target)--harass()
+		harass()
 	end
 			
 			
@@ -630,14 +630,16 @@ function TF2()
 		if Ractive==true and target.dead~=1 and (target.health<Rdamage  or castR==true or myHero.health<15/100*myHero.maxHealth) then --or target.health/target.maxHealth<1/4
 			CastSpellXYZ("R",ufa.x,0,ufa.z,0)
 			Ractive=false
+		elseif os.clock()<Atimer and GetD(target)<myHero.range+50 then
+			AttackT(target)		
 		elseif ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
 			CastSpellXYZ("E",ufa.x,0,ufa.z,0)
+			
+		elseif RRDY==1 and Ractive==false and target.dead~=1 and (os.clock()>Atimer) and GetD(target,myHero)<500 then
+			CastSpellXYZ("R",ufa.x,0,ufa.z,0)
+			Ractive=true
 		elseif QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) and Qmod<2 then
 			
-			if Ractive==false and RRDY==1 then
-				CastSpellXYZ("R",myHero.x,0,myHero.z,0)
-				Ractive=true
-			end
 			CastSpellXYZ("Q",ufa.x,0,ufa.z,0)
 
 		elseif WRDY==1 and (os.clock()>Atimer) and GetD(target,myHero)<275 then
@@ -694,17 +696,7 @@ function TF2()
 			end
 			
 			CastSpellXYZ("W",myHero.x,0,myHero.z,0)
-		elseif RRDY==1 and Ractive==false and target.dead~=1 then
-			CastSpellXYZ("R",ufa.x,0,ufa.z,0)
-			Ractive=true
-		else
-			if GetD(target)<400 then
-				CastSummonerExhaust(target)
-				UseAllItems(target)
-			elseif GetD(target)<600 then
-				CastSummonerExhaust(target)
-				UseTargetItems(target)
-			end
+		else			
 			if Qmod==2 and Qspot==nil then				
 				AttackT(target)
 			elseif Qmod==2 and Qspot~=nil and GetD(Qspot)>50 then
@@ -713,6 +705,29 @@ function TF2()
 				CastSpellXYZ("Q",ufa.x,0,ufa.z,0)
 			else
 				AttackT(target)
+			end
+			if  GetD(target)<400 then
+				for _, item in pairs(hydraItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+				for _, item in pairs(aoeItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+				for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+			elseif GetD(target)<600 then
+				for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
 			end
 		end
 
@@ -734,32 +749,54 @@ end
 
 function combo()
 	if target~=nil then
-	if QRDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
-	CastSpellXYZ("Q",ufa.x,0,ufa.z,0)
-	if WRDY==1 and Ractive==true and GetD(target)<250 then
-	CastSpellXYZ("W",ufa.x,0,ufa.z)
-	end
-	elseif WRDY==1 and (os.clock()>Atimer) and GetD(target,myHero)<280 then
-	CastSpellXYZ("W",myHero.x,0,myHero.z,0)
-	elseif ERDY==1 and (os.clock()>Atimer or GetD(target)>myHero.range+150) then
-	CastSpellXYZ("E",ufa.x,0,ufa.z,0)
-	else
-	if GetD(target)<600 then
-	CastSummonerExhaust(target)
-	UseTargetItems(target)
-	elseif GetD(target)<400 then
-	CastSummonerExhaust(target)
-	UseTargetItems(target)
-	UseSelfItems(target)
-	end
-	AttackT(target)
-	end
+		if os.clock()<Atimer and GetD(target)<myHero.range+50 then
+			AttackT(target)			
+		elseif QRDY==1 and Qmod==0 and ((os.clock()>Atimer) or GetD(target)>myHero.range+150) then
+			
+			CastSpellXYZ("Q",ufa.x,0,ufa.z,0)
+
+		elseif WRDY==1 and (os.clock()>Atimer) and GetD(target,myHero)<275 then			
+			CastSpellXYZ("W",myHero.x,0,myHero.z,0)
+
+		elseif ERDY==1 and ( GetD(target)>myHero.range+150) then
+			CastSpellXYZ("E",ufa.x,0,ufa.z,0)
+		elseif QRDY==1 and ((os.clock()>Atimer) or GetD(target)>myHero.range+150) then		
+			CastSpellXYZ("Q",ufa.x,0,ufa.z,0)	
+
+		elseif ERDY==1 and ((os.clock()>Atimer)) then
+			CastSpellXYZ("E",ufa.x,0,ufa.z,0)
+		else
+			AttackT(target)
+			if  GetD(target)<400 then
+				for _, item in pairs(hydraItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+				for _, item in pairs(aoeItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+				for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+			elseif GetD(target)<600 then
+				for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+				end
+			end
+		end
 	elseif targetult~=nil then
-	if ERDY==1 then CastSpellXYZ("E",ufa2.x,0,ufa2.z,0)
-	elseif QRDY==1 then CastSpellXYZ("Q",ufa2.x,0,ufa2.z,0) 
-	else AttackT(targetult) end
+		if ERDY==1 then CastSpellXYZ("E",ufa2.x,0,ufa2.z,0)
+		elseif QRDY==1 then CastSpellXYZ("Q",ufa2.x,0,ufa2.z,0) 
+		else AttackT(targetult) end
 	else
-	MoveToMouse()
+		MoveToMouse()
 	end  
 end
 
@@ -810,28 +847,63 @@ function AttackNearest()
 		
 		if nearestTarget~=nil and GetD(nearestTarget)<=500 then
 			
-			if QRDY==1 and (os.clock()>Atimer or GetD(nearestTarget)>myHero.range+150) then
-				CastSpellXYZ("Q",nearestTarget.x,0,nearestTarget.z,0)
-
+			if os.clock()<Atimer and GetD(nearestTarget)<myHero.range+50 then
+				AttackT(nearestTarget)			
+			elseif QRDY==1 and Qmod==0 and ((os.clock()>Atimer) or GetD(nearestTarget)>myHero.range+150) then
 				
-				if WRDY==1 and Ractive==true and GetD(nearestTarget)<250 then
-					CastSpellXYZ("W",nearestTarget.x,0,nearestTarget.z,0)
+				CastSpellXYZ("Q",nearestTarget.x,0,nearestTarget.z,0)
+				if  GetD(nearestTarget)<400 then
+					for _, item in pairs(hydraItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
 				end
-
-			elseif WRDY==1 and (os.clock()>Atimer) and GetD(nearestTarget,myHero)<275 then
+			elseif WRDY==1 and (os.clock()>Atimer) and GetD(nearestTarget,myHero)<275 then			
 				CastSpellXYZ("W",myHero.x,0,myHero.z,0)
-			elseif ERDY==1 and (os.clock()>Atimer or GetD(nearestTarget)>myHero.range+150) then
+				for _, item in pairs(hydraItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+						CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+					end
+				end
+			elseif ERDY==1 and ( GetD(nearestTarget)>myHero.range+150) then
+				CastSpellXYZ("E",nearestTarget.x,0,nearestTarget.z,0)
+			elseif QRDY==1 and ((os.clock()>Atimer) or GetD(nearestTarget)>myHero.range+150) then		
+				CastSpellXYZ("Q",nearestTarget.x,0,nearestTarget.z,0)	
+				if  GetD(nearestTarget)<400 then
+					for _, item in pairs(hydraItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
+				end
+			elseif ERDY==1 and ((os.clock()>Atimer)) then
 				CastSpellXYZ("E",nearestTarget.x,0,nearestTarget.z,0)
 			else
-				if GetD(nearestTarget)<400 then
-					CastSummonerExhaust(nearestTarget)
-					UseAllItems(nearestTarget)
-				elseif GetD(nearestTarget)<600 then
-					CastSummonerExhaust(nearestTarget)
-					UseTargetItems(nearestTarget)
-				end
 				AttackT(nearestTarget)
-
+				if  GetD(nearestTarget)<400 then
+					for _, item in pairs(hydraItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
+					for _, item in pairs(aoeItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
+					for _, item in pairs(targetItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
+				elseif GetD(nearestTarget)<600 then
+					for _, item in pairs(targetItems) do
+						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),nearestTarget)
+						end
+					end
+				end
 			end
 		else
 			MoveToMouse()
@@ -1355,7 +1427,34 @@ function LoadTable()
         end
 end
 
-
+function GetTeamSize()
+    return math.floor(objManager:GetMaxHeroes()/2)
+end
+ 
+function GetBestEnemy(damage_type, range, tag)
+    if tag == nil then tag = "BASIC" end
+    local enemy, prospect
+    for i=1,GetTeamSize() do    
+        prospect = GetWeakEnemy(damage_type, range, tag, i)
+        if prospect == nil then
+            -- pass        
+        else
+            if IsInvulnerable(prospect).status==3 then
+                local msg = "*** target invulnerable, cycling ***"
+                print(msg)
+                DrawTextObject(msg,myHero,0xFFFF0000)
+            else
+                enemy = prospect
+                break -- <-------- *** important ***
+            end
+        end
+    end
+    -- we should return nil if everyone is invuln, same as the original api when no enemies are in range
+    --if target == nil then
+    --    target = GetWeakEnemy(damage_type, range, tag)
+    --end
+    return enemy
+end
 
 
 
@@ -1394,6 +1493,75 @@ end
 else
 return 99999
 end
+end
+
+function IsInvulnerable(target)
+        if target ~= nil and target.dead == 0 then
+                if target.invulnerable == 1 then return {status = 3, name = nil, amount = nil, type = nil}
+                else for i=1, objManager:GetMaxObjects(), 1 do
+                                local object = objManager:GetObject(i)
+                                if object ~= nil then
+                                        if string.find(object.charName,"eyeforaneye") ~= nil and GetDistance(target,object) <= 20 then return {status = 3, name = 'Intervention', amount = 0, type = 'ALL'}
+                                        elseif string.find(object.charName,"nickoftime") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Chrono Shift', amount = 0, type = 'REVIVE'}
+                                        elseif target.name == 'Poppy' and string.find(object.charName,"DiplomaticImmunity_tar") ~= nil and GetDistance(myHero,object) > 20 then
+                                                for i=1, objManager:GetMaxObjects(), 1 do
+                                                        local diObject = objManager:GetObject(i)
+                                                        if diObject ~= nil and string.find(diObject.charName,"DiplomaticImmunity_buf") ~= nil and GetDistance(target,diObject) <= 20 then return {status = 3, name = 'Diplomatic Immunity', amount = 0, type = 'ALL'} end
+                                                end
+                                        elseif target.name == 'Vladimir' and string.find(object.charName,"VladSanguinePool_buf") ~= nil and GetDistance(myHero,object) <= 20 then return {status = 3, name = 'Sanguine Pool', amount = 0, type = 'ALL'}
+--                                      elseif string.find(object.charName,"Summoner_Barrier") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+                                        elseif string.find(object.charName,"Global_Spellimmunity") ~= nil or string.find(object.charName,"Morgana_Blackthorn_Blackshield") ~= nil and GetDistance(target,object) <= 20 then
+                                                local amount = 0
+                                                for i= 1,objManager:GetMaxHeroes(),1 do
+                                                        local hero=objManager:GetHero(i)
+                                                        if hero.team == target.team and hero.name == 'Morgana' then
+                                                                amount = 30+(65*hero.SpellLevelE)+(hero.ap*0.7)
+                                                                return {status = 2, name = 'Black Shield', amount = amount, type = 'MAGIC'}
+                                                        end
+                                                end
+                                        elseif string.find(object.charName,"bansheesveil_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Banshees Veil', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
+                                        elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Undying Rage', amount = 0, type = 'NONE'}
+                                        elseif target.name == 'Anivia' then
+                                                if target.team == myHero.team then
+                                                        if egg.team ~= 0 and GetTickCount()-egg.team > 240000 or egg.team == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if egg.enemy ~= 0 and GetTickCount()-egg.enemy > 240000 or egg.enemy == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+                                        elseif target.name == 'Aatrox' then
+                                                if target.team == myHero.team then
+                                                        if aatrox.team ~= 0 and GetTickCount()-aatrox.team > 225000 or aatrox.team == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if aatrox.enemy ~= 0 and GetTickCount()-aatrox.enemy > 225000 or aatrox.enemy == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+                                        elseif target.name == 'Zac' then
+                                                if target.team == myHero.team then
+                                                        if zac.team ~= 0 and GetTickCount()-zac.team > 300000 or zac.team == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                elseif target.team ~= myHero.team then
+                                                        if zac.enemy ~= 0 and GetTickCount()-zac.enemy > 300000 or zac.enemy == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+                                                        else return {status = 0, name = nil, amount = nil, type = nil}
+                                                        end
+                                                end
+--                                      elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetDistance(target,object) <= 30 then return 2--, 'NONE'
+                                        elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
+--                                      elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+                                        end
+                                end
+                        end
+                end
+        end
+        return {status = 0, name = nil, amount = nil, type = nil}
 end
 
 function run_every(interval, fn, ...)

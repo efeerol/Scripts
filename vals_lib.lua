@@ -1,8 +1,13 @@
 require 'Utils'
 local send = require 'SendInputScheduled'
-local version = '1.8'
+local version = '1.10'
 skillshotArray = {}
 local cc = 0
+local Q,W,E,R = 'Q','W','E','R'
+local metakey = SKeys.Control
+local attempts = 0
+local lastAttempt = 0
+
 
 --[[
 	---------------
@@ -159,7 +164,7 @@ function distXYZ(a1,a2,b1,b2)
 	end
 end
 
---targetaa = GetWeakEnemy('PHYS',(myHero.range+(GetDistance(GetMinBBox(myHero)))*1.2))
+--[[targetaa = GetWeakEnemy('PHYS',(myHero.range+(GetDistance(GetMinBBox(myHero)))*1.2))
 function GetAA()
 	local AArange = (myHero.range+(GetDistance(GetMinBBox(myHero))))*1.2
 	local targetaa = GetWeakEnemy('PHYS',AArange)
@@ -197,7 +202,7 @@ function GetAA()
 			end
 		end
 	end
-end
+end]]
 
 function Bullseye(spellslot,Range)
     local spells2={}
@@ -387,7 +392,7 @@ function CheckItemCD()
 	elseif GetInventorySlot(3188)==6 and myHero.SpellTime6 >= 1 then BFT = 1
 	else BFT = 0
 	end
-	
+
 	if GetInventorySlot(3128)==1 and myHero.SpellTime1 >= 1 then DFG = 1
 	elseif GetInventorySlot(3128)==2 and myHero.SpellTime2 >= 1 then DFG = 1
 	elseif GetInventorySlot(3128)==3 and myHero.SpellTime3 >= 1 then DFG = 1
@@ -395,6 +400,24 @@ function CheckItemCD()
 	elseif GetInventorySlot(3128)==5 and myHero.SpellTime5 >= 1 then DFG = 1
 	elseif GetInventorySlot(3128)==6 and myHero.SpellTime6 >= 1 then DFG = 1
 	else DFG = 0
+	end
+	
+	if GetInventorySlot(3144)==1 and myHero.SpellTime1 >= 1 then BC = 1
+	elseif GetInventorySlot(3144)==2 and myHero.SpellTime2 >= 1 then BC = 1
+	elseif GetInventorySlot(3144)==3 and myHero.SpellTime3 >= 1 then BC = 1
+	elseif GetInventorySlot(3144)==4 and myHero.SpellTime4 >= 1 then BC = 1
+	elseif GetInventorySlot(3144)==5 and myHero.SpellTime5 >= 1 then BC = 1
+	elseif GetInventorySlot(3144)==6 and myHero.SpellTime6 >= 1 then BC = 1
+	else BC = 0
+	end
+	
+	if GetInventorySlot(3146)==1 and myHero.SpellTime1 >= 1 then HG = 1
+	elseif GetInventorySlot(3146)==2 and myHero.SpellTime2 >= 1 then HG = 1
+	elseif GetInventorySlot(3146)==3 and myHero.SpellTime3 >= 1 then HG = 1
+	elseif GetInventorySlot(3146)==4 and myHero.SpellTime4 >= 1 then HG = 1
+	elseif GetInventorySlot(3146)==5 and myHero.SpellTime5 >= 1 then HG = 1
+	elseif GetInventorySlot(3146)==6 and myHero.SpellTime6 >= 1 then HG = 1
+	else HG = 0
 	end
 end
 
@@ -438,6 +461,14 @@ end
 function round(num, idp)
   local mult = 10^(idp or 0)
   return math.floor(num * mult + 0.5) / mult
+end
+
+function Round(val, decimal)
+	if (decimal) then
+		return math.floor( (val * 10 ^ decimal) + 0.5) / (10 ^ decimal)
+	else
+		return math.floor(val + 0.5)
+	end
 end
 
 function MoveMouse()
@@ -517,6 +548,44 @@ function MakeStateMatch(changes)
             end
         end
     end
+end
+
+function Skillshots()
+	send.tick()
+	cc=cc+1
+	if cc==30 then LoadTable() end
+	for i=1, #skillshotArray, 1 do
+		if os.clock() > (skillshotArray[i].lastshot + skillshotArray[i].time) then skillshotArray[i].shot = 0 end
+	end
+	for i=1, #skillshotArray, 1 do
+		if skillshotArray[i].shot == 1 then
+			local radius = skillshotArray[i].radius
+			local color = skillshotArray[i].color
+			if skillshotArray[i].isline == false then
+				for number, point in pairs(skillshotArray[i].skillshotpoint) do
+					DrawCircle(point.x, point.y, point.z, radius, color)
+				end
+			else
+				startVector = Vector(skillshotArray[i].p1x,skillshotArray[i].p1y,skillshotArray[i].p1z)
+				endVector = Vector(skillshotArray[i].p2x,skillshotArray[i].p2y,skillshotArray[i].p2z)
+				directionVector = (endVector-startVector):normalized()
+				local angle=0
+				if (math.abs(directionVector.x)<.00001) then
+					if directionVector.z > 0 then angle=90
+					elseif directionVector.z < 0 then angle=270
+					else angle=0
+					end
+				else
+					local theta = math.deg(math.atan(directionVector.z / directionVector.x))
+					if directionVector.x < 0 then theta = theta + 180 end
+					if theta < 0 then theta = theta + 360 end
+					angle=theta
+				end
+				angle=((90-angle)*2*math.pi)/360
+				DrawLine(startVector.x, startVector.y, startVector.z, GetDistance(startVector, endVector)+170, 1,angle,radius)
+			end
+		end
+	end
 end
 
 function calculateLinepass(pos1, pos2, spacing, maxDist)
@@ -837,4 +906,538 @@ function GetCD()
 	if myHero.SpellTimeR > 1 and GetSpellLevel('R') > 0 then 
 		RRDY = 1
 	else RRDY = 0 end
+end
+
+function StunDraw()
+	local stunChamps = 0
+	local amountCC = 0
+	for i = 1, objManager:GetMaxHeroes()  do
+	local enemie = objManager:GetHero(i)
+		if (enemie ~= nil and enemie.team ~= myHero.team and enemie.visible == 1 and enemie.dead == 0) and GetDistance(myHero,enemie) < 2500 then
+			local targetCC = GetTargetCC("HardCC",enemie)
+			if targetCC > 0 then
+				stunChamps = stunChamps+1
+				amountCC = amountCC+targetCC
+				if enemie.visible then
+					thickness = 10*targetCC
+					for j=1, thickness do
+						local ycircle = (j*(60/thickness*2)-60)
+						local r = math.sqrt(60^2-ycircle^2)
+						ycircle = ycircle/1.3
+						DrawCircle(enemie.x, enemie.y+300+ycircle, enemie.z, r, 0x00FF00)
+					end
+				end
+			end
+		end
+	end
+	--DrawText("Hard CC: "..amountCC, DrawX, DrawY-40, Color.White)
+	--DrawText("CC champions: "..stunChamps, DrawX, DrawY-30, Color.White)
+end
+
+function GetTargetCC(typeCC,enemie)
+	local HardCC, Airborne, Charm, Fear, Taunt, Polymorph, Silence, Stun, Suppression = 0, 0, 0, 0, 0, 0, 0, 0, 0
+	local targetName = enemie.name
+	local QREADY = enemie.SpellTimeQ > 1
+	local WREADY = enemie.SpellTimeW > 1
+	local EREADY = enemie.SpellTimeE > 1
+	local RREADY = enemie.SpellTimeR > 1
+	if targetName == "Aatrox" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Ahri" then
+		if EREADY then
+			HardCC = HardCC+1
+			Charm = Charm+1
+		end
+	elseif targetName == "Alistar" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if WREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Amumu" then
+		if QREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Anivia" then
+		if QREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Annie" then
+		if IsBuffed(enemie,'StunReady') and (QREADY or WREADY or RREADY) then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Ashe" then
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Blitzcrank" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Brand" then
+		if QREADY and (IsBuffed(myHero,'BrandFireMark') or WREADY or EREADY or RREADY) then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Cassiopeia" then
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Chogath" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if WREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "Darius" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Diana" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Draven" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Elise" then
+		if EREADY and enemie.range > 300 then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "FiddleSticks" then
+		if QREADY then
+			HardCC = HardCC+1
+			Fear = Fear+1
+		end
+	elseif targetName == "Fizz" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Galio" then
+		if RREADY then
+			HardCC = HardCC+1
+			Taunt = Taunt+1			
+		end
+	elseif targetName == "Garen" then
+		if QREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1			
+		end
+	elseif targetName == "Gragas" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1		
+		end
+	elseif targetName == "Hecarim" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1	
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Fear = Fear+1
+		end
+	elseif targetName == "Heimerdinger" then
+		if EREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Irelia" then
+		if EREADY then
+			if (enemie.health/enemie.maxHealth) <= (myHero.health/myHero.maxHealth) then
+				HardCC = HardCC+1
+				Stun = Stun+1
+			end			
+		end
+	elseif targetName == "Janna" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "JarvanIV" then
+		if QREADY and EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Jax" then
+		if EREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Jayce" then
+		if EREADY and enemie.SpellNameR == "JayceThunderingBlow" then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Kassadin" then
+		if QREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "Kennen" then
+		if (QREADY and WREADY and EREADY) or (IsBuffed(myHero,'kennen_mos') and (QREADY or WREADY or EREADY or RREADY)) then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "LeBlanc" then
+		if QREADY and (WREADY or EREADY or RREADY) then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+		if RREADY and enemie.SpellNameR == "LeblancChaosOrbM" and (WREADY or EREADY or QREADY) then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "LeeSin" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Leona" then
+		if QREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+11
+		end
+	elseif targetName == "Lissandra" then
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Lulu" then
+		if WREADY then
+			HardCC = HardCC+1
+			Polymorph = Polymorph+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Malphite" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Malzahar" then
+		if QREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1			
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Suppression = Suppression+1
+		end
+	elseif targetName == "Nami" then
+		if QREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Nautilus" then
+		HardCC = HardCC+1
+		Stun = Stun+1
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end	
+	elseif targetName == "Nocturne" then
+		if EREADY then
+			HardCC = HardCC+1
+			Fear = Fear+1
+		end
+	elseif targetName == "Orianna" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Pantheon" then
+		if WREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Poppy" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+			Stun = Stun+1
+		end
+		elseif targetName == "Quinn" then
+			if EREADY then
+				HardCC = HardCC+1
+				Stun = Stun+1
+			end
+	elseif targetName == "Rammus" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if EREADY then
+			HardCC = HardCC+1
+			Taunt = Taunt+1	
+		end
+	elseif targetName == "Renekton" then
+		if WREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Riven" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if WREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Sejuani" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Shen" then
+		if EREADY then
+			HardCC = HardCC+1
+			Taunt = Taunt+1
+		end
+	elseif targetName == "Shyvana" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Singed" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Sion" then
+		if QREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Skarner" then
+		if RREADY then
+			HardCC = HardCC+1
+			Suppression = Suppression+1
+		end
+	elseif targetName == "Sona" then
+		if RREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Soraka" then
+		if EREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "Syndra" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end	
+	elseif targetName == "Talon" then
+		if EREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "Taric" then
+		if EREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Thresh" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Tristana" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "TwistedFate" then
+		if enemie.SpellNameW == "goldcardlock" then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Udyr" then
+		if EREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Urgot" then
+		if RREADY then
+			HardCC = HardCC+1
+			Suppression = Suppression+1
+		end
+	elseif targetName == "Vayne" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Veigar" then
+		if EREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "Vi" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Viktor" then
+		if WREADY then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Silence = Silence+1
+		end
+	elseif targetName == "Volibear" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Warwick" then
+		if RREADY then
+			HardCC = HardCC+1
+			Suppression = Suppression+1
+		end
+	elseif targetName == "MonkeyKing" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Xerath" then
+		if EREADY and (QREADY or RREADY) then
+			HardCC = HardCC+1
+			Stun = Stun+1
+		end
+	elseif targetName == "XinZhao" then
+		if QREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Zac" then
+		if EREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	elseif targetName == "Zyra" then
+		if RREADY then
+			HardCC = HardCC+1
+			Airborne = Airborne+1
+		end
+	end
+	if typeCC == "HardCC" then return HardCC
+	elseif typeCC == "Airborne" then return Airborne
+	elseif typeCC == "Charm" then return Charm
+	elseif typeCC == "Fear" then return Fear
+	elseif typeCC == "Taunt" then return Taunt
+	elseif typeCC == "Polymorph" then return Polymorph
+	elseif typeCC == "Silence" then return Silence
+	elseif typeCC == "Stun" then return Stun
+	elseif typeCC == "Suppression" then return Suppression
+	else return 0 end
+end
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+function GetDistanceSqr(p1, p2)
+    assert(p1, "GetDistance: invalid argument: cannot calculate distance to "..type(p1))
+    p2 = p2 or myHero
+    return (p1.x - p2.x) ^ 2 + ((p1.z or p1.y) - (p2.z or p2.y)) ^ 2
+end
+
+function GetD(p1, p2)
+    return math.sqrt(GetDistanceSqr(p1, p2))
+end
+
+--p1 should be the BBoxed object
+function GetDistanceBBox(p1, p2)
+    if p2 == nil then p2 = myHero end
+    assert(p1 and GetMinBBox(p1) and p2 and GetMinBBox(p2), "GetDistanceBBox: wrong argument types (<object><object> expected for p1, p2)")
+    local bbox1 = GetDistance(p1, GetMinBBox(p1))
+    return GetDistance(p1, p2) - (bbox1)
+end
+
+function ValidTarget(object, distance, enemyTeam)
+    local enemyTeam = (enemyTeam ~= false)
+    return object ~= nil and object.valid==1 and (object.team ~= myHero.team) == enemyTeam and object.visible==1 and object.dead==0 and (enemyTeam == false or object.invulnerable == 0) and (distance == nil or GetDistanceSqr(object) <= distance * distance)
+end
+
+function ValidBBoxTarget(object, distance, enemyTeam)
+    local enemyTeam = (enemyTeam ~= false)
+    return object ~= nil and object.valid==1 and (object.team ~= myHero.team) == enemyTeam and object.visible==1 and object.dead==0 and (enemyTeam == false or object.invulnerable == 0) and (distance == nil or GetDistanceBBox(object) <= distance)
+end
+
+function GetDistance2D(o1, o2)
+   local c = "z"
+   if o1.z == nil or o2.z == nil then c = "y" end
+   return math.sqrt(math.pow(o1.x - o2.x, 2) + math.pow(o1[c] - o2[c], 2))
 end
