@@ -1,5 +1,5 @@
 --[[
---IsInvulnerable function v1.5.2 by Lua
+--IsInvulnerable function v1.6 by Lua
 ----IsInvulnerable(target)
 	
 ----return (as table)
@@ -22,9 +22,18 @@ if target ~= nil then
 end
 ]]--
 require "Utils"
-local egg = {team = 0, enemy = 0}
-local zac = {team = 0, enemy = 0}
-local aatrox = {team = 0, enemy = 0}
+local egg = {
+allied = {time = 0},
+enemy = {time = 0}
+}
+local zac = {
+allied = {time = 0},
+enemy = {time = 0}
+}
+local aatrox = {
+allied = {time = 0},
+enemy = {time = 0}
+}
 
 function IsInvulnerable(target)
 	if target ~= nil and target.dead == 0 then
@@ -54,38 +63,36 @@ function IsInvulnerable(target)
 					elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
 					elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
 					elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Undying Rage', amount = 0, type = 'NONE'}
+					elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
 					elseif target.name == 'Anivia' then
 						if target.team == myHero.team then
-							if egg.team ~= 0 and GetTickCount()-egg.team > 240000 or egg.team == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
-							else return {status = 0, name = nil, amount = nil, type = nil}
-							end
-						elseif target.team ~= myHero.team then
-							if egg.enemy ~= 0 and GetTickCount()-egg.enemy > 240000 or egg.enemy == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
-							else return {status = 0, name = nil, amount = nil, type = nil}
-							end
+							if GetTickCount()-egg.allied.time > 240000 or egg.allied.time == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+							else return {status = 0, name = nil, amount = nil, type = nil} end
+						else
+							if GetTickCount()-egg.enemy.time > 240000 or egg.enemy.time == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
+							else return {status = 0, name = nil, amount = nil, type = nil} end
 						end
 					elseif target.name == 'Aatrox' then
 						if target.team == myHero.team then
-							if aatrox.team ~= 0 and GetTickCount()-aatrox.team > 225000 or aatrox.team == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+							if GetTickCount()-aatrox.allied.time > 225000 or aatrox.allied.time == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
 							else return {status = 0, name = nil, amount = nil, type = nil}
 							end
 						elseif target.team ~= myHero.team then
-							if aatrox.enemy ~= 0 and GetTickCount()-aatrox.enemy > 225000 or aatrox.enemy == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+							if GetTickCount()-aatrox.enemy.time > 225000 or aatrox.enemy.time == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
 							else return {status = 0, name = nil, amount = nil, type = nil}
 							end
 						end
 					elseif target.name == 'Zac' then
 						if target.team == myHero.team then
-							if zac.team ~= 0 and GetTickCount()-zac.team > 300000 or zac.team == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+							if GetTickCount()-zac.allied.time > 300000 or zac.allied.time == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
 							else return {status = 0, name = nil, amount = nil, type = nil}
 							end
 						elseif target.team ~= myHero.team then
-							if zac.enemy ~= 0 and GetTickCount()-zac.enemy > 300000 or zac.enemy == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
+							if GetTickCount()-zac.enemy > 300000 or zac.enemy.time == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
 							else return {status = 0, name = nil, amount = nil, type = nil}
 							end
 						end
 --					elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetDistance(target,object) <= 30 then return 2--, 'NONE'
-					elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
 --					elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
 					end
 				end
@@ -101,24 +108,24 @@ function OnCreateObj(obj)
 			for i= 1,objManager:GetMaxHeroes(),1 do
 				local hero=objManager:GetHero(i)
 				if hero.name == 'Anivia' and GetDistance(obj, hero) < 10 then
-					if hero.team == myHero.team then egg = {team = GetTickCount(), enemy = egg.enemy}
-					else egg = {team = egg.team, enemy = GetTickCount()} end
+					if hero.team == myHero.team then egg.allied.time = GetTickCount()
+					else egg.enemy.time = GetTickCount() end
 				end
 			end
 		elseif obj.charName == 'Aatrox_Passive_Death_Activate.troy' then
 			for i= 1,objManager:GetMaxHeroes(),1 do
 				local hero=objManager:GetHero(i)
 				if hero.name == 'Aatrox' and GetDistance(obj, hero) < 10 then
-					if hero.team == myHero.team then aatrox = {team = GetTickCount(), enemy = aatrox.enemy}
-					else aatrox = {team = aatrox.team, enemy = GetTickCount()} end
+					if hero.team == myHero.team then aatrox.allied.time = GetTickCount()
+					else aatrox.enemy.time = GetTickCount() end
 				end
 			end
 		elseif obj.charName == 'ZacPassiveExplosion.troy' then
 			for i= 1,objManager:GetMaxHeroes(),1 do
 				local hero=objManager:GetHero(i)
 				if hero.name == 'Zac' and GetDistance(obj, hero) < 10 then
-					if hero.team == myHero.team then zac = {team = GetTickCount(), enemy = zac.enemy}
-					else zac = {team = zac.team, enemy = GetTickCount()} end
+					if hero.team == myHero.team then zac.allied.time = GetTickCount()
+					else zac.enemy.time = GetTickCount() end
 				end
 			end
 		end

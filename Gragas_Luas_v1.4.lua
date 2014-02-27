@@ -1,4 +1,4 @@
---Lua's DrukenBarrelRoll v1.3
+--Lua's DrukenBarrelRoll v1.4
 
 require 'Utils'
 require 'spell_damage'
@@ -11,11 +11,13 @@ local BarrelSpot = {x=0, y=0, z=0}
 
 Gragas, gragas = uiconfig.add_menu('DrukenBarrelRoll')
 gragas.keytoggle('QR', 'DrukenBarrelRoll', Keys.F1, true)
+gragas.keytoggle('Q', 'Auto Q Detonate', Keys.F2, true)
 gragas.checkbox('DrawCircle', 'Draw Circle that Killable Enemys', true)
 gragas.permashow('QR')
+gragas.permashow('Q')
 
 function DrunkenRoll()
-	if Gragas.QR and Barrel ~= nil and myHero.dead == 0 and myHero.SpellNameQ == 'gragasbarrelrolltoggle' then
+	if Barrel ~= nil and myHero.dead == 0 and myHero.SpellNameQ == 'gragasbarrelrolltoggle' then
 		local RMana = 75+(GetSpellLevel('R')*25)
 		if myHero.mana >= RMana and RMana ~= 75 and myHero.SpellTimeR >= 1 then RDY = true
 		else RDY = false end
@@ -29,10 +31,12 @@ function DrunkenRoll()
 				check = IsInvulnerable(enemy)
 				if check.name ~= 'Black Shield' then Hp = enemy.health
 				else Hp = enemy.health+check.amount end
-				if Hp < QDMG then CastSpellTarget('Q', myHero)
-				elseif Hp < QRDMG and GetDistance(myHero, Barrel) < 1100 then
+				if Gragas.QR and Hp < QDMG then CastSpellTarget('Q', myHero)
+				elseif Gragas.QR and Hp < QRDMG and GetDistance(myHero, Barrel) < 1100 then
 					CastSpellXYZ('R', BarrelSpot.x, 0, BarrelSpot.z)
+					CastSpellTarget('Q', myHero)
 					Boom = GetTickCount()
+				elseif Gragas.Q then CastSpellTarget('Q', myHero)
 				end
 			end
 		end
