@@ -3,7 +3,7 @@ require 'spell_damage'
 
 printtext("\nBrand New\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.5\n")
+printtext("\nVersion 1.6\n")
 
 local target
 local wdelay=6.25
@@ -61,7 +61,7 @@ BrandConfig:addParam('ks', 'Killsteal', SCRIPT_PARAM_ONKEYTOGGLE, true, 48)
 
 BrandConfig:addParam('rt', "R Threshold", SCRIPT_PARAM_NUMERICUPDOWN, 1, 187,0,5,1)
 BrandConfig:addParam('wd', "W Delay", SCRIPT_PARAM_NUMERICUPDOWN, 6.25, 189,4,8,0.1)
-BrandConfig:addParam('qd', "Q Delay", SCRIPT_PARAM_NUMERICUPDOWN, 5.5, 219,4.5,6.5,0.1)
+BrandConfig:addParam('qd', "Q Delay", SCRIPT_PARAM_NUMERICUPDOWN, 5.2, 219,4.5,6.5,0.1)
 BrandConfig:addParam('qs', "Q Speed", SCRIPT_PARAM_NUMERICUPDOWN, 15.8, 221,14.5,16.5,0.1)
 BrandConfig:addParam('ping', "Ping", SCRIPT_PARAM_NUMERICUPDOWN, 60, 220,0,300,5)
 
@@ -210,7 +210,29 @@ function Fight()
 end
 
 function Harass()
-	
+	if target~=nil then
+		
+		if WRDY==1 and GetD(tfa)<925 then
+			local pos=GetMECFA(250,925,target,wdelay,0)
+			if pos~=nil and pos.x~=nil then
+					CastSpellXYZ("W",pos.x,0,pos.z)
+			else
+					CastSpellXYZ("W",tfax,tfay,tfaz)
+			end
+		elseif QRDY==1 and GetD(tqfa)<925 and CreepBlock(tqfa.x,tqfa.y,tqfa.z,100) == 0 then
+			if GetD(tqfa)<100 then
+				CastSpellXYZ("Q",target.x,target.y,target.z,0)
+			else
+				CastSpellXYZ("Q",tqfax,tqfay,tqfaz,0)
+			end
+		elseif ERDY==1 and GetD(target)<650 then
+			CastSpellTarget("E",target)		
+		else
+			MoveToMouse()
+		end
+	else
+		MoveToMouse()
+	end
 	
 end
 
