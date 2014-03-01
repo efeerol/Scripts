@@ -3,7 +3,7 @@ require 'spell_damage'
 
 printtext("\nBrand New\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 1.6\n")
+printtext("\nVersion 1.7\n")
 
 local target
 local wdelay=6.25
@@ -306,7 +306,35 @@ function OnCreateObj(obj)
 				break
 			end
 		end
-	end
+	
+        elseif obj.charName == 'EggTimer.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Anivia' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then egg = {team = GetTickCount(), enemy = egg.enemy}
+                    else egg = {team = egg.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        elseif obj.charName == 'Aatrox_Passive_Death_Activate.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Aatrox' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then aatrox = {team = GetTickCount(), enemy = aatrox.enemy}
+                    else aatrox = {team = aatrox.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        elseif obj.charName == 'ZacPassiveExplosion.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Zac' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then zac = {team = GetTickCount(), enemy = zac.enemy}
+                    else zac = {team = zac.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        end
 end
 
 function OnProcessSpell(unit, spell)
