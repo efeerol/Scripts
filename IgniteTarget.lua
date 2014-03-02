@@ -1,5 +1,5 @@
 --[[
---IgniteTarget v1.3b by Lua
+--IgniteTarget v1.4 by Lua
 ----IgniteTarget(target, SpellKey, BurnGA, BurnEgg, BurnAatrox, BurnZac)
 
 ----Option
@@ -66,7 +66,7 @@ function IgniteTarget(target, Key, BurnGA, BurnEgg, BurnAatrox, BurnZac)
 				secondsNeeded = target.health/(igniteDamage/5)*1000
 				if lastCheck.name == status.name and secondsNeeded<5000 and GetTickCount()-lastCheck.time > 5000-(5000-secondsNeeded) then CastIgnite(Key,igniteDamage,target,Barrier)
 				else lastCheck = {name = status.name, time = GetTickCount()} end
-			elseif target.SpellLevelR == 0 or target.SpellTimeR < -4 and status.status ~= 1 and status.status ~= 3 then CastIgnite(Key,igniteDamage,target,Barrier)
+			elseif target.SpellLevelR == 0 or target.SpellTimeR < -4 and status.status ~= 1 and status.status ~= 4 then CastIgnite(Key,igniteDamage,target,Barrier)
 			end
 		elseif status.name == 'Intervention' then
 				secondsNeeded = target.health/(igniteDamage/5)*1000
@@ -101,15 +101,15 @@ function IgniteTarget(target, Key, BurnGA, BurnEgg, BurnAatrox, BurnZac)
 			end
 		elseif target.name == 'Anivia' then
 			if status.name == 'Egg' and BurnEgg then CastIgnite(Key,igniteDamage,target,Barrier)
-			elseif status.status ~= 1 and status.status ~= 3 then CastIgnite(Key,igniteDamage,target,Barrier)
+			elseif status.status ~= 1 and status.status ~= 4 then CastIgnite(Key,igniteDamage,target,Barrier)
 			end
 		elseif target.name == 'Aatrox' then
 			if status.name == 'Aatrox' and BurnAatrox then CastIgnite(Key,igniteDamage,target,Barrier)
-			elseif status.status ~= 1 and status.status ~= 3 then CastIgnite(Key,igniteDamage,target,Barrier)
+			elseif status.status ~= 1 and status.status ~= 4 then CastIgnite(Key,igniteDamage,target,Barrier)
 			end
 		elseif target.name == 'Zac' then
 			if status.name == 'Zac' and BurnZac then CastIgnite(Key,igniteDamage,target,Barrier)
-			elseif status.status ~= 1 and status.status ~= 3 then CastIgnite(Key,igniteDamage,target,Barrier)
+			elseif status.status ~= 1 and status.status ~= 4 then CastIgnite(Key,igniteDamage,target,Barrier)
 			end
 		elseif target.name == 'MasterYi' then
 			if target.SpellLevelW == 0 or target.SpellTimeW < -4 then CastIgnite(Key,igniteDamage,target,Barrier)
