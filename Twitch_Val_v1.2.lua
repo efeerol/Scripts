@@ -20,7 +20,7 @@ local usescript = 1 -- Set this to 0 to deactivate the whole script except for a
 --------------------------------------------------- END ------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------
 		
-local version = "1.1"
+local version = "1.2"
 local myHero = GetSelf()	
 local target	
 local ultactive = false

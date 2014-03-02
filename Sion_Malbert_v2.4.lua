@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nGeneral Sion Sayonara\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 2.2\n")
+printtext("\nVersion 2.4\n")
 
 local target
 local hasSheen = 0
@@ -613,6 +613,34 @@ function OnCreateObj(obj)
 			outerwdraw=true
 		end
     end
+	if obj.charName == 'EggTimer.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Anivia' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then egg = {team = GetTickCount(), enemy = egg.enemy}
+                    else egg = {team = egg.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        elseif obj.charName == 'Aatrox_Passive_Death_Activate.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Aatrox' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then aatrox = {team = GetTickCount(), enemy = aatrox.enemy}
+                    else aatrox = {team = aatrox.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        elseif obj.charName == 'ZacPassiveExplosion.troy' then
+            for i= 1,objManager:GetMaxHeroes(),1 do
+                local hero=objManager:GetHero(i)
+                if hero.name == 'Zac' and GetDistance(obj, hero) < 10 then
+                    if hero.team == myHero.team then zac = {team = GetTickCount(), enemy = zac.enemy}
+                    else zac = {team = zac.team, enemy = GetTickCount()} end
+                    break
+                end
+            end
+        end
 	
 end
 
@@ -1107,73 +1135,82 @@ function internal_run(t, ...)
     end    
 end
  
+
+local StatusReturn={}
 function IsInvulnerable(target)
         if target ~= nil and target.dead == 0 then
-                if target.invulnerable == 1 then return {status = 3, name = nil, amount = nil, type = nil}
-                else for i=1, objManager:GetMaxObjects(), 1 do
-                                local object = objManager:GetObject(i)
-                                if object ~= nil then
-                                        if string.find(object.charName,"eyeforaneye") ~= nil and GetD(target,object) <= 20 then return {status = 3, name = 'Intervention', amount = 0, type = 'ALL'}
-                                        elseif string.find(object.charName,"nickoftime") ~= nil and GetD(target,object) <= 20 then return {status = 1, name = 'Chrono Shift', amount = 0, type = 'REVIVE'}
-                                        elseif target.name == 'Poppy' and string.find(object.charName,"DiplomaticImmunity_tar") ~= nil and GetD(myHero,object) > 20 then
-                                                for i=1, objManager:GetMaxObjects(), 1 do
-                                                        local diObject = objManager:GetObject(i)
-                                                        if diObject ~= nil and string.find(diObject.charName,"DiplomaticImmunity_buf") ~= nil and GetD(target,diObject) <= 20 then return {status = 3, name = 'Diplomatic Immunity', amount = 0, type = 'ALL'} end
-                                                end
-                                        elseif target.name == 'Vladimir' and string.find(object.charName,"VladSanguinePool_buf") ~= nil and GetD(myHero,object) <= 20 then return {status = 3, name = 'Sanguine Pool', amount = 0, type = 'ALL'}
---                                      elseif string.find(object.charName,"Summoner_Barrier") ~= nil and GetD(target,object) <= 20 then return 2--, 'NONE'
-                                        elseif string.find(object.charName,"Global_Spellimmunity") ~= nil or string.find(object.charName,"Morgana_Blackthorn_Blackshield") ~= nil and GetD(target,object) <= 20 then
-                                                local amount = 0
-                                                for i= 1,objManager:GetMaxHeroes(),1 do
-                                                        local hero=objManager:GetHero(i)
-                                                        if hero.team == target.team and hero.name == 'Morgana' then
-                                                                amount = 30+(65*hero.SpellLevelE)+(hero.ap*0.7)
-                                                                return {status = 2, name = 'Black Shield', amount = amount, type = 'MAGIC'}
-                                                        end
-                                                end
-                                        elseif string.find(object.charName,"bansheesveil_buf") ~= nil and GetD(target,object) <= 20 then return {status = 2, name = 'Banshees Veil', amount = 0, type = 'SPELL'}
-                                        elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetD(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
-                                        elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetD(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
-                                        elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetD(target,object) <= 20 then return {status = 1, name = 'Undying Rage', amount = 0, type = 'NONE'}
-                                        elseif target.name == 'Anivia' then
-                                                if target.team == myHero.team then
-                                                        if egg.team ~= 0 and GetTickCount()-egg.team > 240000 or egg.team == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                elseif target.team ~= myHero.team then
-                                                        if egg.enemy ~= 0 and GetTickCount()-egg.enemy > 240000 or egg.enemy == 0 then return {status = 1, name = 'Egg', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                end
-                                        elseif target.name == 'Aatrox' then
-                                                if target.team == myHero.team then
-                                                        if aatrox.team ~= 0 and GetTickCount()-aatrox.team > 225000 or aatrox.team == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                elseif target.team ~= myHero.team then
-                                                        if aatrox.enemy ~= 0 and GetTickCount()-aatrox.enemy > 225000 or aatrox.enemy == 0 then return {status = 1, name = 'Aatrox', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                end
-                                        elseif target.name == 'Zac' then
-                                                if target.team == myHero.team then
-                                                        if zac.team ~= 0 and GetTickCount()-zac.team > 300000 or zac.team == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                elseif target.team ~= myHero.team then
-                                                        if zac.enemy ~= 0 and GetTickCount()-zac.enemy > 300000 or zac.enemy == 0 then return {status = 1, name = 'Zac', amount = 0, type = 'REVIVE'}
-                                                        else return {status = 0, name = nil, amount = nil, type = nil}
-                                                        end
-                                                end
---                                      elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetD(target,object) <= 30 then return 2--, 'NONE'
-                                        elseif string.find(object.charName,"rebirthready") ~= nil and GetD(target,object) <= 20 then return {status = 1, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
---                                      elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetD(target,object) <= 20 then return 2--, 'NONE'
-                                        end
-                                end
-                        end
+                if target.invulnerable == 1 then return {status = 1, name = nil, amount = nil, type = nil}
+                else 
+					StatusReturn=run_every(0.3,getStatus,target)
+					if StatusReturn~=nil then
+						return	StatusReturn
+					end
                 end
         end
         return {status = 0, name = nil, amount = nil, type = nil}
+end
+
+function getStatus(target)
+	StatusReturn=nil
+	for i=1, objManager:GetMaxObjects(), 1 do
+			local object = objManager:GetObject(i)
+			if object ~= nil then
+					if string.find(object.charName,"eyeforaneye") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Intervention', amount = 0, type = 'ALL'}
+					elseif string.find(object.charName,"nickoftime") ~= nil and GetDistance(target,object) <= 20 then return {status = 4, name = 'Chrono Shift', amount = 0, type = 'REVIVE'}
+					elseif target.name == 'Poppy' and string.find(object.charName,"DiplomaticImmunity_tar") ~= nil and GetDistance(myHero,object) > 20 then
+							for i=1, objManager:GetMaxObjects(), 1 do
+									local diObject = objManager:GetObject(i)
+									if diObject ~= nil and string.find(diObject.charName,"DiplomaticImmunity_buf") ~= nil and GetDistance(target,diObject) <= 20 then return {status = 1, name = 'Diplomatic Immunity', amount = 0, type = 'ALL'} end
+							end
+					elseif target.name == 'Vladimir' and string.find(object.charName,"VladSanguinePool_buf") ~= nil and GetDistance(myHero,object) <= 20 then return {status = 1, name = 'Sanguine Pool', amount = 0, type = 'ALL'}
+--                                      elseif string.find(object.charName,"Summoner_Barrier") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+					elseif (string.find(object.charName,"Global_Spellimmunity") ~= nil or string.find(object.charName,"Morgana_Blackthorn_Blackshield") ~= nil) and GetDistance(target,object) <= 20 then
+							local amount = 0
+							for i= 1,objManager:GetMaxHeroes(),1 do
+									local hero=objManager:GetHero(i)
+									if hero.team == target.team and hero.name == 'Morgana' then
+											amount = 30+(65*hero.SpellLevelE)+(hero.ap*0.7)
+											return {status = 2, name = 'Black Shield', amount = amount, type = 'MAGIC'}
+									end
+							end
+					elseif string.find(object.charName,"bansheesveil_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Banshees Veil', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 4, name = 'Undying Rage', amount = 0, type = 'NONE'}
+					elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 3, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
+					elseif target.name == 'Anivia' then
+							if target.team == myHero.team then
+									if GetTickCount()-egg.allied.time > 240000 or egg.allied.time == 0 then return {status = 3, name = 'Egg', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil} end
+							else
+									if GetTickCount()-egg.enemy.time > 240000 or egg.enemy.time == 0 then return {status = 3, name = 'Egg', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil} end
+							end
+					elseif target.name == 'Aatrox' then
+							if target.team == myHero.team then
+									if GetTickCount()-aatrox.allied.time > 225000 or aatrox.allied.time == 0 then return {status = 3, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							elseif target.team ~= myHero.team then
+									if GetTickCount()-aatrox.enemy.time > 225000 or aatrox.enemy.time == 0 then return {status = 3, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							end
+					elseif target.name == 'Zac' then
+							if target.team == myHero.team then
+									if GetTickCount()-zac.allied.time > 300000 or zac.allied.time == 0 then return {status = 3, name = 'Zac', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							elseif target.team ~= myHero.team then
+									if GetTickCount()-zac.enemy > 300000 or zac.enemy.time == 0 then return {status = 3, name = 'Zac', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							end
+--                                      elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetDistance(target,object) <= 30 then return 2--, 'NONE'
+--                                      elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+					end
+			end
+	end
 end
 
 
@@ -1183,13 +1220,48 @@ end
  
 function GetBestEnemy(damage_type, range, tag)
     if tag == nil then tag = "BASIC" end
+	local QDMG=0
+	local WDMG=0
+	local EDMG=0
+	local RDMG=0
+	local ADMG=0
     local enemy, prospect
     for i=1,GetTeamSize() do    
         prospect = GetWeakEnemy(damage_type, range, tag, i)
         if prospect == nil then
             -- pass        
         else
-            if IsInvulnerable(prospect).status==3 then
+			if spellDmg[myHero.name] then
+				if QRDY==1 and getDmg("Q",prospect,myHero)~=nil then
+					QDMG=getDmg("Q",prospect,myHero)
+				else
+					QDMG=0
+				end
+				if WRDY==1 and getDmg("W",prospect,myHero)~=nil then
+					WDMG=getDmg("W",prospect,myHero)
+				else
+					WDMG=0
+				end
+				if ERDY==1 and getDmg("E",prospect,myHero)~=nil then
+					EDMG=getDmg("E",prospect,myHero)
+				else
+					EDMG=0
+				end
+				if RRDY==1 and getDmg("R",prospect,myHero)~=nil then
+					RDMG=getDmg("R",prospect,myHero)
+				else
+					RDMG=0
+				end
+				if getDmg("AD",prospect,myHero)~=nil then
+					ADMG=getDmg("AD",prospect,myHero)
+				else
+					ADMG=0
+				end
+			
+			end
+			
+			local invul=IsInvulnerable(prospect).status
+            if invul==1 or (invul==4 and QDMG+WDMG+EDMG+RDMG+ADMG>prospect.health) then
                 local msg = "*** target invulnerable, cycling ***"
                 print(msg)
                 DrawTextObject(msg,myHero,0xFFFF0000)

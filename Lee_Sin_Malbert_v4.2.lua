@@ -7,12 +7,21 @@ local send = require 'SendInputScheduled'
 local metakey = SKeys.Control
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 3.8")
+print("\nVersion 4.2")
 local target
 local targeti
 local target2
 local _registry = {}
+local targetItems={3144,3153,3128,3092,3146}
+--Bilgewater,BoTRK,DFG,FrostQueen,Hextech
+local aoeItems={3184,3143,3180,3131,3069,3023,3290,3142}
+--Entropy,Randuins,Odyns,SwordDivine,TalismanAsc,TwinShadows,TwinShadows,YoGBlade
+local hydraItems={3074,3077}
+--Hydra,Tiamat
 
+local egg = {team = 0, enemy = 0}
+local zac = {team = 0, enemy = 0}
+local aatrox = {team = 0, enemy = 0}
 local range = myHero.range + GetDistance(GetMinBBox(myHero))
 local wards = {3340, 3350, 3154, 3361, 3361, 3362, 2044, 2043, 2045, 2049}
 --[[
@@ -59,6 +68,10 @@ local WRDY=0
 local ERDY=0
 local RRDY=0
 local targetR=nil
+local qdelay=0
+local qspeed=0
+local tfa={x=0,y=0,z=0}
+local tfax,tfay,tfaz
 
 	LeeConfig = scriptConfig("LeeSin", "LeeSin Hotkeys")
 LeeConfig:addParam("Combo", "Combo", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("T"))--T
@@ -75,6 +88,8 @@ LeeConfig:addParam("iskey", "What to Insec To", SCRIPT_PARAM_DOMAINUPDOWN, 1, 18
 LeeConfig:addParam('distanceR', "RA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 350, 219,100,700,50)
 LeeConfig:addParam('distanceNR', "NRA Distance", SCRIPT_PARAM_NUMERICUPDOWN, 450, 221,100,700,50)
 LeeConfig:addParam('distanceNM', "NM Distance", SCRIPT_PARAM_NUMERICUPDOWN, 400, 191,100,700,50)
+LeeConfig:addParam('qd', "Q Delay", SCRIPT_PARAM_NUMERICUPDOWN, 2.7, 190,2,4,0.1)
+LeeConfig:addParam('qs', "Q Speed", SCRIPT_PARAM_NUMERICUPDOWN, 16, 191,14,17,0.1)
 LeeConfig:addParam("wardH", "Harass Can Use Ward", SCRIPT_PARAM_ONOFF, false) 
 LeeConfig:addParam("wardF", "Ward Farthest", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("mqi", "Manual Q Insec", SCRIPT_PARAM_ONOFF, true)
@@ -108,10 +123,12 @@ function LeeRun()
         else RRDY = 0 end
 	--------------------------
 
+	qdelay=LeeConfig.qd
+	qspeed=LeeConfig.qs
 
-	target = GetWeakEnemy("PHYS", 975, "NEARMOUSE")
-    target2 = GetWeakEnemy('TRUE',600)
-	targetR = GetWeakEnemy('PHYS',400)
+	target = GetBestEnemy("PHYS", 975, "NEARMOUSE")
+    target2 = GetBestEnemy('TRUE',600)
+	targetR = GetBestEnemy('PHYS',400)
 	
 	for i=1, objManager:GetMaxHeroes(), 1 do
 		hero = objManager:GetHero(i)
@@ -146,20 +163,24 @@ function LeeRun()
 			CastSpellTarget('R',targetR)
 		end
 	end
-	
+	if target~=nil and QRDY==1 then
+		tfax,tfay,tfaz=GetFireahead(target,qdelay,qspeed)
+		tfa={x=tfax,y=tfay,z=tfaz}
+	end
     if IsChatOpen()==0 and LeeConfig.Combo then Combo() end    
     if IsChatOpen()==0 and LeeConfig.harass then Harass() end    
     if IsChatOpen()==0 and LeeConfig.initiate then initiate() end  
     if IsChatOpen()==0 and myHero.dead~=1 and LeeConfig.ward and LeeConfig.wardF then ward(mousePos.x,mousePos.y,mousePos.z) 
     elseif IsChatOpen()==0 and myHero.dead~=1 and LeeConfig.ward and LeeConfig.wardF==false then ward() end  
-	if LeeConfig.mqi then 
+	if LeeConfig.mqi and RRDY==1 then 
 		if (TI==nil or TI.dead==1 or TITimer<os.clock()) and eye~=nil and eye.x~=nil and myHero.SpellNameQ == "blindmonkqtwo" and targeti~=nil then
 			local TIHolder=nil
 			for i = 1, objManager:GetMaxHeroes()  do
             local enemy = objManager:GetHero(i)
-				if enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and (TIHolder==nil or TIHolder.dead==1 or TIHolder.visible==0) and eye~=nil and GetD(enemy)<2000 then
+			local invul=IsInvulnerable(enemy).status
+				if enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and invul~=1 and (TIHolder==nil or TIHolder.dead==1 or TIHolder.visible==0 or IsInvulnerable(TIHolder).status==1) and eye~=nil and GetD(enemy)<2000 then
 					TIHolder=enemy
-				elseif enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and TIHolder~=nil and TIHolder.dead==0 and TIHolder.visible==1 and eye~=nil and GetD(enemy,eye)<GetD(TIHolder,eye) then
+				elseif enemy~=nil and enemy.team~=myHero.team and enemy.dead==0 and enemy.visible==1 and invul~=1 and TIHolder~=nil and TIHolder.dead==0 and TIHolder.visible==1 and eye~=nil and GetD(enemy,eye)<GetD(TIHolder,eye) then
 					TIHolder=enemy				
 				end
 			end
@@ -181,17 +202,19 @@ end
 function findtargeti()
 	if LeeConfig.PU==1 then
 		for j=1, objManager:GetMaxHeroes(), 1 do
-			herotarget = objManager:GetHero(j) 
-			if herotarget~=nil and herotarget.team~=myHero.team and herotarget.dead~=1 and herotarget.visible==1 and herotarget.invulnerable==0 and (targeti==nil or targeti.dead==1) and GetD(herotarget)<975 then
+			local herotarget = objManager:GetHero(j) 
+			local invul=IsInvulnerable(herotarget).status
+			if herotarget~=nil and herotarget.team~=myHero.team and herotarget.dead~=1 and herotarget.visible==1 and invul~=1 and (targeti==nil or targeti.dead==1) and GetD(herotarget)<975 then
 				targeti=herotarget
-			elseif herotarget~=nil and herotarget.team~=myHero.team and herotarget.dead~=1 and herotarget.visible==1 and herotarget.invulnerable==0 and GetD(herotarget)<975 and herotarget.addDamage+herotarget.baseDamage>targeti.addDamage+targeti.baseDamage then
+			elseif herotarget~=nil and herotarget.team~=myHero.team and herotarget.dead~=1 and herotarget.visible==1 and invul~=1 and GetD(herotarget)<975 and herotarget.addDamage+herotarget.baseDamage>targeti.addDamage+targeti.baseDamage then
 				targeti=herotarget
 			end
 		end
 	elseif LeeConfig.PU>1 then
 		
 		for i, enemy in pairs(enemies) do
-			if enemy~=nil and enemy.unit~=nil and enemy.unit.dead~=1 and enemy.unit.invulnerable==0 and enemy.unit.visible==1 and enemy.unit.x~=nil and enemy.number==LeeConfig.PU and myHero.dead~=1 and GetD(enemy.unit)<975 then
+			local invul=IsInvulnerable(enemy.unit).status
+			if enemy~=nil and enemy.unit~=nil and enemy.unit.dead~=1 and invul~=1 and enemy.unit.visible==1 and enemy.unit.x~=nil and enemy.number==LeeConfig.PU and myHero.dead~=1 and GetD(enemy.unit)<975 then
 				targeti=enemy.unit
 			end
 		end
@@ -218,17 +241,19 @@ function Combo()
     if target ~= nil then
         CustomCircle(100,4,1,target)
 		
-        if myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and CreepBlock(target.x,target.y,target.z) == 0 and (PMod>2 or PTimer<os.clock()) then 
-			CastSpellXYZ('Q',GetFireahead(target,2.4,16)) 
+        if myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and CreepBlock(target.x,target.y,target.z) == 0 and (PMod>2 or PTimer<os.clock()) and GetD(tfa)>100 then 
+			CastSpellXYZ('Q',GetFireahead(target,qdelay,qspeed)) 
+        elseif myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and CreepBlock(target.x,target.y,target.z) == 0 and (PMod>2 or PTimer<os.clock()) and GetD(tfa)<=100 then 
+			CastSpellXYZ('Q',target.x,target.y,target.z) 
 			--printtext("\nQ1") 
 		elseif myHero.SpellNameQ == "blindmonkqtwo" and RRDY==1 and LeeConfig.ultC and GetD(target)<400 and eye~=nil and eye.unit~=nil and eye.unit.x~=nil and GetD(eye.unit,target)<100 then 
 			CastSpellTarget("R",target) --printtext("\nR") 
 		elseif myHero.SpellNameQ == "blindmonkqtwo" and QRDY==1 and (PMod>2 or PTimer<os.clock() or GetD(target) > 350 or LeeConfig.ultC) and eye~=nil and eye.unit~=nil and eye.unit.x~=nil and GetD(eye.unit,target)<50 then 
 			CastSpellTarget("Q",target)  
 		end
-        if ERDY==1 and myHero.SpellNameE == "BlindMonkEOne" and GetD(target) < 380 and (PMod>2 or PTimer<os.clock() or GetD(target) > 350-35) then 
+        if ERDY==1 and myHero.SpellNameE == "BlindMonkEOne" and GetD(target) < 360 and (PMod>2 or PTimer<os.clock() or GetD(target) > 350-35) then 
 			CastSpellXYZ('E',myHero.x,myHero.y,myHero.z) --printtext("\nE") 
-		elseif ERDY==1 and myHero.SpellNameE == "blindmonketwo" and (PMod>2 or PTimer<os.clock() or GetD(target) > 350 ) then 
+		elseif ERDY==1 and myHero.SpellNameE == "blindmonketwo" and (PMod>2 or PTimer<os.clock() or GetD(target) > 330 ) then 
 			CastSpellXYZ('E',myHero.x,myHero.y,myHero.z) --printtext("\nE") 
 		elseif myHero.SpellNameW == "BlindMonkWOne" and WRDY==1 and GetD(target) < 350 and (PMod>2 or PTimer<os.clock()) then 
 			run_every(0.2,WSpell,myHero)  
@@ -249,12 +274,28 @@ function Combo()
 			local xx,yy,zz=GetFireahead(target,2,0)
 			MoveToXYZ(xx,yy,zz)
 		end
-		if GetD(target)<400 then
-			CastSummonerExhaust(target)
-			UseAllItems(target)
+		if  GetD(target)<400 then
+			for _, item in pairs(hydraItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+			end
+			for _, item in pairs(aoeItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+			end
+			for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+			end
 		elseif GetD(target)<600 then
-			CastSummonerExhaust(target)
-			UseTargetItems(target)
+			for _, item in pairs(targetItems) do
+					if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
+							CastSpellTarget(tostring(GetInventorySlot(item)),target)
+					end
+			end
 		end
 		
 	else
@@ -269,10 +310,11 @@ function ultSave()
 	if RRDY==1 and myHero.health<myHero.maxHealth*0.20 then
 		local kicktarget=nil
 		for j=1, objManager:GetMaxHeroes(), 1 do
-			herotarget = objManager:GetHero(j) 
-			if herotarget~=nil and herotarget.team~=myHero.team and GetD(herotarget)<400 and (kicktarget==nil or kicktarget.dead==1) then
+			local herotarget = objManager:GetHero(j) 
+			local invul=IsInvulnerable(herotarget).status
+			if herotarget~=nil and herotarget.team~=myHero.team and invul~=1 and invul~=2 and GetD(herotarget)<400 and (kicktarget==nil or kicktarget.dead==1) then
 				kicktarget=herotarget
-			elseif herotarget~=nil and herotarget.team~=myHero.team and GetD(herotarget)<400 and GetD(herotarget)<GetD(kicktarget) then
+			elseif herotarget~=nil and herotarget.team~=myHero.team and invul~=1 and invul~=2 and GetD(herotarget)<400 and GetD(herotarget)<GetD(kicktarget) then
 				kicktarget=herotarget
 			end
 		end
@@ -337,9 +379,12 @@ end
 
 function Harass()
 	if target~=nil and WRDY==1 then
-		if myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and (somethingNear(target)~=nil or gotAWard()) then
+		if myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and (somethingNear(target)~=nil or gotAWard()) and (GetD(tfa)>100 or runningAway(target)) then
 			startHarass=false
-			CastSpellXYZ('Q',GetFireahead(target,2.4,16))
+			CastSpellXYZ('Q',GetFireahead(target,qdelay,qspeed))
+		elseif myHero.SpellNameQ == "BlindMonkQOne" and QRDY==1 and (somethingNear(target)~=nil or gotAWard()) and GetD(tfa)<=100 then
+			startHarass=false
+			CastSpellXYZ('Q',target.x,target.y,target.z)
 		end
 		if myHero.SpellNameQ == "blindmonkqtwo" and QRDY==1 and WRDY==1 and myHero.SpellNameW=="BlindMonkWOne" and eye~=nil and eye.unit~=nil and eye.unit.x~=nil then
 			if GetD(eye.unit,target)<50 and somethingNear(target)~=nil then
@@ -426,23 +471,23 @@ function getWardSpot(a,b,c)
 			if myHero.x==spot.x then
 					tx = myHero.x
 					if myHero.z>spot.z then
-							tz = myHero.z-590
+							tz = myHero.z-610
 					else
-							tz = myHero.z+(590)
+							tz = myHero.z+(610)
 					end
 		   
 			elseif spot.z==myHero.z then
 					tz = myHero.z
 					if myHero.x>spot.x then
-							tx = myHero.x-(590)
+							tx = myHero.x-(610)
 					else
-							tx = myHero.x+(590)
+							tx = myHero.x+(610)
 					end
 		   
 			elseif myHero.x>spot.x then
 					angle = math.asin((myHero.x-spot.x)/dist)
-					zs = (590)*math.cos(angle)
-					xs = (590)*math.sin(angle)
+					zs = (610)*math.cos(angle)
+					xs = (610)*math.sin(angle)
 					if myHero.z>spot.z then
 							tx = myHero.x-xs
 							tz = myHero.z-zs
@@ -453,8 +498,8 @@ function getWardSpot(a,b,c)
 		   
 			elseif myHero.x<spot.x then
 					angle = math.asin((spot.x-myHero.x)/dist)
-					zs = (590)*math.cos(angle)
-					xs = (590)*math.sin(angle)
+					zs = (610)*math.cos(angle)
+					xs = (610)*math.sin(angle)
 					if myHero.z>spot.z then
 							tx = myHero.x+xs
 							tz = myHero.z-zs
@@ -491,7 +536,7 @@ function initiate()
 			startCombo=false
 			wardFound=false
 			success=false
-			CastSpellXYZ('Q',GetFireahead(targeti,2.4,16))
+			CastSpellXYZ('Q',GetFireahead(targeti,qdelay,qspeed))
 			--CastSpellXYZ('Q',GetFireahead(targeti,1.6,18)) 
 			--CastSpellXYZ('Q',mousePos.x,mousePos.y,mousePos.z) 
 			--print("\nQ1") 
@@ -594,9 +639,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x>myHero.x then
-					angle = math.asin((enemy.x-myHero.x)/dist)
-					zs = NRDIST*math.cos(angle)
-					xs = NRDIST*math.sin(angle)
+					angle = math.acos((enemy.x-myHero.x)/dist)
+					xs = NRDIST*math.cos(angle)
+					zs = NRDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x+xs
 						tz = enemy.z+zs
@@ -606,9 +651,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x<myHero.x then
-					angle = math.asin((myHero.x-enemy.x)/dist)
-					zs = NRDIST*math.cos(angle)
-					xs = NRDIST*math.sin(angle)
+					angle = math.acos((myHero.x-enemy.x)/dist)
+					xs = NRDIST*math.cos(angle)
+					zs = NRDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x-xs
 						tz = enemy.z+zs
@@ -635,9 +680,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x>myHero.x then
-					angle = math.asin((enemy.x-myHero.x)/dist)
-					zs = NRDIST*math.cos(angle)
-					xs = NRDIST*math.sin(angle)
+					angle = math.acos((enemy.x-myHero.x)/dist)
+					xs = NRDIST*math.cos(angle)
+					zs = NRDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x+xs
 						tz = enemy.z+zs
@@ -647,9 +692,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x<myHero.x then
-					angle = math.asin((myHero.x-enemy.x)/dist)
-					zs = NRDIST*math.cos(angle)
-					xs = NRDIST*math.sin(angle)
+					angle = math.acos((myHero.x-enemy.x)/dist)
+					xs = NRDIST*math.cos(angle)
+					zs = NRDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x-xs
 						tz = enemy.z+zs
@@ -676,9 +721,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x>myHero.x then
-					angle = math.asin((enemy.x-myHero.x)/dist)
-					zs = RDIST*math.cos(angle)
-					xs = RDIST*math.sin(angle)
+					angle = math.acos((enemy.x-myHero.x)/dist)
+					xs = RDIST*math.cos(angle)
+					zs = RDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x+xs
 						tz = enemy.z+zs
@@ -688,9 +733,9 @@ function inSec(enemy)
 					end
 				
 				elseif enemy.x<myHero.x then
-					angle = math.asin((myHero.x-enemy.x)/dist)
-					zs = RDIST*math.cos(angle)
-					xs = RDIST*math.sin(angle)
+					angle = math.acos((myHero.x-enemy.x)/dist)
+					xs = RDIST*math.cos(angle)
+					zs = RDIST*math.sin(angle)
 					if enemy.z>myHero.z then
 						tx = enemy.x-xs
 						tz = enemy.z+zs
@@ -789,6 +834,34 @@ function OnCreateObj(obj)
 			bluePill = obj
 		end
 	end
+	if obj.charName == 'EggTimer.troy' then
+		for i= 1,objManager:GetMaxHeroes(),1 do
+			local hero=objManager:GetHero(i)
+			if hero.name == 'Anivia' and GetDistance(obj, hero) < 10 then
+				if hero.team == myHero.team then egg = {team = GetTickCount(), enemy = egg.enemy}
+				else egg = {team = egg.team, enemy = GetTickCount()} end
+				break
+			end
+		end
+	elseif obj.charName == 'Aatrox_Passive_Death_Activate.troy' then
+		for i= 1,objManager:GetMaxHeroes(),1 do
+			local hero=objManager:GetHero(i)
+			if hero.name == 'Aatrox' and GetDistance(obj, hero) < 10 then
+				if hero.team == myHero.team then aatrox = {team = GetTickCount(), enemy = aatrox.enemy}
+				else aatrox = {team = aatrox.team, enemy = GetTickCount()} end
+				break
+			end
+		end
+	elseif obj.charName == 'ZacPassiveExplosion.troy' then
+		for i= 1,objManager:GetMaxHeroes(),1 do
+			local hero=objManager:GetHero(i)
+			if hero.name == 'Zac' and GetDistance(obj, hero) < 10 then
+				if hero.team == myHero.team then zac = {team = GetTickCount(), enemy = zac.enemy}
+				else zac = {team = zac.team, enemy = GetTickCount()} end
+				break
+			end
+		end
+	end
 end
 
 function OnProcessSpell(unit,spell)
@@ -829,13 +902,13 @@ function OnDraw()
 			
 			if something~=nil and something.dead~=1 then 
 				CustomCircle(100,20,4,something)
-			elseif somethingNear(target)~=nil then
+			elseif somethingNear(target)~=nil and somethingNear(target).x~=nil then
 				CustomCircle(100,20,4,somethingNear(target))
 			end
 		end
         for i = 1, objManager:GetMaxHeroes()  do
             local enemy = objManager:GetHero(i)
-            if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and enemy.invulnerable==0) then
+            if (enemy ~= nil and enemy.team ~= myHero.team and enemy.visible == 1 and IsInvulnerable(enemy).status~=1) then
                 local qdmg = getDmg("Q",enemy,myHero,3)*QRDY
                 local edmg = getDmg("E",enemy,myHero)*ERDY
                 local rdmg = getDmg("R",enemy,myHero)*RRDY
@@ -1085,42 +1158,147 @@ function GetWardSlot(item)
     return nil
 end
 
-function GetD(p1, p2)
-if p2 == nil then p2 = myHero end
-if (p1.z == nil or p2.z == nil) and p1.x~=nil and p1.y ~=nil and p2.x~=nil and p2.y~=nil then
-px=p1.x-p2.x
-py=p1.y-p2.y
-if px~=nil and py~=nil then
-px2=px*px
-py2=py*py
-if px2~=nil and py2~=nil then
-return math.sqrt(px2+py2)
-else
-return 99999
+function GetTeamSize()
+    return math.floor(objManager:GetMaxHeroes()/2)
 end
-else
-return 99999
+ 
+function GetBestEnemy(damage_type, range, tag)
+    if tag == nil then tag = "BASIC" end
+	local QDMG=0
+	local WDMG=0
+	local EDMG=0
+	local RDMG=0
+	local ADMG=0
+    local enemy, prospect
+    for i=1,GetTeamSize() do    
+        prospect = GetWeakEnemy(damage_type, range, tag, i)
+        if prospect == nil then
+            -- pass        
+        else
+			if spellDmg[myHero.name] then
+				if QRDY==1 and getDmg("Q",prospect,myHero)~=nil then
+					QDMG=getDmg("Q",prospect,myHero)
+				else
+					QDMG=0
+				end
+				if WRDY==1 and getDmg("W",prospect,myHero)~=nil then
+					WDMG=getDmg("W",prospect,myHero)
+				else
+					WDMG=0
+				end
+				if ERDY==1 and getDmg("E",prospect,myHero)~=nil then
+					EDMG=getDmg("E",prospect,myHero)
+				else
+					EDMG=0
+				end
+				if RRDY==1 and getDmg("R",prospect,myHero)~=nil then
+					RDMG=getDmg("R",prospect,myHero)
+				else
+					RDMG=0
+				end
+				if getDmg("AD",prospect,myHero)~=nil then
+					ADMG=getDmg("AD",prospect,myHero)
+				else
+					ADMG=0
+				end
+			
+			end
+			
+			local invul=IsInvulnerable(prospect).status
+            if invul==1 or (invul==4 and QDMG+WDMG+EDMG+RDMG+ADMG>prospect.health) then
+                local msg = "*** target invulnerable, cycling ***"
+                print(msg)
+                DrawTextObject(msg,myHero,0xFFFF0000)
+            else
+                enemy = prospect
+                break -- <-------- *** important ***
+            end
+        end
+    end
+    -- we should return nil if everyone is invuln, same as the original api when no enemies are in range
+    --if target == nil then
+    --    target = GetWeakEnemy(damage_type, range, tag)
+    --end
+    return enemy
 end
 
-elseif p1.x~=nil and p1.z ~=nil and p2.x~=nil and p2.z~=nil then
-px=p1.x-p2.x
-pz=p1.z-p2.z
-if px~=nil and pz~=nil then
-px2=px*px
-pz2=pz*pz
-if px2~=nil and pz2~=nil then
-return math.sqrt(px2+pz2)
-else
-return 99999
-end
-else    
-return 99999
+local StatusReturn={}
+function IsInvulnerable(target)
+        if target ~= nil and target.dead == 0 then
+                if target.invulnerable == 1 then return {status = 1, name = nil, amount = nil, type = nil}
+                else 
+					StatusReturn=run_every(0.3,getStatus,target)
+					if StatusReturn~=nil then
+						return	StatusReturn
+					end
+                end
+        end
+        return {status = 0, name = nil, amount = nil, type = nil}
 end
 
-else
-return 99999
+function getStatus(target)
+	StatusReturn=nil
+	for i=1, objManager:GetMaxObjects(), 1 do
+			local object = objManager:GetObject(i)
+			if object ~= nil then
+					if string.find(object.charName,"eyeforaneye") ~= nil and GetDistance(target,object) <= 20 then return {status = 1, name = 'Intervention', amount = 0, type = 'ALL'}
+					elseif string.find(object.charName,"nickoftime") ~= nil and GetDistance(target,object) <= 20 then return {status = 4, name = 'Chrono Shift', amount = 0, type = 'REVIVE'}
+					elseif target.name == 'Poppy' and string.find(object.charName,"DiplomaticImmunity_tar") ~= nil and GetDistance(myHero,object) > 20 then
+							for i=1, objManager:GetMaxObjects(), 1 do
+									local diObject = objManager:GetObject(i)
+									if diObject ~= nil and string.find(diObject.charName,"DiplomaticImmunity_buf") ~= nil and GetDistance(target,diObject) <= 20 then return {status = 1, name = 'Diplomatic Immunity', amount = 0, type = 'ALL'} end
+							end
+					elseif target.name == 'Vladimir' and string.find(object.charName,"VladSanguinePool_buf") ~= nil and GetDistance(myHero,object) <= 20 then return {status = 1, name = 'Sanguine Pool', amount = 0, type = 'ALL'}
+--                                      elseif string.find(object.charName,"Summoner_Barrier") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+					elseif (string.find(object.charName,"Global_Spellimmunity") ~= nil or string.find(object.charName,"Morgana_Blackthorn_Blackshield") ~= nil) and GetDistance(target,object) <= 20 then
+							local amount = 0
+							for i= 1,objManager:GetMaxHeroes(),1 do
+									local hero=objManager:GetHero(i)
+									if hero.team == target.team and hero.name == 'Morgana' then
+											amount = 30+(65*hero.SpellLevelE)+(hero.ap*0.7)
+											return {status = 2, name = 'Black Shield', amount = amount, type = 'MAGIC'}
+									end
+							end
+					elseif string.find(object.charName,"bansheesveil_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Banshees Veil', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Sivir' and string.find(object.charName,"Sivir_Base_E_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Spell Shield', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Nocturne' and string.find(object.charName,"nocturne_shroudofDarkness_shield") ~= nil and GetDistance(target,object) <= 20 then return {status = 2, name = 'Shroud of Darkness', amount = 0, type = 'SPELL'}
+					elseif target.name == 'Tryndamere' and string.find(object.charName,"UndyingRage_buf") ~= nil and GetDistance(target,object) <= 20 then return {status = 4, name = 'Undying Rage', amount = 0, type = 'NONE'}
+					elseif string.find(object.charName,"rebirthready") ~= nil and GetDistance(target,object) <= 20 then return {status = 3, name = 'Guardian Angel', amount = 0, type = 'REVIVE'}
+					elseif target.name == 'Anivia' then
+							if target.team == myHero.team then
+									if GetTickCount()-egg.allied.time > 240000 or egg.allied.time == 0 then return {status = 3, name = 'Egg', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil} end
+							else
+									if GetTickCount()-egg.enemy.time > 240000 or egg.enemy.time == 0 then return {status = 3, name = 'Egg', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil} end
+							end
+					elseif target.name == 'Aatrox' then
+							if target.team == myHero.team then
+									if GetTickCount()-aatrox.allied.time > 225000 or aatrox.allied.time == 0 then return {status = 3, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							elseif target.team ~= myHero.team then
+									if GetTickCount()-aatrox.enemy.time > 225000 or aatrox.enemy.time == 0 then return {status = 3, name = 'Aatrox', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							end
+					elseif target.name == 'Zac' then
+							if target.team == myHero.team then
+									if GetTickCount()-zac.allied.time > 300000 or zac.allied.time == 0 then return {status = 3, name = 'Zac', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							elseif target.team ~= myHero.team then
+									if GetTickCount()-zac.enemy > 300000 or zac.enemy.time == 0 then return {status = 3, name = 'Zac', amount = 0, type = 'REVIVE'}
+									else return {status = 0, name = nil, amount = nil, type = nil}
+									end
+							end
+--                                      elseif string.find(object.charName,"GLOBAL_Item_FoM_Shield") ~= nil and GetDistance(target,object) <= 30 then return 2--, 'NONE'
+--                                      elseif target.name == 'Nautilus' and string.find(object.charName,"Nautilus_W_shield_cas") ~= nil and GetDistance(target,object) <= 20 then return 2--, 'NONE'
+					end
+			end
+	end
 end
-end
+
 function run_every(interval, fn, ...)
     return internal_run({fn=fn, interval=interval}, ...)
 end
@@ -1189,4 +1367,42 @@ function internal_run(t, ...)
         end
     end    
 end
+
+function GetD(p1, p2)
+if p2 == nil then p2 = myHero end
+if (p1.z == nil or p2.z == nil) and p1.x~=nil and p1.y ~=nil and p2.x~=nil and p2.y~=nil then
+px=p1.x-p2.x
+py=p1.y-p2.y
+if px~=nil and py~=nil then
+px2=px*px
+py2=py*py
+if px2~=nil and py2~=nil then
+return math.sqrt(px2+py2)
+else
+return 99999
+end
+else
+return 99999
+end
+
+elseif p1.x~=nil and p1.z ~=nil and p2.x~=nil and p2.z~=nil then
+px=p1.x-p2.x
+pz=p1.z-p2.z
+if px~=nil and pz~=nil then
+px2=px*px
+pz2=pz*pz
+if px2~=nil and pz2~=nil then
+return math.sqrt(px2+pz2)
+else
+return 99999
+end
+else    
+return 99999
+end
+
+else
+return 99999
+end
+end
+
 SetTimerCallback("LeeRun")
