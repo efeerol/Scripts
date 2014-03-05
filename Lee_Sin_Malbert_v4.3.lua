@@ -7,7 +7,7 @@ local send = require 'SendInputScheduled'
 local metakey = SKeys.Control
 print("\nMalbert's")
 print("\nPrivate LeeSin")
-print("\nVersion 4.2")
+print("\nVersion 4.3")
 local target
 local targeti
 local target2
@@ -96,6 +96,7 @@ LeeConfig:addParam("mqi", "Manual Q Insec", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("pots", "Auto Potions", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("ignite", "Ignite KS", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:addParam("movement", "movement", SCRIPT_PARAM_ONOFF, true)
+LeeConfig:addParam('cw', "Circle Width", SCRIPT_PARAM_NUMERICUPDOWN, 5, 40,0,10,1)
 LeeConfig:addParam("circles", "Circles", SCRIPT_PARAM_ONOFF, true)
 LeeConfig:permaShow("smite")
 LeeConfig:permaShow("ultLow")
@@ -889,14 +890,18 @@ function OnProcessSpell(unit,spell)
 end
 
 function OnDraw()
-	if myHero.dead~=1 then
-    if LeeConfig.circles then
-        CustomCircle(975,10,5,myHero) --Q    
-        CustomCircle(375,10,5,myHero) --R
-        CustomCircle(700,10,5,myHero) --W   
+  if myHero.dead~=1 then
+   if LeeConfig.circles then
+	local CW=0
+    	if LeeConfig.cw>0 then
+		CW=LeeConfig.cw
+        CustomCircle(975,CW,5,myHero) --Q    
+        CustomCircle(375,CW,5,myHero) --R
+        CustomCircle(700,CW,5,myHero) --W   
 			if gotAWard() then
-				CustomCircle(650,10,1,myHero)
+				CustomCircle(650,CW,1,myHero)
 			end
+	end
         if target ~= nil then
 			CustomCircle(50,5,2,target) 
 			

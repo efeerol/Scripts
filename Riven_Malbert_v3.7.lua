@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nRiding on Riven\n")
 printtext("\nBy Malbert\n")
-printtext("\nBeta 3.6\n")
+printtext("\nBeta 3.7\n")
 
 local target
 local stuntarget
@@ -270,7 +270,11 @@ function OnProcessSpell(unit,spell)
 			QmodReset=os.clock()+3.5
 			Atimer=os.clock()+delay+(RivConfig.AC/myHero.attackspeed)
 			if target~=nil then
-				MoveToXYZ(myHero.x,myHero.y,myHero.z,0)			
+				if GetD(target)<=myHero.range+25 then
+					MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				else
+					MoveToXYZ(target.x,target.y,target.z,0)
+				end	
 				if GetD(target)<400 then
 					for _, item in pairs(hydraItems) do
 						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
@@ -285,7 +289,11 @@ function OnProcessSpell(unit,spell)
 		elseif string.find(spell.name,"RivenMartyr") ~= nil then
 			Atimer=os.clock()+delay+(RivConfig.AC/myHero.attackspeed)
 			if target~=nil then
-				MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				if GetD(target)<=myHero.range+25 then
+					MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				else
+					MoveToXYZ(target.x,target.y,target.z,0)
+				end
 				if GetD(target)<400 then
 					for _, item in pairs(hydraItems) do
 						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
@@ -299,7 +307,11 @@ function OnProcessSpell(unit,spell)
 		elseif string.find(spell.name,"RivenFeint") ~= nil then
 			Atimer=os.clock()+delay+(RivConfig.AC/myHero.attackspeed)
 			if target~=nil then
-				MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				if GetD(target)<=myHero.range+25 then
+					MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				else
+					MoveToXYZ(target.x,target.y,target.z,0)
+				end
 			end
 			timetoAA=os.clock()
 
@@ -308,7 +320,11 @@ function OnProcessSpell(unit,spell)
 			Rtimer=os.clock()
 			Atimer=os.clock()+delay+(RivConfig.AC/myHero.attackspeed)
 			if target~=nil then
-				MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				if GetD(target)<=myHero.range+25 then
+					MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				else
+					MoveToXYZ(target.x,target.y,target.z,0)
+				end
 				if GetD(target)<400 then
 					for _, item in pairs(hydraItems) do
 						if GetInventorySlot(item)~=nil and myHero["SpellTime"..GetInventorySlot(item)]>1.0 then
@@ -324,7 +340,11 @@ function OnProcessSpell(unit,spell)
 			castR=false
 			Atimer=os.clock()+delay+(RivConfig.AC/myHero.attackspeed)
 			if target~=nil then
-				MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				if GetD(target)<=myHero.range+25 then
+					MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+				else
+					MoveToXYZ(target.x,target.y,target.z,0)
+				end
 			end
 			timetoAA=os.clock()
 		end 
@@ -950,7 +970,11 @@ function AttackT(enemy)
 		--MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
 		AttackTarget(enemy)
 	elseif os.clock()>=AttackCompleted then
-		MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+		if GetD(enemy)<=myHero.range+25 then
+			MoveToXYZ(myHero.x,myHero.y,myHero.z,0)
+		else
+			MoveToXYZ(enemy.x,enemy.y,enemy.z,0)
+		end
 	end
 end
 
