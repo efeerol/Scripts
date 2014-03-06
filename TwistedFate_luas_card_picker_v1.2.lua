@@ -1,4 +1,4 @@
---Lua's Little Card Picker v1.1
+--Lua's Little Card Picker v1.2
 
 require "Utils"
 local uiconfig = require 'uiconfig'
@@ -40,15 +40,15 @@ function GimmeACard()
 		if IsChatOpen() == 0 and myHero.dead == 0 then
 			if PickBlock ~= nil and GetTickCount()-PickBlock > 1000 then PickBlock = nil end
 			if TFMenu.TFBlue and WRDY == 1 then NextCard = 'Blue'
-			elseif TFMenu.TFGold and WRDY == 1 then NextCard = 'Yellow'
+			elseif TFMenu.TFGold and WRDY == 1 then NextCard = 'Gold'
 			elseif TFMenu.TFRed and WRDY == 1 then NextCard = 'Red' end
 			if WRDY == 1 and NextCard ~= nil and PickBlock == nil and myHero.SpellNameW == 'PickACard' then
 				PickBlock = GetTickCount()
 				CastSpellTarget('W',myHero)
 			end
 			if TFMenu.ShowPick and NextCard ~= nil then
-				if NextCard ~= 'Yellow' then DrawTextObject(NextCard,myHero,Color[NextCard])
-				else DrawTextObject('Gold',myHero,Color.Yellow) end
+				if NextCard ~= 'Gold' then DrawTextObject(NextCard,myHero,Color[NextCard])
+				else DrawTextObject(NextCard,myHero,Color.Yellow) end
 			end
 			if PickCard and Locked == nil then CastSpellTarget('W',myHero) end
 		end
@@ -62,7 +62,7 @@ function OnProcessSpell(unit,spell)
 			Locked = GetTickCount()
 			PickCard = false
 			NextCard = nil
-		elseif NextCard ~= nil and NextCard == 'Yellow' and spell.name == 'goldcardlock' then
+		elseif NextCard ~= nil and NextCard == 'Gold' and spell.name == 'goldcardlock' then
 			Locked = GetTickCount()
 			PickCard = false
 			NextCard = nil
@@ -75,11 +75,9 @@ function OnProcessSpell(unit,spell)
 end
 
 function OnCreateObj(obj)
-	if obj ~= nil and NextCard ~= nil and string.find(obj.charName, "Card_") ~= nil then
-		if string.find(obj.charName, NextCard) ~= nil then
-			PickCard = true
-		else PickCard = false
-		end
+	if obj ~= nil and NextCard ~= nil and string.find(obj.charName, NextCard) ~= nil and GetDistance(obj, myHero) < 100 then
+		PickCard = true
+		CastSpellTarget('W',myHero)
 	end
 end
 
