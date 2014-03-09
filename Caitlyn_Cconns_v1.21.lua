@@ -26,9 +26,11 @@ UPDATED: 2/17/2014
 BY: CCONN
 
 CHANGELOG:		VERSION 1.20		initial release - complete rewrite of v1.1
-			VERSION 1.21		Tweaks to auto carry settings and farming,
-						updated SafeR to use CountUnit,
-						corected damage calc for ultimate
+				VERSION 1.21		Tweaks to auto carry settings and farming,
+									updated SafeR to use CountUnit,
+									corected damage calc for ultimate
+				VERSION 1.22		minor code error fixes,
+									changes to Q, W, E, R functions
 ]]
 
 require 'Utils'
@@ -260,7 +262,7 @@ function Deadly_Caitlyn()
 		if CfgCaitControls.Combo then Combo() end
 		if CfgCaitKillSteal.Killsteal then Killsteal() end
 		if CfgCaitControls.AutoHarass then AutoHarass() end
-		if CfgCaitControls.Cast_Ult then if CfgGragas.MECULT_ONOFF then RMEC() else R(target) end end
+		if CfgCaitControls.Cast_Ult then if CfgCaitSettings.SafeR and SafeR() then R(target) else R(target) end end
 		if CfgCaitControls.LaneClear then LaneClear() end
 		if CfgCaitControls.Farm then Farm() end
 	end	
@@ -462,40 +464,32 @@ end
 
 --SPELL FUNCTIONS---------------------------------
 function Q(QTarget)
-local range = 1300
-local manacost = (40 + (10 * myHero.SpellLevelQ))
 	if QTarget ~= nil then
-		if GetDistance(myHero, QTarget) <= range and myHero.mana >= manacost then
+		if GetDistance(myHero, QTarget) <= 1300 and myHero.mana >= (40 + (10 * myHero.SpellLevelQ)) then
 			CastSpellXYZ('Q',GetFireahead(QTarget,2,16))
 		end
 	end
 end
 
 function W(WTarget)
-local range = 800
-local manacost = 50
 	if WTarget ~= nil then
-		if GetDistance(myHero, WTarget) <= range and myHero.mana >= manacost then
+		if GetDistance(myHero, WTarget) <= 800 and myHero.mana >= 50 then
 			CastSpellTarget('W',WTarget)
 		end
 	end
 end
 
 function E(ETarget)
-local range = 1000
-local manacost = 75
 	if ETarget ~= nil then
-		if GetDistance(myHero, ETarget) <= range and myHero.mana >= manacost then
+		if GetDistance(myHero, ETarget) <= 1000 and myHero.mana >= 75 then
 			CastSpellXYZ('E',GetFireahead(ETarget,2,32))
 		end
 	end
 end
 
 function R(RTarget)
-local range = (1500+(500*myHero.SpellLevelR))
-local manacost = 100
 	if RTarget ~= nil then
-		if GetDistance(myHero, RTarget) <= range and myHero.mana >= manacost then
+		if GetDistance(myHero, RTarget) <= (1500+(500*myHero.SpellLevelR)) and myHero.mana >= 100 then
 			CastSpellTarget('R',RTarget)
 		end
 	end

@@ -5,8 +5,8 @@ require 'vals_lib'
 require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
-local version = '3.3'
-local cc,ls,dodgetimer = 0,0,0
+local version = '3.4'
+local ls = 0
 local Jcoord = {}
 local KSN = {}
 local HNS = {}
@@ -29,22 +29,11 @@ local HNS = {}
 	menu.checkbutton('DrawCircles', 'DrawCircles', true)
 	menu.slider('TargetSelector', 'TargetSelector', 1, 3, 2, {'Loose','Soft','Hard'})
 	menu.slider('Emultiplier', 'E proc multiplier', 1, 2, 1)
-	
-	DodgeConfig, menu = uiconfig.add_menu('DodgeSkillshot Config', 250)
-	menu.checkbutton('DrawSkillShots', 'Draw Skillshots', true)
-	menu.checkbutton('DodgeSkillShots', 'Dodge Skillshots', true)
-	menu.checkbutton('DodgeSkillShotsAOE', 'Dodge Skillshots for AOE', true)
-	menu.slider('BlockSettings', 'Block user input', 1, 2, 1, {'FixBlock','NoBlock'})
-	menu.slider('BlockSettingsAOE', 'Block user input for AOE', 1, 2, 2, {'FixBlock','NoBlock'})
-	menu.slider('BlockTime', 'Block imput time', 0, 1000, 750)
-	menu.permashow('DrawSkillShots')
-	menu.permashow('DodgeSkillShots')
 
 function Main()
 	if IsLolActive() then
-		SetVariables()
 		CheckItemCD()
-		Skillshots()
+		SetVariables()
 		Distance()
 		SpellSequence()
 		Jump()
@@ -209,7 +198,7 @@ function SpellSequence()
 			end
 		end
 	end
-	if LBSettings.MouseMove and (LBConf.Combo or LBConf.Harass) and dodgetimer == 0 then MoveToMouse() end
+	if LBSettings.MouseMove and (LBConf.Combo or LBConf.Harass) then MoveToMouse() end
 end
 	
 function Seq(a,b)
@@ -298,7 +287,6 @@ function SetVariables()
 	if LBSettings.TargetSelector == 1 then target = GetWeakEnemy('MAGIC',1200)
 	elseif LBSettings.TargetSelector == 2 then target = GetWeakEnemy('MAGIC',1200,'NEARMOUSE')
 	elseif LBSettings.TargetSelector == 3 then target = GetWeakEnemy('MAGIC',1200,'ONLYNEARMOUSE') end
-	if GetTickCount()-dodgetimer>DodgeConfig.BlockTime then dodgetimer = 0 end
 end
 
 function ReturnPad()
@@ -375,161 +363,12 @@ function Jump()
 	end
 end
 
-function dodgeaoe(pos1, pos2, radius)
-	local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY()
-	local calc = (math.floor(math.sqrt((pos2.x-myHero.x)^2 + (pos2.z-myHero.z)^2)))
-	local dodgex = pos2.x + ((radius+50)/calc)*(myHero.x-pos2.x)
-	local dodgez = pos2.z + ((radius+50)/calc)*(myHero.z-pos2.z)
-	if calc < radius and DodgeConfig.DodgeSkillShotsAOE == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
-		if DodgeConfig.BlockSettingsAOE == 1 and LBConf.Combo == false and LBConf.Harass == false then
-			dodgetimer = GetTickCount()
-			send.block_input(true,DodgeConfig.BlockTime)
-			MoveToXYZ(dodgex,0,dodgez)
-		elseif DodgeConfig.BlockSettingsAOE == 2 or LBConf.Combo or LBConf.Harass then
-			dodgetimer = GetTickCount()
-			MoveToXYZ(dodgex,0,dodgez)
-		end
-	end
-end
-
-function dodgelinepoint(pos1, pos2, radius)
-	local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY()
-	local calc1 = (math.floor(math.sqrt((pos2.x-myHero.x)^2 + (pos2.z-myHero.z)^2)))
-	local calc2 = (math.floor(math.sqrt((pos1.x-myHero.x)^2 + (pos1.z-myHero.z)^2)))
-	local calc4 = (math.floor(math.sqrt((pos1.x-pos2.x)^2 + (pos1.z-pos2.z)^2)))
-	local perpendicular = (math.floor((math.abs((pos2.x-pos1.x)*(pos1.z-myHero.z)-(pos1.x-myHero.x)*(pos2.z-pos1.z)))/(math.sqrt((pos2.x-pos1.x)^2 + (pos2.z-pos1.z)^2))))
-	local k = ((pos2.z-pos1.z)*(myHero.x-pos1.x) - (pos2.x-pos1.x)*(myHero.z-pos1.z)) / ((pos2.z-pos1.z)^2 + (pos2.x-pos1.x)^2)
-	local x4 = myHero.x - k * (pos2.z-pos1.z)
-	local z4 = myHero.z + k * (pos2.x-pos1.x)
-	local calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
-	local dodgex = x4 + ((radius+100)/calc3)*(myHero.x-x4)
-	local dodgez = z4 + ((radius+100)/calc3)*(myHero.z-z4)
-	if perpendicular < radius and calc1 < calc4 and calc2 < calc4 and DodgeConfig.DodgeSkillShots == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
-		if DodgeConfig.BlockSettings == 1  and LBConf.Combo == false and LBConf.Harass == false then
-			dodgetimer = GetTickCount()
-			send.block_input(true,DodgeConfig.BlockTime)
-			MoveToXYZ(dodgex,0,dodgez)
-		elseif DodgeConfig.BlockSettings == 2 or LBConf.Combo or LBConf.Harass then
-			dodgetimer = GetTickCount()
-			MoveToXYZ(dodgex,0,dodgez)
-		end
-	end
-end
-
-function dodgelinepass(pos1, pos2, radius, maxDist)
-	local xa,xb,ya,yb,cc = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY()
-	local pm2x = pos1.x + (maxDist)/(math.floor(math.sqrt((pos1.x-pos2.x)^2 + (pos1.z-pos2.z)^2)))*(pos2.x-pos1.x)
-	local pm2z = pos1.z + (maxDist)/(math.floor(math.sqrt((pos1.x-pos2.x)^2 + (pos1.z-pos2.z)^2)))*(pos2.z-pos1.z)
-	local calc1 = (math.floor(math.sqrt((pm2x-myHero.x)^2 + (pm2z-myHero.z)^2)))
-	local calc2 = (math.floor(math.sqrt((pos1.x-myHero.x)^2 + (pos1.z-myHero.z)^2)))
-	local calc4 = (math.floor(math.sqrt((pos1.x-pm2x)^2 + (pos1.z-pm2z)^2)))
-	local perpendicular = (math.floor((math.abs((pm2x-pos1.x)*(pos1.z-myHero.z)-(pos1.x-myHero.x)*(pm2z-pos1.z)))/(math.sqrt((pm2x-pos1.x)^2 + (pm2z-pos1.z)^2))))
-	local k = ((pm2z-pos1.z)*(myHero.x-pos1.x) - (pm2x-pos1.x)*(myHero.z-pos1.z)) / ((pm2z-pos1.z)^2 + (pm2x-pos1.x)^2)
-	local x4 = myHero.x - k * (pm2z-pos1.z)
-	local z4 = myHero.z + k * (pm2x-pos1.x)
-	local calc3 = (math.floor(math.sqrt((x4-myHero.x)^2 + (z4-myHero.z)^2)))
-	local dodgex = x4 + ((radius+100)/calc3)*(myHero.x-x4)
-	local dodgez = z4 + ((radius+100)/calc3)*(myHero.z-z4)
-	if perpendicular < radius and calc1 < calc4 and calc2 < calc4 and DodgeConfig.DodgeSkillShots == true and GetCursorX() > xa and GetCursorX() < xb and GetCursorY() > ya and GetCursorY() < yb then
-		if DodgeConfig.BlockSettings == 1 and LBConf.Combo == false and LBConf.Harass == false then
-			dodgetimer = GetTickCount()
-			send.block_input(true,DodgeConfig.BlockTime)
-			MoveToXYZ(dodgex,0,dodgez)
-		elseif DodgeConfig.BlockSettings == 2 then
-			dodgetimer = GetTickCount()
-			MoveToXYZ(dodgex,0,dodgez)
-		end
-	end
-end
-
-function Skillshots()
-	send.tick()
-	cc=cc+1
-	if cc==30 then LoadTable() end
-	for i=1, #skillshotArray, 1 do
-		if os.clock() > (skillshotArray[i].lastshot + skillshotArray[i].time) then skillshotArray[i].shot = 0 end
-	end
-	for i=1, #skillshotArray, 1 do
-		if skillshotArray[i].shot == 1 then
-			local radius = skillshotArray[i].radius
-			local color = skillshotArray[i].color
-			if skillshotArray[i].isline == false then
-				for number, point in pairs(skillshotArray[i].skillshotpoint) do
-					DrawCircle(point.x, point.y, point.z, radius, color)
-				end
-			else
-				startVector = Vector(skillshotArray[i].p1x,skillshotArray[i].p1y,skillshotArray[i].p1z)
-				endVector = Vector(skillshotArray[i].p2x,skillshotArray[i].p2y,skillshotArray[i].p2z)
-				directionVector = (endVector-startVector):normalized()
-				local angle=0
-				if (math.abs(directionVector.x)<.00001) then
-					if directionVector.z > 0 then angle=90
-					elseif directionVector.z < 0 then angle=270
-					else angle=0
-					end
-				else
-					local theta = math.deg(math.atan(directionVector.z / directionVector.x))
-					if directionVector.x < 0 then theta = theta + 180 end
-					if theta < 0 then theta = theta + 360 end
-					angle=theta
-				end
-				angle=((90-angle)*2*math.pi)/360
-				DrawLine(startVector.x, startVector.y, startVector.z, GetDistance(startVector, endVector)+170, 1,angle,radius)
-			end
-		end
-	end
-end
-
 function OnProcessSpell(unit, spell)
 	if unit ~= nil and spell ~= nil and unit.charName == myHero.charName then
 		if spell.name == 'LeblancChaosOrb' then ls = 'Q1' end
 		if spell.name == 'LeblancChaosOrbM' then ls = 'Q2' end
 			if spell.name == 'LeblancSlide' then ls = 'xW' end
 		if spell.name == 'LeblancSoulShackle' then ls = 'E1' end
-	end
-	local P1 = spell.startPos
-	local P2 = spell.endPos
-	local calc = (math.floor(math.sqrt((P2.x-unit.x)^2 + (P2.z-unit.z)^2)))
-	if string.find(unit.name,"Minion_") == nil and string.find(unit.name,"Turret_") == nil then
-		if (unit.team ~= myHero.team or (show_allies==1)) and string.find(spell.name,"Basic") == nil then
-			for i=1, #skillshotArray, 1 do
-				local maxdist
-				local dodgeradius
-				dodgeradius = skillshotArray[i].radius
-				maxdist = skillshotArray[i].maxdistance
-				if spell.name == skillshotArray[i].name then
-					skillshotArray[i].shot = 1
-					skillshotArray[i].lastshot = os.clock()
-					if skillshotArray[i].type == 1 then
-						skillshotArray[i].p1x = unit.x
-						skillshotArray[i].p1y = unit.y
-						skillshotArray[i].p1z = unit.z
-						skillshotArray[i].p2x = unit.x + (maxdist)/calc*(P2.x-unit.x)
-						skillshotArray[i].p2y = P2.y
-						skillshotArray[i].p2z = unit.z + (maxdist)/calc*(P2.z-unit.z)
-						dodgelinepass(unit, P2, dodgeradius, maxdist)
-					elseif skillshotArray[i].type == 2 then
-						skillshotArray[i].px = P2.x
-						skillshotArray[i].py = P2.y
-						skillshotArray[i].pz = P2.z
-						dodgelinepoint(unit, P2, dodgeradius)
-					elseif skillshotArray[i].type == 3 then
-						skillshotArray[i].skillshotpoint = calculateLineaoe(unit, P2, maxdist)
-						if skillshotArray[i].name ~= "SummonerClairvoyance" then
-							dodgeaoe(unit, P2, dodgeradius)
-						end
-					elseif skillshotArray[i].type == 4 then
-						skillshotArray[i].px = unit.x + (maxdist)/calc*(P2.x-unit.x)
-						skillshotArray[i].py = P2.y
-						skillshotArray[i].pz = unit.z + (maxdist)/calc*(P2.z-unit.z)
-						dodgelinepass(unit, P2, dodgeradius, maxdist)
-					elseif skillshotArray[i].type == 5 then
-						skillshotArray[i].skillshotpoint = calculateLineaoe2(unit, P2, maxdist)
-						dodgeaoe(unit, P2, dodgeradius)
-					end
-				end
-			end
-		end
 	end
 end
 

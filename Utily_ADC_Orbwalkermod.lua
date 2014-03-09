@@ -1,6 +1,5 @@
 ----------config----------
 local ping = 45    --enter your ping
-local custom = 150 --default 150 , higher when you attack slower than normal, lower when you're stopping
 --------------------------
 
 require "Utils"
@@ -8,7 +7,7 @@ require "spell_damage"
 
 p = printtext
 
-
+local timer1 = 0
 local target
 local target2
 local targetHero
@@ -31,7 +30,7 @@ OrbConfig:addParam("Draw", "Draw Circles", SCRIPT_PARAM_ONOFF, true,string.byte(
 
      
 function OnTick()
-    targetReset()
+	 targetReset()
     if target and target.dead == 1 then target = nil end
     
     if OrbConfig.AutoCarry and IsChatOpen() == 0 then
@@ -49,14 +48,10 @@ function OnTick()
     if OrbConfig.LaneClear and IsChatOpen() == 0 then
         LaneClear()
     end
-           
-    if OrbConfig.AutoCarry or OrbConfig.Hybrid or OrbConfig.Farm or OrbConfig.LaneClear then
-        moveToCursor()
-    end
-   
+             
     if OrbConfig.Draw then
         if myHero.dead ~= 1 then
-            CustomCircle(range,2,4,myHero)
+			CustomCircle(range, 5, 1, myHero)
         end
     end
 end
@@ -75,16 +70,6 @@ function OnLoad()
         p("\nTrue Range: "..math.ceil(range).."\nTraditional Range: "..myHero.range)
 end
 
---[[function trueRange()
-local trueRangeValue
-        if target ~= nil and GetDistance(target) < range then
-                trueRangeValue = range -(range-GetDistance(target))
-        else
-                trueRangeValue = range
-        end
-        return trueRangeValue
-end]]
-
 function targetReset()
         if not target and not target2 and not targetHero then
         target = nil
@@ -94,13 +79,15 @@ function targetReset()
 end
 
 function Action()
-        if timeToShoot() then           
-            attackEnemy(target)
-            CustomCircle(100,10,1,target)
-        else
-            CustomCircle(100,5,2,target)
-            if heroCanMove() then moveToCursor() end
-        end
+        if timeToShoot() then
+			if GetDistance(target) <= range + GetDistance(target.minBBox, target.maxBBox) * 0.5 then
+			attackEnemy(target)
+				CustomCircle(100,10,1,target)
+			end
+        elseif heroCanMove() and not timeToShoot() then 
+			moveToCursor() 
+       end
+
 end
 
 function attackEnemy(target)
@@ -110,27 +97,13 @@ function attackEnemy(target)
         end
 end
 
-function GetNextAttackTime()
-    --return lastAttack + attackDelayOffset / GetAttackSpeed()
-	   return lastAttack + (1000/myHero.attackspeed) 
-end
-
---function GetAttackSpeed()
- --   return myHero.attackspeed/(1/startAttackSpeed)
---end
-
 function timeToShoot()
-    if GetTickCount() > GetNextAttackTime() - ping - custom then
-    return true
-    end
-    return false
+    return (GetTickCount() + 0.5 * ping > lastAttack + (1000 / myHero.attackspeed))
+
 end
 
 function heroCanMove()
-    if shotFired == false or timeToShoot() then
-        return true
-    end
-    return false
+	return (GetTickCount() + ping * 0.5 > lastAttack + 200 / myHero.attackspeed)
 end
 
 function moveToCursor() -- Removes derping when mouse is in one position instead of myHero:MoveTo mousePos
@@ -141,36 +114,9 @@ function moveToCursor() -- Removes derping when mouse is in one position instead
     MoveToXYZ(moveX,0,moveZ)
 end
 
---[[function On()
-    local HP = (myHero.maxHealth *(.25))
-    local HPB = (myHero.maxHealth *(.20))
-    if myHero.health < HP and target~=nil and myHero.SummonerF == "SummonerHeal" then
-        CastSpellTarget("F",myHero)
-    elseif myHero.health < HP and target~=nil and myHero.SummonerD == "SummonerHeal" then
-        CastSpellTarget("D",myHero)
-    end
-
-    if myHero.health < HPB and target~=nil and myHero.SummonerF == "SummonerBarrier" then
-        CastSpellTarget("F",myHero)
-    elseif myHero.health < HPB and target~=nil and myHero.SummonerD == "SummonerBarrier" then
-        CastSpellTarget("D",myHero)
-    end
-end ]]   
-
-function OnCreateObj(object)
-    if GetAAData()[myHero.name] ~= nil then
-        for _, v in pairs(GetAAData()[myHero.name].aaParticles) do
-            if string.find(object.charName,v) then
-                shotFired = false
-                lastAttack = GetTickCount()
-            end
-        end
-    end
-end
-
 function OnProcessSpell(obj,spell)
     if obj ~= nil and obj.name == myHero.name then
-        if string.find(spell.name,"attack") then                       
+        if string.find(spell.name,"Attack") then                       
             lastAttack = GetTickCount()
         end
     end
@@ -266,11 +212,11 @@ function getAdditionalDamage()
 end
 
 function AutoCarry()
-    CustomCircle(range,2,4,myHero)
+
     if target2 ~= nil then 
         target = target2 
     else 
-        target = GetWeakEnemy("PHYS",range) 
+        target = GetWeakEnemy("PHYS",range + 80) 
     end
     
     if target ~= nil then
@@ -282,8 +228,8 @@ function AutoCarry()
 end
 
 function Hybrid()
-    CustomCircle(range,2,4,myHero)
-    targetHero = GetWeakEnemy("PHYS",range)
+
+    targetHero = GetWeakEnemy("PHYS",range + 80)
 
     if targetHero ~= nil then
         target = targetHero
@@ -302,7 +248,7 @@ function Hybrid()
 end
 
 function Farm()
-    CustomCircle(range,2,4,myHero)
+
     
     if target2 ~= nil then 
         target = target2 
@@ -322,7 +268,7 @@ function Farm()
 end
 
 function LaneClear()
-    CustomCircle(range,2,4,myHero)
+
     tlow=GetLowestHealthEnemyMinion(range) 
     thigh=GetHighestHealthEnemyMinion(range) 
 
@@ -332,10 +278,9 @@ function LaneClear()
 
     if tlow~= nil then 
         target = tlow
-    end
 
-    if thigh ~= nil then     
-    target = thigh
+	elseif thigh ~= nil then     
+		target = thigh
     end
 
     if target ~= nil then 
@@ -345,8 +290,6 @@ function LaneClear()
     moveToCursor()
     end
 end
-
-OnLoad()
 
 if GetAAData()[myHero.name] ~= nil then p("\n\nAuto Carry Loaded: "..myHero.name.."\n") end
 

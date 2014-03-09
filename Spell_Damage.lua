@@ -162,7 +162,7 @@ Aatrox = {
 	Corki = {
 		PDmgT = ".1*ad", --xhit (bonus)
 		PType = 2,
-		QDmgM = "50*Qlvl+30+.5*ap",
+		QDmgM = "50*Qlvl+30+.5*ap+.5*bad",
 		WDmgM = "30*Wlvl+30+.4*ap", --xsec (2.5 sec)
 		EDmgP = "12*Elvl+8+.4*bad", --xsec (4 sec)
 		RDmgM = "math.max(70*Rlvl+50+.3*ap+(.1*Rlvl+.1)*ad,(70*Rlvl+50+.3*ap+(.1*Rlvl+.1)*ad)*1.5*stagedmg3)", --150% the big one. stage3: Max damage
@@ -249,8 +249,8 @@ Aatrox = {
 	},
 	Gragas = {
 		QDmgM = "50*Qlvl+35+.9*ap",
-		EDmgM = "40*Elvl+40+.5*ap+.66*ad",
-		RDmgM = "125*Rlvl+75+ap",
+		EDmgM = "40*Elvl+40+.5*ap+(.1*Elvl+0.2*ad)",
+		RDmgM = "125*Rlvl+75+0.9*ap",
 	},
 	Graves = {
 		QDmgP = "math.max(35*Qlvl+25+.8*bad,(35*Qlvl+25+.8*bad)*1.7*stagedmg3)", --xbullet , each bullet beyond the first will deal only 35% damage. stage3: Max damage
@@ -322,10 +322,10 @@ Aatrox = {
 		RDmgM = "150*Rlvl+100+.6*ap",
 	},
 	Kassadin = {
-		QDmgM = "35*Qlvl+45+.7*ap",
+		QDmgM = "30*Qlvl+50+.7*ap",
 		WDmgM = "15*Wlvl+15+.3*ap",
 		WType = 2,
-		EDmgM = "50*Elvl+30+.7*ap",
+		EDmgM = "40*Elvl+40+.7*ap",
 		RDmgM = "math.max((20*Rlvl+60+.8*ap)*(stagedmg1+stagedmg3),(5*Rlvl+45+.1*ap)*stagedmg2)", --stage1:Initial. stage2:additional dmg xstack (10 stack). stage3: Initial
 	},
 	Katarina = {
@@ -349,9 +349,9 @@ Aatrox = {
 	Khazix = {
 		PDmgM = "math.max(5*lvl+10,10*lvl-5,15*lvl-55)-math.max(0,5*(lvl-13))+.5*ap", -- (bonus)
 		PType = 2,
-		QDmgP = "math.max((30*Qlvl+40+1.5*bad)*stagedmg1,(30*Qlvl+40+1.5*bad+8*(tmhp-thp)/100)*(stagedmg2+stagedmg3))", --stage1:Normal. stage2-stage3:Evolved Enlarged Claws. (isolated increases the damage by 45%) 
+		QDmgP = "math.max((30*Qlvl+40+1.5*bad)*stagedmg1,(30*Qlvl+40+1.5*bad+6*(tmhp-thp)/100)*(stagedmg2+stagedmg3))", --stage1:Normal. stage2-stage3:Evolved Enlarged Claws. (isolated increases the damage by 45%) 
 		WDmgP = "40*Wlvl+35+bad",
-		EDmgP = "35*Elvl+30+.8*bad",
+		EDmgP = "35*Elvl+30+.2*bad",
 	},
 	KogMaw = {
 		PDmgT = "100+25*lvl",
@@ -501,7 +501,7 @@ Aatrox = {
 		RDmgM = "75*Rlvl+75+.7*ap",
 	},
 	Pantheon = {
-		QDmgP = "(40*Qlvl+25+1.4*bad)+(40*Qlvl+25+1.4*bad)*0.5*math.floor((tmhp-thp)/85)",
+        QDmgP = "(40*Qlvl+25+1.4*bad)+((40*Qlvl+25+1.4*bad)*(0.5*math.floor((tmhp-thp)/(tmhp*0.85))))",
 		WDmgM = "25*Wlvl+25+ap",
 		EDmgP = "math.max(20*Elvl+6+1.2*bad,(20*Elvl+6+1.2*bad)*3*stagedmg3)", --xStrike (3 strikes). stage3: Max damage
 		RDmgM = "300*Rlvl+100+ap",
@@ -641,7 +641,7 @@ Aatrox = {
 		QDmgM = "45*Qlvl+35+.8*ap",
 		EDmgM = "math.max((10*Elvl+.3*ap)*stagedmg1,(6*Elvl+.1*ap)*stagedmg2,(34*Elvl+.7*ap)*stagedmg3)", --stage1:Hit (bonus). stage2:poison xsec (4 sec). stage3:Hit+poison for 4 sec
 		--
-		RDmgM = "125*Rlvl+75+.8*ap",
+		RDmgM = "125*Rlvl+75+.5*ap",
 	},
 	Thresh = {
 		QDmgM = "40*Qlvl+40+.5*ap",
@@ -794,6 +794,13 @@ Aatrox = {
 		WDmgM = "23+6.5*lvl+.2*ap", --xstrike Extra plants striking the same target deal 50% less damage
 		EDmgM = "35*Elvl+25+.5*ap",
 		RDmgM = "85*Rlvl+95+.7*ap",
+	},
+	Velkoz = {
+		PDmgT = "10*lvl+25",
+		QDmgM = "40*Qlvl+40+.6*ap",
+		WDmgM = "math.max((20*Wlvl+10+.25*ap)*stagedmg1,(30*Wlvl+15+.375*ap*stagedmg2,(((20*Wlvl+10+.25*ap)+(30*Wlvl+15+.375*ap))*stagedmg3)", --stage1: First damage. stage2: Second damage. stage3: Max damage
+		EDmgM = "30*Elvl+40+.5*ap",
+		RDmgM = "math.max((20*Rlvl+30+.06*ap)*stagedmg1,(20*Rlvl+30+.06*ap)*10*stagedmg3)", --stage1: xhit per 0.25sec. stage3: Max damage (2.5sec)
 	},
 }
            

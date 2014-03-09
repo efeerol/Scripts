@@ -1,22 +1,12 @@
 require 'Utils'
 require 'winapi'
 require 'SKeys'
-require 'spell_damage'
 require 'vals_lib'
 require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.2'
-----------------------------
-local skillingOrder = {SR = {Q,E,W,Q,E,R,E,Q,Q,E,R,E,Q,W,W,R,W,W}, DOM = {Q,W,E,W,W,R,W,Q,W,Q,R,Q,Q,E,E,R,E,E},}
-----------------------------
-local wUsedAt,vUsedAt = 0,0
-local timer = os.clock()
-local bluePill = nil
-local metakey = SKeys.Control
-local attempts = 0
-local lastAttempt = 0
+local version = '1.3'
 ----------------------------
 local toggle_timer = os.clock()
 local cc,locus_timer,dodgetimer = 0,0,0
@@ -27,14 +17,10 @@ local SORT_CUSTOM = function(a, b) return a.maxHealth and b.maxHealth and a.maxH
 local Enemies = {}
 local EnemyIndex = 1
 local skillshotArray = {}
-local xa = 50/1920*GetScreenX()
-local xb = 1870/1920*GetScreenX()
-local ya = 50/1080*GetScreenY()
-local yb = 1030/1080*GetScreenY()
-local cc = 0
+local xa,xb,ya,yb = 50/1920*GetScreenX(),1870/1920*GetScreenX(),50/1080*GetScreenY(),1030/1080*GetScreenY()
 ---------- CONFIG ----------
-local Harass_Mode = 7 -- Harassmode on gamestart [1=Q, 2=QW, 3=QE, 4=QEW, 5=IQEW, 6=EQ, 7=EQW, 8=IEQW]
-local Combo_Mode = 4 -- Combomode on gamestart [1=QEWR, 2=EQWR, 3=IQEWR, 4=IEQWR]
+local Harass_Mode = 3 -- Harassmode on gamestart [1=Q, 2=EQ, 3=EQW, 4=IEQW]
+local Combo_Mode = 2 -- Combomode on gamestart [1=EQWR, 2=IEQWR]
 local DrawX,DrawY = 70,170 -- X/Y-oordinates of the mode text
 local Qrange = 675
 local Wrange = 350
@@ -56,7 +42,6 @@ local Rrange = 550
 	menu.checkbutton('DrawCircles', 'DrawCircles', true)
 	menu.checkbutton('MouseMove', 'MouseMove', true)
 	menu.checkbutton('StunDraw', 'Draw HardCC', true)
-	menu.checkbutton('AutoLevel', 'AutoLevel', false)
 	menu.checkbutton('AutoZonyas', 'AutoZonyas', true)
 	menu.slider('Zhonyas_Hourglass_Value', 'Zhonya Hourglass Value', 0, 100, 15, nil, true)
 	
@@ -67,17 +52,6 @@ local Rrange = 550
 	menu.slider('BlockSettings', 'Block user input', 1, 2, 1, {'FixBlock','NoBlock'})
 	menu.slider('BlockSettingsAOE', 'Block user input for AOE', 1, 2, 2, {'FixBlock','NoBlock'})
 	menu.slider('BlockTime', 'Block imput time', 0, 1000, 750)
-	
-	CfgPotions, menu = uiconfig.add_menu('4.) Potions', 250)
-	menu.checkbutton('RedElixir', 'Master Switch: Potions', true)
-	menu.checkbutton('Health_Potion_ONOFF', 'Health Potions', true)
-	menu.checkbutton('Chrystalline_Flask_ONOFF', 'Chrystalline Flask', true)
-	menu.checkbutton('Elixir_of_Fortitude_ONOFF', 'Elixir of Fortitude', true)
-	menu.checkbutton('Biscuit_ONOFF', 'Biscuit', true)
-	menu.slider('Health_Potion_Value', 'Health Potion Value', 0, 100, 75, nil, true)
-	menu.slider('Chrystalline_Flask_Value', 'Chrystalline Flask Value', 0, 100, 75, nil, true)
-	menu.slider('Elixir_of_Fortitude_Value', 'Elixir of Fortitude Value', 0, 100, 30, nil, true)
-	menu.slider('Biscuit_Value', 'Biscuit Value', 0, 100, 60, nil, true)
 	
 function Main()
 	if IsLolActive() then
@@ -99,9 +73,9 @@ function Main()
 		end
 		if KeyCFG.LaneClear then LaneClear() end
 		if MainCFG.StunDraw then StunDraw() end
-		if MainCFG.AutoLevel then AutoLevel() end
-		if CfgPotions.RedElixir then RedElixir() end
 		if MainCFG.DrawCircles then CustomCircle(Erange,1,2,myHero) end
+		if locus then DrawText('locus == true',DrawX,DrawY+50,Color.Yellow)
+		elseif locus==false then DrawText('locus == false',DrawX,DrawY+50,Color.Yellow) end
 	end
 end
 
@@ -131,23 +105,15 @@ function HarassModes()
 	DrawText('Harass Mode:',DrawX,DrawY-10,Color.White)
 	if (MainCFG.HarassMode and os.clock() - toggle_timer>.15) then
 		toggle_timer = os.clock()
-		Harass_Mode = ((Harass_Mode+1)%9)
+		Harass_Mode = ((Harass_Mode+1)%5)
 	end
 	if (Harass_Mode == 1) then
 		DrawText('Q',DrawX,DrawY,Color.White)
 	elseif (Harass_Mode == 2) then
-		DrawText('Q-W',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 3) then
-		DrawText('Q-E',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 4) then
-		DrawText('Q-E-W',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 5) then
-		DrawText('I-Q-E-W',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 6) then
 		DrawText('E-Q',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 7) then
+	elseif (Harass_Mode == 3) then
 		DrawText('E-Q-W',DrawX,DrawY,Color.White)
-	elseif (Harass_Mode == 8) then
+	elseif (Harass_Mode == 4) then
 		DrawText('I-E-Q-W',DrawX,DrawY,Color.White)
 	else
 		DrawText("OFF",DrawX,DrawY,Color.White)
@@ -155,13 +121,9 @@ function HarassModes()
 	end
 	if KeyCFG.Harass and locus==false then
 		if Harass_Mode == 1 then Seq('_Q','_A',nil,nil,nil,nil,target)
-		elseif Harass_Mode == 2 then Seq('_Q','_W','_A',nil,nil,nil,target)
-		elseif Harass_Mode == 3 then Seq('_Q','_E','_A',nil,nil,nil,target)
-		elseif Harass_Mode == 4 then Seq('_Q','_E','_W','_A',nil,nil,target)
-		elseif Harass_Mode == 5 then Seq('_I','_Q','_E','_W','_A',nil,target)
-		elseif Harass_Mode == 6 then Seq('_E','_Q','_A',nil,nil,nil,target)
-		elseif Harass_Mode == 7 then Seq('_E','_Q','_W','_A',nil,nil,target)
-		elseif Harass_Mode == 8 then Seq('_I','_E','_Q','_W','_A',nil,target)
+		elseif Harass_Mode == 2 then Seq('_E','_Q','_A',nil,nil,nil,target)
+		elseif Harass_Mode == 3 then Seq('_E','_Q','_W','_A',nil,nil,target)
+		elseif Harass_Mode == 4 then Seq('_I','_E','_Q','_W','_A',nil,target)
 		end
 		Move()
 	end
@@ -171,25 +133,19 @@ function ComboModes()
 	DrawText('Combo Mode:',DrawX,DrawY+20,Color.White)
 	if (MainCFG.ComboMode and os.clock() - toggle_timer>.15) then
 		toggle_timer = os.clock()
-		Combo_Mode = ((Combo_Mode+1)%5)
+		Combo_Mode = ((Combo_Mode+1)%3)
 	end
 	if (Combo_Mode == 1) then
-		DrawText('Q-E-W-R',DrawX,DrawY+30,Color.White)
-		elseif (Combo_Mode == 2) then
 		DrawText('E-Q-W-R',DrawX,DrawY+30,Color.White)
-	elseif (Combo_Mode == 3) then
-		DrawText('I-Q-E-W-R',DrawX,DrawY+30,Color.White)
-	elseif (Combo_Mode == 4) then
+	elseif (Combo_Mode == 2) then
 		DrawText('I-E-Q-W-R',DrawX,DrawY+30,Color.White)
 	else
 		DrawText("OFF",DrawX,DrawY+30,Color.White)
 		return
 	end
 	if KeyCFG.Combo and locus==false then
-		if Combo_Mode == 1 then Seq('_Q','_E','_W','_R','_A',nil,target)
-		elseif Combo_Mode == 2 then Seq('_E','_Q','_W','_R','_A',nil,target)
-		elseif Combo_Mode == 3 then Seq('_I','_Q','_E','_W','_R','_A',target)
-		elseif Combo_Mode == 4 then Seq('_I','_E','_Q','_W','_R','_A',target)
+		if Combo_Mode == 1 then Seq('_E','_Q','_W','_R','_A',nil,target)
+		elseif Combo_Mode == 2 then Seq('_I','_E','_Q','_W','_R','_A',target)
 		end
 		Move()
 	end
@@ -223,19 +179,28 @@ function Espell(target)
 	end
 end
 
-function Rspell(target)
-	local xQ = (35+(myHero.SpellLevelQ*25)+(myHero.ap*.45))*QRDY
-	local xW = (15+(myHero.SpellLevelW*35)+(myHero.ap*.25)+(myHero.addDamage*.6))*WRDY
-	local xE = (35+(myHero.SpellLevelE*25)+(myHero.ap*.4))*ERDY
-	local effhealtht = target.health*(1+(((target.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
-    if RRDY==1 then
-        if QRDY+WRDY+ERDY==0 and effhealtht>xQ+xW+xE then 
-			CastSpellTarget("R",target)
-			locus = true
-        end
-    end
+function Rspell()
+	run_many_reset(1,Rspell2)
 	if CountEnemyHeroInRange(Rrange) == 0 then
 		locus = false
+	end
+end
+
+function Rspell2()
+	if target~=nil then
+		local xQ = (35+(myHero.SpellLevelQ*25)+(myHero.ap*.45))*QRDY
+		local xW = (15+(myHero.SpellLevelW*35)+(myHero.ap*.25)+(myHero.addDamage*.6))*WRDY
+		local xE = (35+(myHero.SpellLevelE*25)+(myHero.ap*.4))*ERDY
+		local effhealtht = target.health*(1+(((target.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
+		if RRDY==1 then
+			if QRDY+WRDY+ERDY==0 and effhealtht>xQ+xW+xE then 
+				CastSpellTarget("R",target)
+				locus = true
+			end
+		end
+	end
+	if RRDY==1 then
+		return true
 	end
 end
 
@@ -270,9 +235,7 @@ function Ispell(target)
 end
 
 function Attack(target)
-	if locus==false and targetaa~=nil and IsBuffed(targetaa,'katarina_daggered') or IsBuffed(targetaa,'katarina_xmas_daggered.troy') then
-		AttackTarget(target)
-	end
+	if locus==false and targetaa~=nil then AttackTarget(target) end
 end
 
 function Move()
@@ -453,10 +416,6 @@ function Killsteal()
 						if Enemy ~= nil then
 							Hero = Enemy.Unit	
 							local PositionX = (13.3/16) * GetScreenX()
-							local QDMG = getDmg('Q', Hero, myHero)+(getDmg('Q',Hero,myHero))
-							local WDMG = getDmg('W', Hero, myHero)+(getDmg('W',Hero,myHero))
-							local EDMG = getDmg('E', Hero, myHero)+(getDmg('E',Hero,myHero))
-							local RDMG = getDmg('R', Hero, myHero)+(getDmg('R',Hero,myHero))
 							local Current_Burst
 							local Damage
 							local effhealthH = (Hero.health-xIGN)*(1+(((Hero.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
@@ -504,6 +463,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif a~=nil and a == '_DFG' then UseItemOnTarget(3128, target)
 		elseif a~=nil and a == '_BFT' then UseItemOnTarget(3188, target)
 		elseif a~=nil and a == '_IGN' then CastSummonerIgnite(target)
+		elseif a~=nil and a == '_A' then Attack(target)
 		end
 		if b~=nil and b == '_Q' then Qspell(target)
 		elseif b~=nil and b == '_W' then Wspell(target)
@@ -515,6 +475,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif b~=nil and b == '_DFG' then UseItemOnTarget(3128, target)
 		elseif b~=nil and b == '_BFT' then UseItemOnTarget(3188, target)
 		elseif b~=nil and b == '_IGN' then CastSummonerIgnite(target)
+		elseif b~=nil and b == '_A' then Attack(target)
 		end
 		if c~=nil and c == '_Q' then Qspell(target)
 		elseif c~=nil and c == '_W' then Wspell(target)
@@ -526,6 +487,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif c~=nil and c == '_DFG' then UseItemOnTarget(3128, target)
 		elseif c~=nil and c == '_BFT' then UseItemOnTarget(3188, target)
 		elseif c~=nil and c == '_IGN' then CastSummonerIgnite(target)
+		elseif c~=nil and c == '_A' then Attack(target)
 		end
 		if d~=nil and d == '_Q' then Qspell(target)
 		elseif d~=nil and d == '_W' then Wspell(target)
@@ -537,6 +499,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif d~=nil and d == '_DFG' then UseItemOnTarget(3128, target)
 		elseif d~=nil and d == '_BFT' then UseItemOnTarget(3188, target)
 		elseif d~=nil and d == '_IGN' then CastSummonerIgnite(target)
+		elseif d~=nil and d == '_A' then Attack(target)
 		end
 		if e~=nil and e == '_Q' then Qspell(target)
 		elseif e~=nil and e == '_W' then Wspell(target)
@@ -548,6 +511,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif e~=nil and e == '_DFG' then UseItemOnTarget(3128, target)
 		elseif e~=nil and e == '_BFT' then UseItemOnTarget(3188, target)
 		elseif e~=nil and e == '_IGN' then CastSummonerIgnite(target)
+		elseif e~=nil and e == '_A' then Attack(target)
 		end
 		if f~=nil and f == '_Q' then Qspell(target)
 		elseif f~=nil and f == '_W' then Wspell(target)
@@ -559,6 +523,7 @@ function Seq(a,b,c,d,e,f,target)
 		elseif f~=nil and f == '_DFG' then UseItemOnTarget(3128, target)
 		elseif f~=nil and f == '_BFT' then UseItemOnTarget(3188, target)
 		elseif f~=nil and f == '_IGN' then CastSummonerIgnite(target)
+		elseif f~=nil and f == '_A' then Attack(target)
 		end
 	end
 end
@@ -674,53 +639,6 @@ function dodgelinepass(pos1, pos2, radius, maxDist)
 			dodgetimer = GetTickCount()
 			MoveToXYZ(dodgex,0,dodgez)
 		end
-	end
-end
-
-function AutoLevel()
-	local spellLevelSum = myHero.SpellLevelQ + myHero.SpellLevelW + myHero.SpellLevelE + myHero.SpellLevelR
-	if attempts <= 10 or (attempts > 10 and GetTickCount() > lastAttempt+1500) then
-		if spellLevelSum < myHero.selflevel then
-			if lastSpellLevelSum ~= spellLevelSum then attempts = 0 end
-			if GetMap() == 1 or GetMap() == 3 then letter = skillingOrder["SR"][spellLevelSum+1] end
-			if GetMap() == 0 or GetMap() == 2 then letter = skillingOrder["DOM"][spellLevelSum+1] end
-			Level_Spell(letter, spellLevelSum)
-			attempts = attempts+1
-			lastAttempt = GetTickCount()
-			lastSpellLevelSum = spellLevelSum
-		else
-			attempts = 0
-		end
-	end
-end
- 
-function Level_Spell(letter)  
-     if letter == Q then send.key_press(0x69)
-     elseif letter == W then send.key_press(0x6a)
-     elseif letter == E then send.key_press(0x6b)
-     elseif letter == R then send.key_press(0x6c) end
-end
-
-function RedElixir()
-	if IsBuffed(myHero,'FountainHeal') then
-		timer=os.clock()
-		bluePill = object
-	end
-	if bluePill == nil then
-		if myHero.health < myHero.maxHealth * (CfgPotions.Health_Potion_Value / 100) and GetClock() > wUsedAt + 15000 then
-			UseItemOnTarget(2003,myHero)
-			wUsedAt = GetClock()
-		elseif myHero.health < myHero.maxHealth * (CfgPotions.Chrystalline_Flask_Value / 100) and GetClock() > vUsedAt + 10000 then 
-			UseItemOnTarget(2041,myHero)
-			vUsedAt = GetClock()
-		elseif myHero.health < myHero.maxHealth * (CfgPotions.Biscuit_Value / 100) then
-			UseItemOnTarget(2009,myHero)
-		elseif myHero.health < myHero.maxHealth * (CfgPotions.Elixir_of_Fortitude_Value / 100) then
-			UseItemOnTarget(2037,myHero)
-		end
-	end
-	if (os.clock() < timer + 5000) then
-		bluePill = nil 
 	end
 end
 
@@ -1049,6 +967,11 @@ function LoadTable()
 			end
 			if enemy.name == 'Veigar' then
 				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 225, color= 0xFFFFFF00, time = 2, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
+			end
+			if enemy.name == 'Velkoz' then
+				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
+				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 225, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
 			end
 			if enemy.name == 'Vi' then
 				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 725, type = 1, radius = 75, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })

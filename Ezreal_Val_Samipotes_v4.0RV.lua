@@ -17,7 +17,8 @@ local targetac
 local target2
 local targetw
 local RtargetAP
-local RtargetAD
+local targetRAD
+local targetRAP
 local targetHero
 local startAttackSpeed
 local projSpeed = 1
@@ -28,7 +29,7 @@ local attackDelayOffset = 275
 local isMoving = false
 local startAttackSpeed = 0.625 
 
-local version = 'IPJs Valezreal 1.3'
+local version = 'GGWP Ezreal 1.8'
 local target
 local targetaa
 local RangeAttackQ = false
@@ -36,11 +37,12 @@ local RangeAttackW = false
 local Qrange = 1100
 local Qspeed = 20
 local Wrange = 900
-local Wspeed = 15
-local Rspeed = 18
-local Rrange = 5500
+local Wspeed = 20
+local Wdelay = 2
+local Rspeed = 2
+local Rrange = 3000
 local Rdelay = 4
-local delay = 1.6
+local delay = 2
 local metakey = SKeys.Control
 local attempts = 0
 local lastAttempt = 0
@@ -68,8 +70,8 @@ function EzrealRun()
 	target = GetWeakEnemy('PHYS',1100)
 	targetaa = GetWeakEnemy('PHYS',700)
 	targetW = GetWeakEnemy('MAGIC',900)
-	RtargetAD = GetWeakEnemy('PHYS',5500)
-	RtargetAP = GetWeakEnemy('MAGIC',5500)
+	targetRAD = GetWeakEnemy('PHYS',7500)
+	targetRAP = GetWeakEnemy('MAGIC',7500)
 	--[[attRange()]]--
 	RedElixir()
 	Timer()
@@ -124,24 +126,21 @@ function EzrealRun()
 	end
 	
 	if EzrealConfig.useW and timer3 == 0  and  targetW ~= nil then
-		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
+		SpellPred(W,WRDY,myHero,targetW,Wrange,Wdelay,Wspeed,0)
 		
 		elseif EzrealConfig.Killsteal and targetW ~= nil and getDmg("W", myHero, targetW) >= targetW.health then
-		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,0)
+		SpellPred(W,WRDY,myHero,targetW,Wrange,Wdelay,Wspeed,0)
 	end
 	if EzrealConfig.useQW and timer3 == 0 then
-		SpellPred(Q,QRDY,myHero,target,Wrange,delay,Wspeed,1)
-		SpellPred(W,WRDY,myHero,targetW,Wrange,delay,Wspeed,1)	
+		SpellPred(Q,QRDY,myHero,target,Wrange,Wdelay,Wspeed,1)
+		SpellPred(W,WRDY,myHero,targetW,Wrange,Wdelay,Wspeed,1)	
 	end
 	if EzrealConfig.useE then
 		SpellXYZ(E,ERDY,myHero,myHero,100,mousePos.x,mousePos.z)
 		moveToCursor()
 	end
-	if EzrealConfig.autoR and RtargetAD~=nil and getDmg("R", myHero, RtargetAD) >= RtargetAD.health  then 
+	if EzrealConfig.autoR and targetRAD and getDmg("R", myHero, targetRAD) >= targetRAD.health then
 	    SpellPred(R,RRDY,myHero,RtargetAD,Rrange,Rdelay,Rspeed,0)
-		
-		elseif EzrealConfig.autoR and RtargetAP~=nil and getDmg("R", myHero, RtargetAP) >= RtargetAP.health  then
-		SpellPred(R,RRDY,myHero,RtargetAP,Rrange,Rdelay,Rspeed,0)
 		end
 	
 	if EzrealConfig.Autolevel then Autolevel() end
@@ -175,12 +174,6 @@ end
 	menu.checkbutton('Draw', 'Draw', true)
 	menu.checkbutton('drawskillshots', 'Draw Skillshots', true)
 	menu.checkbutton('dodgeskillshots', 'dodge Skillshots', true)
-	menu.permashow('useQ')
-	menu.permashow('useW')
-	menu.permashow('useQW')
-	menu.permashow('useE')
-	menu.permashow('AutoCarry')
-	menu.permashow('Hybrid')
 	
 PotConfig = scriptConfig("AutoPot Config", "Pot")
 PotConfig:addParam("Potion", "Script Toggle", SCRIPT_PARAM_ONKEYTOGGLE, true, 117)

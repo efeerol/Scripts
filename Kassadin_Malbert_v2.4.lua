@@ -3,7 +3,7 @@ require 'spell_damage'
 print=printtext
 printtext("\nA-Void Me\n")
 printtext("\nBy Malbert\n")
-printtext("\nVersion 2.3\n")
+printtext("\nVersion 2.4\n")
 
 local target
 local targetclose
@@ -299,8 +299,11 @@ function harass()
 				elseif GetD(target,myHero)<1200 then
 				
 					
-					local t = GetUltSpot(target)
-					CastSpellXYZ('R',t.x,0,t.z)
+					local tspot = {}
+					tspot=GetUltSpot(target)
+					if tspot~=nil and tspot.x~=nil then
+						CastSpellXYZ('R',tspot.x,0,tspot.z)
+					end
 					if QRDY==1 then
 					CastSpellTarget('Q',target)
 					end
@@ -314,8 +317,11 @@ function harass()
 					MoveToMouse()
 				elseif GetD(target,myHero)<1200 then
 				
-					local t = GetUltSpot(target)
-					CastSpellXYZ('R',t.x,0,t.z)
+					local tspot = {}
+					tspot=GetUltSpot(target)
+					if tspot~=nil and tspot.x~=nil then
+						CastSpellXYZ('R',tspot.x,0,tspot.z)
+					end
 					CastSpellTarget('Q',target)
 					MoveToMouse()
 				end
@@ -455,8 +461,11 @@ function killsteal()
 				end
 				if KassConfig.dokillsteal and KassConfig.rks then
 					if GetD(targetkslongrange,myHero)<1200 then
-						local t = GetUltSpot(targetkslongrange)
-						CastSpellXYZ('R',t.x,0,t.z)
+						local tspot = {}
+						tspot=GetUltSpot(targetkslongrange)
+						if tspot~=nil and tspot.x~=nil then
+							CastSpellXYZ('R',tspot.x,0,tspot.z)
+						end
 					end
 				end
 			end
@@ -494,8 +503,11 @@ function killsteal()
 				CustomCircle(200,50,3,targetkslongrange)
 			end
 			if KassConfig.dokillsteal and KassConfig.rks then
-				local t = GetUltSpot(targetkslongrange)
-				CastSpellXYZ('R',t.x,0,t.z)
+				local tspot = {}
+					tspot=GetUltSpot(targetkslongrange)
+					if tspot~=nil and tspot.x~=nil then
+						CastSpellXYZ('R',tspot.x,0,tspot.z)
+					end
 			end
 		end
 	end

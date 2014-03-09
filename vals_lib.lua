@@ -1,13 +1,10 @@
 require 'Utils'
+require 'winapi'
+require 'SKeys'
 local send = require 'SendInputScheduled'
-local version = '1.10'
-skillshotArray = {}
-local cc = 0
-local Q,W,E,R = 'Q','W','E','R'
-local metakey = SKeys.Control
-local attempts = 0
-local lastAttempt = 0
-
+local uiconfig = require 'uiconfig'
+local version = '1.11'
+AArange = myHero.range+(GetDistance(GetMinBBox(myHero)))
 
 --[[
 	---------------
@@ -17,11 +14,12 @@ local lastAttempt = 0
 	- Add at the top of your script: 				local Q,W,E,R = 'Q','W','E','R'
 	- GetCD() 										Add into your main function to get cooldowns; 
 	- QRDY,WRDY,ERDY,RRDY: 							Returns 0 or 1 whether the skill is on cooldown or ready
-	- GetAA()										Returns true for each successful autoattack
 	- IsLolActive()									Returns true if the LoL-window in the foreground and the chat window is closed
 	- IsBuffed(target,name)							Returns true if the target has a buff/debuff. Example: IsBuffed(myHero,'Annie_E_buf')
 	- IsBetween(a,b,c,dist)							Returns true if b is in a line between a and c. Example: IsBetween(myHero,minion,target,125)
-	
+	- Bullseye(spellslot,Range)						Cast the spell when an enemy can be hit with it (only work with delayed AOE spells). Example: Bullseye('Q',1000)
+	- CheckItemCD()									Return 1 or 0 if an item is ready (DFG = Deathfire, BFT = Blackfire, BC = Bilgewater, HG = Hextech Gunblade)
+	- runningAway(target)							Return true or fals if a target is running away from you.
 	
 	----------------------	
 	--- Draw Functions ---
@@ -29,6 +27,7 @@ local lastAttempt = 0
 	
 	- DrawSphere(radius,thickness,color,x,y,z)		Draw a sphere. Example: DrawSphere(70,25,5,target.x,target.y+300,target.z)
 	- CustomCircleXYZ(radius,thickness,color,x,y,z)	Draw a circle at a XYZ-coordinate. Example: CustomCircleXYZ(100,5,1,target.x,target.y,target.z)
+	- StunDraw()									Use this in your main function to draw circles over enemies with a hardCC ready. Example : function Main() StunDraw() end
 	
 	----------------------	
 	--- Misc Functions ---
@@ -38,7 +37,15 @@ local lastAttempt = 0
 	- MoveMouse()									Move your champ to the mouse cursor, prevents derping when mouse is in one position.
 	- MoveTarget(target)							Move your champ to the given target, prevents derping when target is in one position.
 	- distXYZ(a1,a2,b1,b2)							Distance between two XYZ coordinates, y is always 0
-	
+	- LoadTable()									Table for the Draw-/DodgeSkillshot function. Call it from the lib, so you don't need to paste and update it in every single script.
+	- GetDistanceSqr(p1, p2)
+	- GetD(p1, p2)
+	- GetDistanceBBox(p1, p2)
+	- GetDistance2D(o1, o2)							Several functions to get the distance between 2 objects
+	- ValidTarget(object, distance, enemyTeam)		Returns true if an enemy in range is vulnerable. Example: ValidTarget(target, 1000)
+	- ValidBBoxTarget(object, distance, enemyTeam) 	Same as ValidTarget, but use true ranges. Example: ValidBBoxTarget(target, 1000)
+	- AArange										Return your autoattack range
+
 	-----------------------
 	--- Spell functions ---
 	-----------------------
@@ -373,16 +380,47 @@ function Bullseye(spellslot,Range)
 			end
 		end
 	end
-	for i = 1, objManager:GetMaxHeroes() do
-		local ally = objManager:GetHero(i)
-		if (ally ~= nil and ally.team == myHero.team and ally.visible == 1 and ally.dead == 0) then
-			if (IsBuffed(ally,'CurseBandages')) and
-				GetDistance(ally)<Range then
-				CastSpellXYZ(spellslot,ally.x,ally.y,ally.z)
-			end
-		end
-	end
 end
+
+function GetAA()
+    local AArange = (myHero.range+(GetDistance(GetMinBBox(myHero))))*1.2
+    local targetaa = GetWeakEnemy('PHYS',AArange)
+    local spells1={}
+    local a1={GetCastSpell()}    
+    local g1=0
+    while (a1~=nil and a1[1] ~= nil and g1<200) do
+        local spell1={}
+        local startPos1={}
+        local endPos1={}
+        spell1.unit=a1[1]
+        spell1.name=a1[2]
+        startPos1.x=a1[3]
+        startPos1.y=a1[4]
+        startPos1.z=a1[5]
+        endPos1.x=a1[6]
+        endPos1.y=a1[7]
+        endPos1.z=a1[8]
+        spell1.target=a1[12]
+        spell1.startPos1=startPos1
+        spell1.endPos1=endPos1
+        table.insert(spells1, spell1)
+        a1={GetCastSpell()}
+        g1=g1+1
+        if (string.find(spell1.name,'Attack') or string.find(spell1.name,'attack')) and (spell1.unit.name == myHero.name) then
+            attackstart = true
+        end
+    end
+    for i=1, objManager:GetMaxNewObjects() do
+        local obj = objManager:GetNewObject(i)  
+        if obj ~= nil then
+            if targetaa~=nil and attackstart and string.find(obj.charName,'globalhit') and GetDistance(obj, targetaa) < 50 then
+                attackstart = false
+                return true
+            end
+        end
+    end
+end
+
 function CheckItemCD()
 	if GetInventorySlot(3188)==1 and myHero.SpellTime1 >= 1 then BFT = 1
 	elseif GetInventorySlot(3188)==2 and myHero.SpellTime2 >= 1 then BFT = 1
@@ -487,17 +525,6 @@ function MoveTarget(target)
 	end
 end
 
-function IsSheenRdy()
-	if ((GetInventorySlot(3025)==1 or GetInventorySlot(3057)==1 or GetInventorySlot(3078)==1 or GetInventorySlot(3100)==1) and myHero.SpellTime1 >= 1) or
-	((GetInventorySlot(3025)==2 or GetInventorySlot(3057)==2 or GetInventorySlot(3078)==2 or GetInventorySlot(3100)==2) and myHero.SpellTime2 >= 1) or
-	((GetInventorySlot(3025)==3 or GetInventorySlot(3057)==3 or GetInventorySlot(3078)==3 or GetInventorySlot(3100)==3) and myHero.SpellTime3 >= 1) or
-	((GetInventorySlot(3025)==4 or GetInventorySlot(3057)==4 or GetInventorySlot(3078)==4 or GetInventorySlot(3100)==4) and myHero.SpellTime4 >= 1) or
-	((GetInventorySlot(3025)==5 or GetInventorySlot(3057)==5 or GetInventorySlot(3078)==5 or GetInventorySlot(3100)==5) and myHero.SpellTime5 >= 1) or
-	((GetInventorySlot(3025)==6 or GetInventorySlot(3057)==6 or GetInventorySlot(3078)==6 or GetInventorySlot(3100)==6) and myHero.SpellTime6 >= 1) then
-	return true
-	end
-end
-
 function IsBuffed(target,name)
     for i = 1, objManager:GetMaxObjects(), 1 do
         obj = objManager:GetObject(i)
@@ -524,364 +551,6 @@ function IsBetween(a,b,c,dist)
 		distanc = (math.abs(mz - m*mx - c))/(math.sqrt(m*m+1))
 		if distanc<dist and math.sqrt((tx-ex)*(tx-ex)+(tz-ez)*(tz-ez))>math.sqrt((tx-mx)*(tx-mx)+(tz-mz)*(tz-mz)) then
 			return true
-		end
-	end
-end
-
-function MakeStateMatch(changes)
-    for scode,flag in pairs(changes) do    
-        local vk = winapi.map_virtual_key(scode, 3)
-        local is_down = winapi.get_async_key_state(vk)
-        if flag then
-            if is_down then
-                send.wait(60)
-                send.key_down(scode)
-                send.wait(60)
-            else
-            end            
-        else
-            if is_down then
-            else
-                send.wait(60)
-                send.key_up(scode)
-                send.wait(60)
-            end
-        end
-    end
-end
-
-function Skillshots()
-	send.tick()
-	cc=cc+1
-	if cc==30 then LoadTable() end
-	for i=1, #skillshotArray, 1 do
-		if os.clock() > (skillshotArray[i].lastshot + skillshotArray[i].time) then skillshotArray[i].shot = 0 end
-	end
-	for i=1, #skillshotArray, 1 do
-		if skillshotArray[i].shot == 1 then
-			local radius = skillshotArray[i].radius
-			local color = skillshotArray[i].color
-			if skillshotArray[i].isline == false then
-				for number, point in pairs(skillshotArray[i].skillshotpoint) do
-					DrawCircle(point.x, point.y, point.z, radius, color)
-				end
-			else
-				startVector = Vector(skillshotArray[i].p1x,skillshotArray[i].p1y,skillshotArray[i].p1z)
-				endVector = Vector(skillshotArray[i].p2x,skillshotArray[i].p2y,skillshotArray[i].p2z)
-				directionVector = (endVector-startVector):normalized()
-				local angle=0
-				if (math.abs(directionVector.x)<.00001) then
-					if directionVector.z > 0 then angle=90
-					elseif directionVector.z < 0 then angle=270
-					else angle=0
-					end
-				else
-					local theta = math.deg(math.atan(directionVector.z / directionVector.x))
-					if directionVector.x < 0 then theta = theta + 180 end
-					if theta < 0 then theta = theta + 360 end
-					angle=theta
-				end
-				angle=((90-angle)*2*math.pi)/360
-				DrawLine(startVector.x, startVector.y, startVector.z, GetDistance(startVector, endVector)+170, 1,angle,radius)
-			end
-		end
-	end
-end
-
-function calculateLinepass(pos1, pos2, spacing, maxDist)
-	local calc = (math.floor(math.sqrt((pos2.x-pos1.x)^2 + (pos2.z-pos1.z)^2)))
-	local line = {}
-	local point1 = {}
-	point1.x = pos1.x
-	point1.y = pos1.y
-	point1.z = pos1.z
-	local point2 = {}
-	point1.x = pos1.x + (maxDist)/calc*(pos2.x-pos1.x)
-	point1.y = pos2.y
-	point1.z = pos1.z + (maxDist)/calc*(pos2.z-pos1.z)
-	table.insert(line, point2)
-	table.insert(line, point1)
-	return line
-end
-
-function calculateLineaoe(pos1, pos2, maxDist)
-	local line = {}
-	local point = {}
-	point.x = pos2.x
-	point.y = pos2.y
-	point.z = pos2.z
-	table.insert(line, point)
-	return line
-end
-
-function calculateLineaoe2(pos1, pos2, maxDist)
-	local calc = (math.floor(math.sqrt((pos2.x-pos1.x)^2 + (pos2.z-pos1.z)^2)))
-	local line = {}
-	local point = {}
-		if calc < maxDist then
-		point.x = pos2.x
-		point.y = pos2.y
-		point.z = pos2.z
-		table.insert(line, point)
-	else
-		point.x = pos1.x + maxDist/calc*(pos2.x-pos1.x)
-		point.z = pos1.z + maxDist/calc*(pos2.z-pos1.z)
-		point.y = pos2.y
-		table.insert(line, point)
-	end
-	return line
-end
-
-function calculateLinepoint(pos1, pos2, spacing, maxDist)
-	local line = {}
-	local point1 = {}
-	point1.x = pos1.x
-	point1.y = pos1.y
-	point1.z = pos1.z
-	local point2 = {}
-	point1.x = pos2.x
-	point1.y = pos2.y
-	point1.z = pos2.z
-	table.insert(line, point2)
-	table.insert(line, point1)
-	return line
-end
-
-function LoadTable()
-	for i = 1, objManager:GetMaxHeroes() do
-		local enemy = objManager:GetHero(i)
-		if (enemy ~= nil and enemy.team ~= myHero.team) then
-			if enemy.name == 'Ahri' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 880, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 975, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Amumu' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Anivia' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 90, color= 0x0000FFFF, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Ashe' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 50000, type = 4, radius = 120, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Blitzcrank' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 925, type = 1, radius = 120, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-			end
-			if enemy.name == 'Brand' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 50, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0})
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Cassiopeia' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 125, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Caitlyn' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 50, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Corki' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1225, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Chogath' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 275, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Diana' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 205, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Draven' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 125, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 1, radius = 100, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'DrMundo' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Elise' and enemy.range>300 then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Ezreal' then
-				if enemy.ap>enemy.addDamage then
-					table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				elseif enemy.ap<enemy.addDamage then
-					table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				end
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 4, radius = 150, color= 0x0000FFFF, time = 4, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Fizz' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1275, type = 2, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Galio' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 905, type = 3, radius = 200, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 120, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Gragas' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 320, color= 0xFFFFFF00, time = 2.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 3, radius = 400, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Graves' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 110, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Hecarim' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 125, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Heimerdinger' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 225, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Janna' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1700, type = 1, radius = 100, color= 0x0000FFFF, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Jayce' and enemy.range>300 then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1, radius = 125, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Jinx' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1.5, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5000, type = 3, radius = 225, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Karma' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Karthus' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 875, type = 3, radius = 75, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Kennen' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1050, type = 1, radius = 75, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Khazix' then	
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 75, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })	
-			end
-			if enemy.name == 'KogMaw' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1115, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 2200, type = 3, radius = 200, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Leblanc' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'LeeSin' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 975, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Leona' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Lissandra' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 725, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Lucian' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 100, color= 0x0000FFFF, time = 0.75, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 150, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Lulu' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 925, type = 1, radius = 50, color= 0x0000FFFF, time = 1, isline = true, px =0, py =0 , pz =0, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Lux' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1175, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 300, color= 0xFFFFFF00, time = 2.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 3000, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Malzahar' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 100 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 250 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Maokai' then
-				table.insert(skillshotArray,{name= 'MaokaiTrunkLineMissile', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 3, radius = 350 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Morgana' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1300, type = 1, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Nami' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 875, type = 3, radius = 210, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 2750, type = 1, radius = 335, color= 0xFFFFFF00, time = 3, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Nautilus' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Nidalee' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1500, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Olaf' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 2, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Orianna' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 825, type = 3, radius = 150, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Rumble' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 100, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1700, type = 1, radius = 100, color= 0xFFFFFF00, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Sejuani' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1150, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = f, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Shen' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 2, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Shyvana' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 925, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 80, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Sivir' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Skarner' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 600, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Sona' then
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 150, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Swain' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 265 , color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Syndra' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 800, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 650, type = 1, radius = 100, color= 0xFFFFFF00, time = 0.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 210, color= 0x0000FFFF, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Thresh' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 160, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'TwistedFate' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 100, color= 0x0000FFFF, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Urgot' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 1, radius = 80, color= 0x0000FFFF, time = 0.8, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 3, radius = 300, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Varus' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1475, type = 1, radius = 50, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1075, type = 1, radius = 80, color= 0x0000FFFF, time = 1.5, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Veigar' then
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 225, color= 0xFFFFFF00, time = 2, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-			end
-			if enemy.name == 'Vi' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 725, type = 1, radius = 75, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Viktor' then
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 700, type = 1, radius = 80, color= 0xFFFFFF00, time = 2})
-			end
-			if enemy.name == 'Xerath' then
-				table.insert(skillshotArray,{name= 'xeratharcanopulse2', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 1, radius = 150, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1450, type = 3, radius = 225, color= 0xFFFFFF00, time = 0.8, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 950, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= 'xerathrmissilewrapper', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 2000+(enemy.SpellLevelR+1200), type = 3, radius = 75, color= 0xFFFFFF00, time = 0.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Yasuo' then
-				table.insert(skillshotArray,{name= 'yasuoq3w', shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 125, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Zac' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 550, type = 1, radius = 100, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1550, type = 5, radius = 200, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Zed' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 1, radius = 55, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Ziggs' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 850, type = 3, radius = 160, color= 0xFFFFFF00, time = 1, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= enemy.SpellNameW, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1000, type = 3, radius = 225 , color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0  })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 900, type = 3, radius = 250, color= 0xFFFFFF00, time = 1, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameR, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 5300, type = 3, radius = 550, color= 0xFFFFFF00, time = 3, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
-			if enemy.name == 'Zyra' then
-				table.insert(skillshotArray,{name= enemy.SpellNameQ, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 825, type = 3, radius = 275, color= 0xFFFFFF00, time = 1.5, isline = false, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-				table.insert(skillshotArray,{name= enemy.SpellNameE, shot=0, lastshot = 0, skillshotpoint = {}, maxdistance = 1100, type = 1, radius = 90, color= 0x0000FFFF, time = 2, isline = true, p1x =0, p1y =0 , p1z =0 , p2x =0, p2y =0 , p2z =0 })
-			end
 		end
 	end
 end
