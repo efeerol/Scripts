@@ -24,6 +24,8 @@ local target
 	   Config, menu = uiconfig.add_menu('Amumu WomboCombo 1.0', 200)  
         menu.keydown('teamFight', 'TeamFight', Keys.X, false)
 		menu.keydown('useUlt', 'Ult', Keys.A)
+		menu.checkbutton('items', 'items in teamfight', true)
+		menu.checkbutton('autoHarrass', 'Harrass', true)
 		menu.checkbutton('UseR', 'UseR in teamfight', true)
         menu.keytoggle('autoIgnite', 'Auto Ignite', Keys.F5, true)
 function main()
@@ -31,6 +33,7 @@ GetCD()
 if Config.autoIgnite then ignite() end
 if Config.teamFight then teamFight() end
 if Config.useUlt then CastR() end
+if Config.autoHarrass then autoHarrass() end
 targetignite = GetWeakEnemy('TRUE',600)
 target = GetWeakEnemy('MAGIC',1100)
 end
@@ -43,7 +46,9 @@ function teamFight()
 		if target ~= nil and GetDistance(myHero, target) <= 350 then
 		 CastSpellTarget('E',target) end
 		end
-		
+		if Config.items and target ~= nil then
+		UseAllItems(target)
+		end
 		if target ~= nil and crying == false then 
 		SpellTarget(W,WRDY,myHero,target,300)
 		end
@@ -64,6 +69,11 @@ if (enemy ~= nil and RRDY == 1 and enemy.team ~= myHero.team and enemy.visible =
 CastHotkey("R AUTO 100,0 SPELLR:WEAKENEMY SKILLSHOTSELF")
 end
 end
+
+function autoHarrass()
+		if target ~= nil and GetDistance(myHero, target) <= 350 then
+		 CastSpellTarget('E',target) end
+		end
 
 function ignite()
         local damage = (myHero.selflevel*20)+50
