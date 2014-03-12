@@ -6,7 +6,7 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.4'
+local version = '1.5'
 ----------------------------
 local toggle_timer = os.clock()
 local cc,locus_timer,dodgetimer = 0,0,0
@@ -74,8 +74,6 @@ function Main()
 		if KeyCFG.LaneClear then LaneClear() end
 		if MainCFG.StunDraw then StunDraw() end
 		if MainCFG.DrawCircles then CustomCircle(Erange,1,2,myHero) end
-		if locus then DrawText('locus == true',DrawX,DrawY+50,Color.Yellow)
-		elseif locus==false then DrawText('locus == false',DrawX,DrawY+50,Color.Yellow) end
 	end
 end
 
@@ -162,21 +160,15 @@ function LaneClear()
 end
 
 function Qspell(target)
-	if locus==false then SpellTarget(Q,QRDY,myHero,target,Qrange) end
+	SpellTarget(Q,QRDY,myHero,target,Qrange)
 end
 
 function Wspell(target)
-	if locus==false then SpellXYZ(W,WRDY,myHero,target,Wrange,myHero.x,myHero.z) end
+	SpellXYZ(W,WRDY,myHero,target,Wrange,myHero.x,myHero.z)
 end
 
 function Espell(target)
-	if locus==false then 
-		if not KeyCFG.Combo and not KeyCFG.Harass or QRDY==0 or ((KeyCFG.Combo and (Combo_Mode==2 or Combo_Mode==4)) or (KeyCFG.Harass and (Harass_Mode==6 or Harass_Mode==7 or Harass_Mode==8))) then
-			SpellTarget(E,ERDY,myHero,target,Erange) 
-		else
-			SpellTarget(E,ERDY,myHero,target,Qrange)
-		end
-	end
+	SpellTarget(E,ERDY,myHero,target,Qrange)
 end
 
 function Rspell()
@@ -192,16 +184,12 @@ function Rspell2()
 		local xW = (15+(myHero.SpellLevelW*35)+(myHero.ap*.25)+(myHero.addDamage*.6))*WRDY
 		local xE = (35+(myHero.SpellLevelE*25)+(myHero.ap*.4))*ERDY
 		local effhealtht = target.health*(1+(((target.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
-		if RRDY==1 then
-			if QRDY+WRDY+ERDY==0 and effhealtht>xQ+xW+xE then 
-				CastSpellTarget("R",target)
-				locus = true
-			end
+		if RRDY==1 and QRDY+WRDY+ERDY==0 and effhealtht>xQ+xW+xE then 
+			CastSpellTarget("R",target)
+			locus = true
 		end
 	end
-	if RRDY==1 then
-		return true
-	end
+	if RRDY==1 then return true end
 end
 
 function CountEnemyHeroInRange(range, object)
@@ -218,18 +206,11 @@ function CountEnemyHeroInRange(range, object)
 end
 
 function Ispell(target)
-	local xQ = (35+(myHero.SpellLevelQ*25)+(myHero.ap*.45))*QRDY
-	local xW = (15+(myHero.SpellLevelW*35)+(myHero.ap*.25)+(myHero.addDamage*.6))*WRDY
-	local xE = (35+(myHero.SpellLevelE*25)+(myHero.ap*.4))*ERDY
-	local xR = (225+(myHero.SpellLevelR*175)+(myHero.ap*2.5)+(myHero.addDamage*3.75))*RRDY
-	local effhealtht = target.health*(1+(((target.magicArmor*myHero.magicPenPercent)-myHero.magicPen)/100))
 	if locus==false and QRDY*WRDY*ERDY==1 and GetDistance(target)<700 then
-		if ((Combo_Mode==3 or Combo_Mode==4) and effhealtht>xQ+xW+xE+xR) or ((Harass_Mode==5 or Harass_Mode==8) and effhealtht>xQ+xW+xE) or (not KeyCFG.Combo and not KeyCFG.Harass) then
-			if BC == 1 and target~=nil then UseItemOnTarget(3144, target)
-			elseif HG == 1 and target~=nil then UseItemOnTarget(3146, target)
-			elseif BFT == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3188, target)
-			elseif DFG == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3128, target)
-			end
+		if BC == 1 and target~=nil then UseItemOnTarget(3144, target)
+		elseif HG == 1 and target~=nil then UseItemOnTarget(3146, target)
+		elseif BFT == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3188, target)
+		elseif DFG == 1 and target~=nil and GetDistance(target)<Erange then UseItemOnTarget(3128, target)
 		end
 	end
 end
@@ -250,7 +231,7 @@ function Killsteal()
 				Enemies[enemy.name] = { Unit = enemy, Number = EnemyIndex }
 				EnemyIndex = EnemyIndex + 1
 			end
-			if (enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) and locus==false then
+			if (enemy.visible==1 and enemy.invulnerable==0 and enemy.dead==0) then
 				local xQ = (35+(myHero.SpellLevelQ*25)+(myHero.ap*.45))*QRDY
 				local xW = (15+(myHero.SpellLevelW*35)+(myHero.ap*.25)+(myHero.addDamage*.6))*WRDY
 				local xE = (35+(myHero.SpellLevelE*25)+(myHero.ap*.4))*ERDY
