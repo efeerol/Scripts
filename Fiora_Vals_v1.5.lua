@@ -6,13 +6,17 @@ require 'vals_lib'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.4'
+local version = '1.5'
 local Qattack = false
 local attacked = 0
+local Minions = {}
+local SORT_CUSTOM = function(a, b) return a.maxHealth and b.maxHealth and a.maxHealth < b.maxHealth end
 
 function Main()
 	target = GetWeakEnemy('PHYS',600,"NEARMOUSE")
 	targetaa = GetWeakEnemy('PHYS',AArange+50)
+	target2 = GetWeakEnemy('PHYS',400)
+	Minions = GetEnemyMinions(SORT_CUSTOM)
 	GetCD()
 	if FioraConfig.Combo then Combo() end
 	if FioraConfig.Killsteal then Killsteal() end
@@ -30,12 +34,14 @@ function QQ()
 end
 
 function OnProcessSpell(unit,spell)
-	if unit~=nil and spell~=nil and unit.team~=myHero.team and (string.find(spell.name,"Attack")~=nil or string.find(spell.name,"attack")~=nil) and spell.target~=nil and spell.target.name == myHero.name and FioraConfig.AutoW and WRDY==1 then CastSpellTarget("W", myHero) end
+	if unit~=nil and spell~=nil and unit.team~=myHero.team and not string.find(spell.name,"minion") and not string.find(spell.name,"Minion") and (string.find(spell.name,"Attack")~=nil or string.find(spell.name,"attack")~=nil) and spell.target~=nil and spell.target.name == myHero.name and FioraConfig.AutoW and WRDY==1 then  CastSpellTarget("W", myHero) end
 	if unit~=nil and spell~=nil and unit.charName==myHero.charName and spell.name == "FioraQ" and attacked == 0 then attacked = GetTickCount() end
 end
 
 function OnCreateObj(obj)
-	if obj ~= nil and obj.charName == 'FioraQLunge_tar.troy' and GetDistance(obj)<100 and FioraConfig.Combo then Qattack = true end
+	if obj ~= nil and obj.charName == 'FioraQLunge_tar.troy' and GetDistance(obj)<100 and FioraConfig.Combo then 
+		Qattack = true 
+	end
 end
 
 function Combo()
@@ -52,10 +58,8 @@ function Combo()
 		end
 		AttackTarget(target)
 	end
-	if targetaa~=nil then
-		if ERDY==1 then CastSpellTarget("E", targetaa) end
-	end
-	if targetaa==nil then MoveMouse() end
+	if targetaa~=nil and ERDY==1 then CastSpellTarget("E", targetaa)
+	else MoveMouse() end
 end
 
 function Killsteal()
@@ -72,7 +76,6 @@ end
 
 function OnDraw()
 	if myHero.dead == 0 then CustomCircle(600,3,3,myHero)
-	CustomCircle(AArange,3,3,myHero)
 		if target ~= nil then CustomCircle(100,4,2,target) end
 	end
 	for i = 1, objManager:GetMaxHeroes() do

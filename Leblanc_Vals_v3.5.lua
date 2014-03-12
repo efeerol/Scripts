@@ -5,7 +5,7 @@ require 'vals_lib'
 require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
-local version = '3.4'
+local version = '3.5'
 local ls = 0
 local Jcoord = {}
 local KSN = {}
@@ -29,12 +29,15 @@ local HNS = {}
 	menu.checkbutton('DrawCircles', 'DrawCircles', true)
 	menu.slider('TargetSelector', 'TargetSelector', 1, 3, 2, {'Loose','Soft','Hard'})
 	menu.slider('Emultiplier', 'E proc multiplier', 1, 2, 1)
+	menu.checkbutton('AutoZonyas', 'AutoZonyas', true)
+	menu.slider('Zhonyas_Hourglass_Value', 'Zhonya Hourglass Value', 0, 100, 15, nil, true)
 
 function Main()
 	if IsLolActive() then
 		CheckItemCD()
 		SetVariables()
 		Distance()
+		Items()
 		SpellSequence()
 		Jump()
 		ReturnPad()
@@ -360,6 +363,13 @@ function Jump()
 				end
 			end
 		end
+	end
+end
+
+function Items()
+	if LBSettings.AutoZonyas and myHero.health < myHero.maxHealth*(LBSettings.Zhonyas_Hourglass_Value/100) then 
+		UseItemOnTarget(3157,myHero)
+		UseItemOnTarget(3090,myHero)
 	end
 end
 

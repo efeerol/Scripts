@@ -6,7 +6,7 @@ require 'runrunrun'
 local send = require 'SendInputScheduled'
 local uiconfig = require 'uiconfig'
 local Q,W,E,R = 'Q','W','E','R'
-local version = '1.3'
+local version = '1.4'
 ----------------------------
 local toggle_timer = os.clock()
 local cc,locus_timer,dodgetimer = 0,0,0
@@ -210,7 +210,7 @@ function CountEnemyHeroInRange(range, object)
     local enemyInRange = 0
     for i = 1, objManager:GetMaxHeroes() do
         local hero = objManager:GetHero(i)
-        if (hero~=nil and hero.team~=myHero.team and hero.visible==1 and hero.dead==0) and GetDistance(object, hero) <= range then
+        if (hero~=nil and hero.team~=myHero.team and hero.dead==0) and GetDistance(object, hero) <= range then
             enemyInRange = enemyInRange + 1
         end
     end
@@ -275,135 +275,139 @@ function Killsteal()
 				local effdamageH = damageH*(100/(100+((enemy.magicArmor*myHero.magicPenPercent)-myHero.magicPen)))
 				local effdamageC = damageC*(100/(100+((enemy.magicArmor*myHero.magicPenPercent)-myHero.magicPen)))
 				
-				KSK[1]   = {range=Wrange, A='_W', B=nil, C=nil, D=nil, E=nil, F=nil, dam=xW} --W
-				KSK[2]   = {range=Wrange, A='_E', B=nil, C=nil, D=nil, E=nil, F=nil, dam=xE} --E
-				KSK[3]   = {range=Qrange, A='_Q', B=nil, C=nil, D=nil, E=nil, F=nil, dam=xQ} --Q
-				KSK[4]   = {range=Erange, A='_E', B='_W', C=nil, D=nil, E=nil, F=nil, dam=xE+xW} --EW
-				KSK[5]   = {range=Wrange, A='_W', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=xW+xQ} --WQ
-				KSK[6]   = {range=Erange, A='_E', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=xE+xQ} --EQ
-				KSK[7]   = {range=Erange, A='_E', B='_W', C='_Q', D=nil, E=nil, F=nil, dam=xE+xW+xQ} --EWQ
-				KSK[8]   = {range=Wrange, A='_BC', B='_W', C=nil, D=nil, E=nil, F=nil, dam=xW+xBC} --WBC
-				KSK[9]   = {range=Erange, A='_BC', B='_E', C=nil, D=nil, E=nil, F=nil, dam=xE+xBC} --EBC
-				KSK[10]  = {range=450, A='_BC', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=xQ+xBC} --QBC
-				KSK[11]  = {range=Erange, A='_E', B='_W', C='_BC', D=nil, E=nil, F=nil, dam=xE+xW+xBC} --EWBC
-				KSK[12]  = {range=Wrange, A='_W', B='_BC', C='_Q', D=nil, E=nil, F=nil, dam=xW+xQ+xBC} --WQBC
-				KSK[13]  = {range=Erange, A='_E', B='_BC', C='_Q', D=nil, E=nil, F=nil, dam=xE+xQ+xBC} --EQBC
-				KSK[14]  = {range=Erange, A='_E', B='_W', C='_BC', D='_Q', E=nil, F=nil, dam=xE+xW+xQ+xBC} --EWQBC
-				KSK[15]  = {range=Wrange, A='_W', B='_HG', C=nil, D=nil, E=nil, F=nil, dam=xW+xHG} --WHG
-				KSK[16]  = {range=Erange, A='_E', B='_HG', C=nil, D=nil, E=nil, F=nil, dam=xE+xHG} --EHG
-				KSK[17]  = {range=Qrange, A='_HG', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=xQ+xHG} --QHG
-				KSK[18]  = {range=Erange, A='_E', B='_W', C='_HG', D=nil, E=nil, F=nil, dam=xE+xW+xHG} --EWHG
-				KSK[19]  = {range=Wrange, A='_W', B='_HG', C='_Q', D=nil, E=nil, F=nil, dam=xW+xQ+xHG} --WQHG
-				KSK[20]  = {range=Erange, A='_E', B='_HG', C='_Q', D=nil, E=nil, F=nil, dam=xE+xQ+xHG} --EQHG
-				KSK[21]  = {range=Erange, A='_E', B='_W', C='_HG', D='_Q', E=nil, F=nil, dam=xE+xW+xQ+xHG} --EWQHG
-				KSK[22]  = {range=Wrange, A='_DFG', B='_E', C='_W', D=nil, E=nil, F=nil, dam=((xW*1.2)+xDFG)*DFG} --WDFG
-				KSK[23]  = {range=Erange, A='_DFG', B='_E', C=nil, D=nil, E=nil, F=nil, dam=((xE*1.2)+xDFG)*DFG} --EDFG
-				KSK[24]  = {range=Qrange, A='_DFG', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=((xQ*1.2)+xDFG)*DFG} --QDFG
-				KSK[25]  = {range=Erange, A='_DFG', B='_E', C='_W', D=nil, E=nil, F=nil, dam=((xE+xW*1.2)+xDFG)*DFG} --EWDFG
-				KSK[26]  = {range=Wrange, A='_DFG', B='_W', C='_Q', D=nil, E=nil, F=nil, dam=((xW+xQ*1.2)+xDFG)*DFG} --WQDFG
-				KSK[27]  = {range=Erange, A='_DFG', B='_E', C='_Q', D=nil, E=nil, F=nil, dam=((xE+xQ*1.2)+xDFG)*DFG} --EQDFG
-				KSK[28]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E=nil, F=nil, dam=((xE+xW+xQ*1.2)+xDFG)*DFG} --EWQDFG
-				KSK[29]  = {range=Wrange, A='_BFT', B='_W', C=nil, D=nil, E=nil, F=nil, dam=((xW*1.2)+xBFT)*BFT} --WBFT
-				KSK[30]  = {range=Erange, A='_BFT', B='_E', C=nil, D=nil, E=nil, F=nil, dam=((xE*1.2)+xBFT)*BFT} --EBFT
-				KSK[31]  = {range=Qrange, A='_BFT', B='_Q', C=nil, D=nil, E=nil, F=nil, dam=((xQ*1.2)+xBFT)*BFT } --QBFT
-				KSK[32]  = {range=Erange, A='_BFT', B='_E', C='_W', D=nil, E=nil, F=nil, dam=((xE+xW*1.2)+xBFT)} --EWBFT
-				KSK[33]  = {range=Wrange, A='_BFT', B='_W', C='_Q', D=nil, E=nil, F=nil, dam=((xW+xQ*1.2)+xBFT)*BFT} --WQBFT
-				KSK[34]  = {range=Erange, A='_BFT', B='_E', C='_Q', D=nil, E=nil, F=nil, dam=((xE+xQ*1.2)+xBFT)*BFT} --EQBFT
-				KSK[35]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_Q', E=nil, F=nil, dam=((xE+xW+xQ*1.2)+xBFT)*BFT} --EWQBFT
-				KSK[36]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D=nil, E=nil, F=nil, dam=((xW+xBC*1.2)+xDFG)*DFG} --WBCDFG
-				KSK[37]  = {range=Erange, A='_DFG', B='_E', C='_BC', D=nil, E=nil, F=nil, dam=((xE+xBC*1.2)+xDFG)*DFG} --EBCDFG
-				KSK[38]  = {range=450, A='_DFG', B='_BC', C='_Q', D=nil, E=nil, F=nil, dam=((xQ+xBC*1.2)+xDFG)*DFG} --QBCDFG
-				KSK[39]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_BC', E=nil, F=nil, dam=((xE+xW+xBC*1.2)+xDFG)*DFG} --EWBCDFG
-				KSK[40]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_Q', E=nil, F=nil, dam=((xW+xQ+xBC*1.2)+xDFG)*DFG} --WQBCDFG
-				KSK[41]  = {range=Erange, A='_DFG', B='_E', C='_BC', D='_Q', E=nil, F=nil, dam=((xE+xQ+xBC*1.2)+xDFG)*DFG} --EQBCDFG
-				KSK[42]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E='_BC', F=nil, dam=((xE+xW+xQ+xBC*1.2)+xDFG)*DFG} --EWQBCDFG
-				KSK[43]  = {range=Wrange, A='_BFT', B='_W', C='_BC', D=nil, E=nil, F=nil, dam=((xW+xBC*1.2)+xBFT)*BFT} --WBCBFT
-				KSK[44]  = {range=Erange, A='_BFT', B='_E', C='_BC', D=nil, E=nil, F=nil, dam=((xE+xBC*1.2)+xBFT)*BFT} --EBCBFT
-				KSK[45]  = {range=450, A='_BFT', B='_BC', C='_Q', D=nil, E=nil, F=nil, dam=((xQ+xBC*1.2)+xBFT)*BFT} --QBCBFT
-				KSK[46]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E=nil, F=nil, dam=((xE+xW+xBC*1.2)+xBFT)*BFT} --EWBCBFT
-				KSK[47]  = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_Q', E=nil, F=nil, dam=((xW+xQ+xBC*1.2)+xBFT)*BFT} --WQBCBFT
-				KSK[48]  = {range=Erange, A='_BFT', B='_E', C='_BC', D='_Q', E=nil, F=nil, dam=((xE+xQ+xBC*1.2)+xBFT)*BFT} --EQBCBFT
-				KSK[49]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E='_Q', F=nil, dam=((xE+xW+xQ+xBC*1.2)+xBFT)*BFT} --EWQBCBFT
-				KSK[50]  = {range=Wrange, A='_DFG', B='_W', C='_HG', D=nil, E=nil, F=nil, dam=((xW+xHG*1.2)+xDFG)*DFG} --WHGDFG
-				KSK[51]  = {range=Erange, A='_DFG', B='_E', C='_HG', D=nil, E=nil, F=nil, dam=((xE+xHG*1.2)+xDFG)*DFG} --EHGDFG
-				KSK[52]  = {range=450, A='_DFG', B='_HG', C='_Q', D=nil, E=nil, F=nil, dam=((xQ+xHG*1.2)+xDFG)*DFG} --QHGDFG
-				KSK[53]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E=nil, F=nil, dam=((xE+xW+xHG*1.2)+xDFG)*DFG} --EWHGDFG
-				KSK[54]  = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_Q', E=nil, F=nil, dam=((xW+xQ+xHG*1.2)+xDFG)*DFG} --WQHGDFG
-				KSK[55]  = {range=Erange, A='_DFG', B='_E', C='_HG', D='_Q', E=nil, F=nil, dam=((xE+xQ+xHG*1.2)+xDFG)*DFG} --EQHGDFG
-				KSK[56]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E='_Q', F=nil, dam=((xE+xW+xQ+xHG*1.2)+xDFG)*DFG} --EWQHGDFG
-				KSK[57]  = {range=Wrange, A='_BFT', B='_W', C='_HG', D=nil, E=nil, F=nil, dam=((xW+xHG*1.2)+xBFT)*BFT} --WHGBFT
-				KSK[58]  = {range=Erange, A='_BFT', B='_E', C='_HG', D=nil, E=nil, F=nil, dam=((xE+xHG*1.2)+xBFT)*BFT} --EHGBFT
-				KSK[59]  = {range=450, A='_BFT', B='_HG', C='_Q', D=nil, E=nil, F=nil, dam=((xQ+xHG*1.2)+xBFT)*BFT} --QHGBFT
-				KSK[60]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_HG', E=nil, F=nil, dam=((xE+xW+xHG*1.2)+xBFT)*BFT} --EWHGBFT
-				KSK[61]  = {range=Wrange, A='_BFT', B='_W', C='_HG', D='_Q', E=nil, F=nil, dam=((xW+xQ+xHG*1.2)+xBFT)*BFT} --WQHGBFT
-				KSK[62]  = {range=Erange, A='_BFT', B='_E', C='_HG', D='_Q', E=nil, F=nil, dam=((xE+xQ+xHG*1.2)+xBFT)*BFT} --EQHGBFT
-				KSK[63]  = {range=Erange, A='_BFT', B='_E', C='_HG', D='_W', E='_Q', F=nil, dam=((xE+xW+xQ+xHG*1.2)+xBFT)*BFT} --EWQHGBFT
-				KSK[64]  = {range=Wrange, A='_W', B='_IGN', C=nil, D=nil, E=nil, F=nil, dam=IGN*xW} --IGNW
-				KSK[65]  = {range=Erange, A='_E', B='_IGN', C=nil, D=nil, E=nil, F=nil, dam=IGN*xE} --IGNE
-				KSK[66]  = {range=Qrange, A='_Q', B='_IGN', C=nil, D=nil, E=nil, F=nil, dam=IGN*xQ} --IGNQ
-				KSK[67]  = {range=Erange, A='_E', B='_IGN', C='_W', D=nil, E=nil, F=nil, dam=IGN*(xE+xW)} --IGNEW
-				KSK[68]  = {range=Wrange, A='_W', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xW+xQ)} --IGNWQ
-				KSK[69]  = {range=Erange, A='_E', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xE+xQ)} --IGNEQ
-				KSK[70]  = {range=Erange, A='_E', B='_W', C='_Q', D='_IGN', E=nil, F=nil, dam=IGN*(xE+xW+xQ)} --IGNEWQ
-				KSK[71]  = {range=Wrange, A='_W', B='_BC', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xW+xBC)} --IGNWBC
-				KSK[72]  = {range=Erange, A='_E', B='_BC', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xE+xBC)} --IGNEBC
-				KSK[73]  = {range=450, A='_BC', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xQ+xBC)} --IGNQBC
-				KSK[74]  = {range=Erange, A='_E', B='_W', C='_BC', D='_IGN', E=nil, F=nil, dam=IGN*(xE+xW+xBC)} --IGNEWBC
-				KSK[75]  = {range=Wrange, A='_W', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, dam=IGN*(xW+xQ+xBC)} --IGNWQBC
-				KSK[76]  = {range=Erange, A='_E', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, dam=IGN*(xE+xQ+xBC)} --IGNEQBC
-				KSK[77]  = {range=Erange, A='_E', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, dam=IGN*(xE+xW+xQ+xBC)} --IGNEWQBC
-				KSK[78]  = {range=Wrange, A='_W', B='_HG', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xW+xHG)} --IGNWHG
-				KSK[79]  = {range=Erange, A='_E', B='_HG', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xE+xHG)} --IGNEHG
-				KSK[80]  = {range=Qrange, A='_HG', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=IGN*(xQ+xHG)} --IGNQHG
-				KSK[81]  = {range=Erange, A='_E', B='_W', C='_HG', D='_IGN', E=nil, F=nil, dam=IGN*(xE+xW+xHG)} --IGNEWHG
-				KSK[82]  = {range=Wrange, A='_W', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, dam=IGN*(xW+xQ+xHG)} --IGNWQHG
-				KSK[83]  = {range=Erange, A='_E', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, dam=IGN*(xE+xQ+xHG)} --IGNEQHG
-				KSK[84]  = {range=Erange, A='_E', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, dam=IGN*(xE+xW+xQ+xHG)} --IGNEWQHG
-				KSK[85]  = {range=Wrange, A='_DFG', B='_W', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xW*1.2)+xDFG))*DFG} --IGNWDFG
-				KSK[86]  = {range=Erange, A='_DFG', B='_E', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xE*1.2)+xDFG))*DFG} --IGNEDFG
-				KSK[87]  = {range=Qrange, A='_DFG', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xQ*1.2)+xDFG))*DFG} --IGNQDFG
-				KSK[88]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xW*1.2)+xDFG))*DFG} --IGNEWDFG
-				KSK[89]  = {range=Wrange, A='_DFG', B='_W', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xW+xQ*1.2)+xDFG))*DFG} --IGNWQDFG
-				KSK[90]  = {range=Erange, A='_DFG', B='_E', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xQ*1.2)+xDFG))*DFG} --IGNEQDFG
-				KSK[91]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xW+xQ*1.2)+xDFG))*DFG} --IGNEWQDFG
-				KSK[92]  = {range=Wrange, A='_BFT', B='_W', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xW*1.2)+xBFT))*BFT} --IGNWBFT
-				KSK[93]  = {range=Erange, A='_BFT', B='_E', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xE*1.2)+xBFT))*BFT} --IGNEBFT
-				KSK[94]  = {range=Qrange, A='_BFT', B='_Q', C='_IGN', D=nil, E=nil, F=nil, dam=((IGN*(xQ*1.2)+xBFT))*BFT} --IGNQBFT
-				KSK[95]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xW*1.2)+xBFT))*BFT} --IGNEWBFT
-				KSK[96]  = {range=Wrange, A='_BFT', B='_W', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xW+xQ*1.2)+xBFT))*BFT} --IGNWQBFT
-				KSK[97]  = {range=Erange, A='_BFT', B='_E', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xQ*1.2)+xBFT))*BFT} --IGNEQBFT
-				KSK[98]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xW+xQ*1.2)+xBFT))*BFT} --IGNEWQBFT
-				KSK[99]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_IGN', E=nil, F=nil, dam=((IGN*(xW+xBC*1.2)+xDFG))*DFG} --IGNWBCDFG
-				KSK[100] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xBC*1.2)+xDFG))*DFG} --IGNEBCDFG
-				KSK[101] = {range=450, A='_DFG', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xQ+xBC*1.2)+xDFG))*DFG} --IGNQBCDFG
-				KSK[102] = {range=Erange, A='_DFG', B='_E', C='_W', D='_BC', E='_IGN', F=nil, dam=((IGN*(xE+xW+xBC*1.2)+xDFG))*DFG} --IGNEWBCDFG
-				KSK[103] = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, dam=((IGN*(xW+xQ+xBC*1.2)+xDFG))*DFG} --IGNWQBCDFG
-				KSK[104] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xQ+xBC*1.2)+xDFG))*DFG} --IGNEQBCDFG
-				KSK[105] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_W', E='_Q', F='_IGN', dam=((IGN*(xE+xW+xQ+xBC*1.2)+xDFG))*DFG} --IGNEWQBCDFG
-				KSK[106] = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_IGN', E=nil, F=nil, dam=((IGN*(xW+xBC*1.2)+xBFT)*BFT)} --IGNWBCBFT
-				KSK[107] = {range=Erange, A='_BFT', B='_E', C='_BC', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xBC*1.2)+xBFT)*BFT)} --IGNEBCBFT
-				KSK[108] = {range=450, A='_BFT', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xQ+xBC*1.2)+xBFT))*BFT} --IGNQBCBFT
-				KSK[109] = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E='_IGN', F=nil, dam=((IGN*(xE+xW+xBC*1.2)+xBFT))*BFT} --IGNEWBCBFT
-				KSK[110] = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, dam=((IGN*(xW+xQ+xBC*1.2)+xBFT))*BFT} --IGNWQBCBFT
-				KSK[111] = {range=Erange, A='_BFT', B='_E', C='_BC', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xQ+xBC*1.2)+xBFT))*BFT} --IGNEQBCBFT
-				KSK[112] = {range=Erange, A='_BFT', B='_BC', C='_E', D='_W', E='_Q', F='_IGN', dam=((IGN*(xE+xW+xQ+xBC*1.2)+xBFT))*BFT} --IGNEWQBCBFT
-				KSK[113] = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_IGN', E=nil, F=nil, dam=((IGN*(xW+xHG*1.2)+xDFG))*DFG} --IGNWHGDFG
-				KSK[114] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xHG*1.2)+xDFG))*DFG} --IGNEHGDFG
-				KSK[115] = {range=450, A='_DFG', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xQ+xHG*1.2)+xDFG))*DFG} --IGNQHGDFG
-				KSK[116] = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E='_IGN', F=nil, dam=((IGN*(xE+xW+xHG*1.2)+xDFG))*DFG} --IGNEWHGDFG
-				KSK[117] = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, dam=((IGN*(xW+xQ+xHG*1.2)+xDFG))*DFG} --IGNWQHGDFG
-				KSK[118] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xQ+xHG*1.2)+xDFG))*DFG} --IGNEQHGDFG
-				KSK[119] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_W', E='_Q', F='_IGN', dam=((IGN*(xE+xW+xQ+xHG*1.2)+xDFG))*DFG} --IGNEWQHGDFG
-				KSK[120] = {range=Wrange, A='_BFT', B=nil, C=nil, D=nil, E=nil, F=nil, dam=((IGN*(xW+xHG*1.2)+xBFT))*BFT} --IGNWHGBFT
-				KSK[121] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_IGN', E=nil, F=nil, dam=((IGN*(xE+xHG*1.2)+xBFT))*BFT} --IGNEHGBFT
-				KSK[122] = {range=450, A='_BFT', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, dam=((IGN*(xQ+xHG*1.2)+xBFT))*BFT} --IGNQHGBFT
-				KSK[123] = {range=Erange, A='_BFT', B='_E', C='_W', D='_HG', E='_IGN', F=nil, dam=((IGN*(xE+xW+xHG*1.2)+xBFT))*BFT} --IGNEWHGBFT
-				KSK[124] = {range=Wrange, A='_BFT', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, dam=((IGN*(xW+xQ+xHG*1.2)+xBFT))*BFT} --IGNWQHGBFT
-				KSK[125] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_Q', E='_IGN', F=nil, dam=((IGN*(xE+xQ+xHG*1.2)+xBFT))*BFT} --IGNEQHGBFT
-				KSK[126] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_W', E='_Q', F='_IGN', dam=((IGN*(xE+xW+xQ+xHG*1.2)+xBFT))*BFT} --IGNEWQHGBFT
+				KSK[1]   = {range=Wrange, A='_W', B=nil, C=nil, D=nil, E=nil, F=nil, ls='*W', var=false, dam=xW} --W
+				KSK[2]   = {range=Wrange, A='_E', B=nil, C=nil, D=nil, E=nil, F=nil, var=false, dam=xE} --E
+				KSK[3]   = {range=Qrange, A='_Q', B=nil, C=nil, D=nil, E=nil, F=nil, var=false, dam=xQ} --Q
+				KSK[4]   = {range=Erange, A='_E', B='_W', C=nil, D=nil, E=nil, F=nil, var=false, dam=xE+xW} --EW
+				KSK[5]   = {range=Wrange, A='_W', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=xW+xQ} --WQ
+				KSK[6]   = {range=Erange, A='_E', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=xE+xQ} --EQ
+				KSK[7]   = {range=Erange, A='_E', B='_W', C='_Q', D=nil, E=nil, F=nil, var=false, dam=xE+xW+xQ} --EWQ
+				KSK[8]   = {range=Wrange, A='_BC', B='_W', C=nil, D=nil, E=nil, F=nil, var=false, dam=xW+xBC} --WBC
+				KSK[9]   = {range=Erange, A='_BC', B='_E', C=nil, D=nil, E=nil, F=nil, var=false, dam=xE+xBC} --EBC
+				KSK[10]  = {range=450, A='_BC', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=xQ+xBC} --QBC
+				KSK[11]  = {range=Erange, A='_E', B='_W', C='_BC', D=nil, E=nil, F=nil, var=false, dam=xE+xW+xBC} --EWBC
+				KSK[12]  = {range=Wrange, A='_W', B='_BC', C='_Q', D=nil, E=nil, F=nil, var=false, dam=xW+xQ+xBC} --WQBC
+				KSK[13]  = {range=Erange, A='_E', B='_BC', C='_Q', D=nil, E=nil, F=nil, var=false, dam=xE+xQ+xBC} --EQBC
+				KSK[14]  = {range=Erange, A='_E', B='_W', C='_BC', D='_Q', E=nil, F=nil, var=false, dam=xE+xW+xQ+xBC} --EWQBC
+				KSK[15]  = {range=Wrange, A='_W', B='_HG', C=nil, D=nil, E=nil, F=nil, var=false, dam=xW+xHG} --WHG
+				KSK[16]  = {range=Erange, A='_E', B='_HG', C=nil, D=nil, E=nil, F=nil, var=false, dam=xE+xHG} --EHG
+				KSK[17]  = {range=Qrange, A='_HG', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=xQ+xHG} --QHG
+				KSK[18]  = {range=Erange, A='_E', B='_W', C='_HG', D=nil, E=nil, F=nil, var=false, dam=xE+xW+xHG} --EWHG
+				KSK[19]  = {range=Wrange, A='_W', B='_HG', C='_Q', D=nil, E=nil, F=nil, var=false, dam=xW+xQ+xHG} --WQHG
+				KSK[20]  = {range=Erange, A='_E', B='_HG', C='_Q', D=nil, E=nil, F=nil, var=false, dam=xE+xQ+xHG} --EQHG
+				KSK[21]  = {range=Erange, A='_E', B='_W', C='_HG', D='_Q', E=nil, F=nil, var=false, dam=xE+xW+xQ+xHG} --EWQHG
+				KSK[22]  = {range=Wrange, A='_DFG', B='_E', C='_W', D=nil, E=nil, F=nil, var=false, dam=((xW*1.2)+xDFG)*DFG} --WDFG
+				KSK[23]  = {range=Erange, A='_DFG', B='_E', C=nil, D=nil, E=nil, F=nil, var=false, dam=((xE*1.2)+xDFG)*DFG} --EDFG
+				KSK[24]  = {range=Qrange, A='_DFG', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=((xQ*1.2)+xDFG)*DFG} --QDFG
+				KSK[25]  = {range=Erange, A='_DFG', B='_E', C='_W', D=nil, E=nil, F=nil, var=false, dam=((xE+xW*1.2)+xDFG)*DFG} --EWDFG
+				KSK[26]  = {range=Wrange, A='_DFG', B='_W', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xW+xQ*1.2)+xDFG)*DFG} --WQDFG
+				KSK[27]  = {range=Erange, A='_DFG', B='_E', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xE+xQ*1.2)+xDFG)*DFG} --EQDFG
+				KSK[28]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E=nil, F=nil, var=false, dam=((xE+xW+xQ*1.2)+xDFG)*DFG} --EWQDFG
+				KSK[29]  = {range=Wrange, A='_BFT', B='_W', C=nil, D=nil, E=nil, F=nil, var=false, dam=((xW*1.2)+xBFT)*BFT} --WBFT
+				KSK[30]  = {range=Erange, A='_BFT', B='_E', C=nil, D=nil, E=nil, F=nil, var=false, dam=((xE*1.2)+xBFT)*BFT} --EBFT
+				KSK[31]  = {range=Qrange, A='_BFT', B='_Q', C=nil, D=nil, E=nil, F=nil, var=false, dam=((xQ*1.2)+xBFT)*BFT } --QBFT
+				KSK[32]  = {range=Erange, A='_BFT', B='_E', C='_W', D=nil, E=nil, F=nil, var=false, dam=((xE+xW*1.2)+xBFT)} --EWBFT
+				KSK[33]  = {range=Wrange, A='_BFT', B='_W', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xW+xQ*1.2)+xBFT)*BFT} --WQBFT
+				KSK[34]  = {range=Erange, A='_BFT', B='_E', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xE+xQ*1.2)+xBFT)*BFT} --EQBFT
+				KSK[35]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_Q', E=nil, F=nil, var=false, dam=((xE+xW+xQ*1.2)+xBFT)*BFT} --EWQBFT
+				KSK[36]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D=nil, E=nil, F=nil, var=false, dam=((xW+xBC*1.2)+xDFG)*DFG} --WBCDFG
+				KSK[37]  = {range=Erange, A='_DFG', B='_E', C='_BC', D=nil, E=nil, F=nil, var=false, dam=((xE+xBC*1.2)+xDFG)*DFG} --EBCDFG
+				KSK[38]  = {range=450, A='_DFG', B='_BC', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xQ+xBC*1.2)+xDFG)*DFG} --QBCDFG
+				KSK[39]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_BC', E=nil, F=nil, var=false, dam=((xE+xW+xBC*1.2)+xDFG)*DFG} --EWBCDFG
+				KSK[40]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_Q', E=nil, F=nil, var=false, dam=((xW+xQ+xBC*1.2)+xDFG)*DFG} --WQBCDFG
+				KSK[41]  = {range=Erange, A='_DFG', B='_E', C='_BC', D='_Q', E=nil, F=nil, var=false, dam=((xE+xQ+xBC*1.2)+xDFG)*DFG} --EQBCDFG
+				KSK[42]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E='_BC', F=nil, var=false, dam=((xE+xW+xQ+xBC*1.2)+xDFG)*DFG} --EWQBCDFG
+				KSK[43]  = {range=Wrange, A='_BFT', B='_W', C='_BC', D=nil, E=nil, F=nil, var=false, dam=((xW+xBC*1.2)+xBFT)*BFT} --WBCBFT
+				KSK[44]  = {range=Erange, A='_BFT', B='_E', C='_BC', D=nil, E=nil, F=nil, var=false, dam=((xE+xBC*1.2)+xBFT)*BFT} --EBCBFT
+				KSK[45]  = {range=450, A='_BFT', B='_BC', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xQ+xBC*1.2)+xBFT)*BFT} --QBCBFT
+				KSK[46]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E=nil, F=nil, var=false, dam=((xE+xW+xBC*1.2)+xBFT)*BFT} --EWBCBFT
+				KSK[47]  = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_Q', E=nil, F=nil, var=false, dam=((xW+xQ+xBC*1.2)+xBFT)*BFT} --WQBCBFT
+				KSK[48]  = {range=Erange, A='_BFT', B='_E', C='_BC', D='_Q', E=nil, F=nil, var=false, dam=((xE+xQ+xBC*1.2)+xBFT)*BFT} --EQBCBFT
+				KSK[49]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E='_Q', F=nil, var=false, dam=((xE+xW+xQ+xBC*1.2)+xBFT)*BFT} --EWQBCBFT
+				KSK[50]  = {range=Wrange, A='_DFG', B='_W', C='_HG', D=nil, E=nil, F=nil, var=false, dam=((xW+xHG*1.2)+xDFG)*DFG} --WHGDFG
+				KSK[51]  = {range=Erange, A='_DFG', B='_E', C='_HG', D=nil, E=nil, F=nil, var=false, dam=((xE+xHG*1.2)+xDFG)*DFG} --EHGDFG
+				KSK[52]  = {range=450, A='_DFG', B='_HG', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xQ+xHG*1.2)+xDFG)*DFG} --QHGDFG
+				KSK[53]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E=nil, F=nil, var=false, dam=((xE+xW+xHG*1.2)+xDFG)*DFG} --EWHGDFG
+				KSK[54]  = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_Q', E=nil, F=nil, var=false, dam=((xW+xQ+xHG*1.2)+xDFG)*DFG} --WQHGDFG
+				KSK[55]  = {range=Erange, A='_DFG', B='_E', C='_HG', D='_Q', E=nil, F=nil, var=false, dam=((xE+xQ+xHG*1.2)+xDFG)*DFG} --EQHGDFG
+				KSK[56]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E='_Q', F=nil, var=false, dam=((xE+xW+xQ+xHG*1.2)+xDFG)*DFG} --EWQHGDFG
+				KSK[57]  = {range=Wrange, A='_BFT', B='_W', C='_HG', D=nil, E=nil, F=nil, var=false, dam=((xW+xHG*1.2)+xBFT)*BFT} --WHGBFT
+				KSK[58]  = {range=Erange, A='_BFT', B='_E', C='_HG', D=nil, E=nil, F=nil, var=false, dam=((xE+xHG*1.2)+xBFT)*BFT} --EHGBFT
+				KSK[59]  = {range=450, A='_BFT', B='_HG', C='_Q', D=nil, E=nil, F=nil, var=false, dam=((xQ+xHG*1.2)+xBFT)*BFT} --QHGBFT
+				KSK[60]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_HG', E=nil, F=nil, var=false, dam=((xE+xW+xHG*1.2)+xBFT)*BFT} --EWHGBFT
+				KSK[61]  = {range=Wrange, A='_BFT', B='_W', C='_HG', D='_Q', E=nil, F=nil, var=false, dam=((xW+xQ+xHG*1.2)+xBFT)*BFT} --WQHGBFT
+				KSK[62]  = {range=Erange, A='_BFT', B='_E', C='_HG', D='_Q', E=nil, F=nil, var=false, dam=((xE+xQ+xHG*1.2)+xBFT)*BFT} --EQHGBFT
+				KSK[63]  = {range=Erange, A='_BFT', B='_E', C='_HG', D='_W', E='_Q', F=nil, var=false, dam=((xE+xW+xQ+xHG*1.2)+xBFT)*BFT} --EWQHGBFT
+				KSK[64]  = {range=Wrange, A='_W', B='_IGN', C=nil, D=nil, E=nil, F=nil, var=false, dam=IGN*xW} --IGNW
+				KSK[65]  = {range=Erange, A='_E', B='_IGN', C=nil, D=nil, E=nil, F=nil, var=false, dam=IGN*xE} --IGNE
+				KSK[66]  = {range=Qrange, A='_Q', B='_IGN', C=nil, D=nil, E=nil, F=nil, var=false, dam=IGN*xQ} --IGNQ
+				KSK[67]  = {range=Erange, A='_E', B='_IGN', C='_W', D=nil, E=nil, F=nil, var=false, dam=IGN*(xE+xW)} --IGNEW
+				KSK[68]  = {range=Wrange, A='_W', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xW+xQ)} --IGNWQ
+				KSK[69]  = {range=Erange, A='_E', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xE+xQ)} --IGNEQ
+				KSK[70]  = {range=Erange, A='_E', B='_W', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xE+xW+xQ)} --IGNEWQ
+				KSK[71]  = {range=Wrange, A='_W', B='_BC', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xW+xBC)} --IGNWBC
+				KSK[72]  = {range=Erange, A='_E', B='_BC', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xE+xBC)} --IGNEBC
+				KSK[73]  = {range=450, A='_BC', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xQ+xBC)} --IGNQBC
+				KSK[74]  = {range=Erange, A='_E', B='_W', C='_BC', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xE+xW+xBC)} --IGNEWBC
+				KSK[75]  = {range=Wrange, A='_W', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xW+xQ+xBC)} --IGNWQBC
+				KSK[76]  = {range=Erange, A='_E', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xE+xQ+xBC)} --IGNEQBC
+				KSK[77]  = {range=Erange, A='_E', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, var=false, dam=IGN*(xE+xW+xQ+xBC)} --IGNEWQBC
+				KSK[78]  = {range=Wrange, A='_W', B='_HG', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xW+xHG)} --IGNWHG
+				KSK[79]  = {range=Erange, A='_E', B='_HG', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xE+xHG)} --IGNEHG
+				KSK[80]  = {range=Qrange, A='_HG', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=IGN*(xQ+xHG)} --IGNQHG
+				KSK[81]  = {range=Erange, A='_E', B='_W', C='_HG', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xE+xW+xHG)} --IGNEWHG
+				KSK[82]  = {range=Wrange, A='_W', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xW+xQ+xHG)} --IGNWQHG
+				KSK[83]  = {range=Erange, A='_E', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=IGN*(xE+xQ+xHG)} --IGNEQHG
+				KSK[84]  = {range=Erange, A='_E', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, var=false, dam=IGN*(xE+xW+xQ+xHG)} --IGNEWQHG
+				KSK[85]  = {range=Wrange, A='_DFG', B='_W', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xW*1.2)+xDFG))*DFG} --IGNWDFG
+				KSK[86]  = {range=Erange, A='_DFG', B='_E', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xE*1.2)+xDFG))*DFG} --IGNEDFG
+				KSK[87]  = {range=Qrange, A='_DFG', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xQ*1.2)+xDFG))*DFG} --IGNQDFG
+				KSK[88]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xW*1.2)+xDFG))*DFG} --IGNEWDFG
+				KSK[89]  = {range=Wrange, A='_DFG', B='_W', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xW+xQ*1.2)+xDFG))*DFG} --IGNWQDFG
+				KSK[90]  = {range=Erange, A='_DFG', B='_E', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xQ*1.2)+xDFG))*DFG} --IGNEQDFG
+				KSK[91]  = {range=Erange, A='_DFG', B='_E', C='_W', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xQ*1.2)+xDFG))*DFG} --IGNEWQDFG
+				KSK[92]  = {range=Wrange, A='_BFT', B='_W', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xW*1.2)+xBFT))*BFT} --IGNWBFT
+				KSK[93]  = {range=Erange, A='_BFT', B='_E', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xE*1.2)+xBFT))*BFT} --IGNEBFT
+				KSK[94]  = {range=Qrange, A='_BFT', B='_Q', C='_IGN', D=nil, E=nil, F=nil, var=false, dam=((IGN*(xQ*1.2)+xBFT))*BFT} --IGNQBFT
+				KSK[95]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xW*1.2)+xBFT))*BFT} --IGNEWBFT
+				KSK[96]  = {range=Wrange, A='_BFT', B='_W', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xW+xQ*1.2)+xBFT))*BFT} --IGNWQBFT
+				KSK[97]  = {range=Erange, A='_BFT', B='_E', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xQ*1.2)+xBFT))*BFT} --IGNEQBFT
+				KSK[98]  = {range=Erange, A='_BFT', B='_E', C='_W', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xQ*1.2)+xBFT))*BFT} --IGNEWQBFT
+				KSK[99]  = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xW+xBC*1.2)+xDFG))*DFG} --IGNWBCDFG
+				KSK[100] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xBC*1.2)+xDFG))*DFG} --IGNEBCDFG
+				KSK[101] = {range=450, A='_DFG', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xQ+xBC*1.2)+xDFG))*DFG} --IGNQBCDFG
+				KSK[102] = {range=Erange, A='_DFG', B='_E', C='_W', D='_BC', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xBC*1.2)+xDFG))*DFG} --IGNEWBCDFG
+				KSK[103] = {range=Wrange, A='_DFG', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xW+xQ+xBC*1.2)+xDFG))*DFG} --IGNWQBCDFG
+				KSK[104] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xQ+xBC*1.2)+xDFG))*DFG} --IGNEQBCDFG
+				KSK[105] = {range=Erange, A='_DFG', B='_E', C='_BC', D='_W', E='_Q', F='_IGN', var=false, dam=((IGN*(xE+xW+xQ+xBC*1.2)+xDFG))*DFG} --IGNEWQBCDFG
+				KSK[106] = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xW+xBC*1.2)+xBFT)*BFT)} --IGNWBCBFT
+				KSK[107] = {range=Erange, A='_BFT', B='_E', C='_BC', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xBC*1.2)+xBFT)*BFT)} --IGNEBCBFT
+				KSK[108] = {range=450, A='_BFT', B='_BC', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xQ+xBC*1.2)+xBFT))*BFT} --IGNQBCBFT
+				KSK[109] = {range=Erange, A='_BFT', B='_E', C='_W', D='_BC', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xBC*1.2)+xBFT))*BFT} --IGNEWBCBFT
+				KSK[110] = {range=Wrange, A='_BFT', B='_W', C='_BC', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xW+xQ+xBC*1.2)+xBFT))*BFT} --IGNWQBCBFT
+				KSK[111] = {range=Erange, A='_BFT', B='_E', C='_BC', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xQ+xBC*1.2)+xBFT))*BFT} --IGNEQBCBFT
+				KSK[112] = {range=Erange, A='_BFT', B='_BC', C='_E', D='_W', E='_Q', F='_IGN', var=false, dam=((IGN*(xE+xW+xQ+xBC*1.2)+xBFT))*BFT} --IGNEWQBCBFT
+				KSK[113] = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xW+xHG*1.2)+xDFG))*DFG} --IGNWHGDFG
+				KSK[114] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xHG*1.2)+xDFG))*DFG} --IGNEHGDFG
+				KSK[115] = {range=450, A='_DFG', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xQ+xHG*1.2)+xDFG))*DFG} --IGNQHGDFG
+				KSK[116] = {range=Erange, A='_DFG', B='_E', C='_W', D='_HG', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xHG*1.2)+xDFG))*DFG} --IGNEWHGDFG
+				KSK[117] = {range=Wrange, A='_DFG', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xW+xQ+xHG*1.2)+xDFG))*DFG} --IGNWQHGDFG
+				KSK[118] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xQ+xHG*1.2)+xDFG))*DFG} --IGNEQHGDFG
+				KSK[119] = {range=Erange, A='_DFG', B='_E', C='_HG', D='_W', E='_Q', F='_IGN', var=false, dam=((IGN*(xE+xW+xQ+xHG*1.2)+xDFG))*DFG} --IGNEWQHGDFG
+				KSK[120] = {range=Wrange, A='_BFT', B=nil, C=nil, D=nil, E=nil, F=nil, var=false, dam=((IGN*(xW+xHG*1.2)+xBFT))*BFT} --IGNWHGBFT
+				KSK[121] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xE+xHG*1.2)+xBFT))*BFT} --IGNEHGBFT
+				KSK[122] = {range=450, A='_BFT', B='_HG', C='_Q', D='_IGN', E=nil, F=nil, var=false, dam=((IGN*(xQ+xHG*1.2)+xBFT))*BFT} --IGNQHGBFT
+				KSK[123] = {range=Erange, A='_BFT', B='_E', C='_W', D='_HG', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xW+xHG*1.2)+xBFT))*BFT} --IGNEWHGBFT
+				KSK[124] = {range=Wrange, A='_BFT', B='_W', C='_HG', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xW+xQ+xHG*1.2)+xBFT))*BFT} --IGNWQHGBFT
+				KSK[125] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_Q', E='_IGN', F=nil, var=false, dam=((IGN*(xE+xQ+xHG*1.2)+xBFT))*BFT} --IGNEQHGBFT
+				KSK[126] = {range=Erange, A='_BFT', B='_E', C='_HG', D='_W', E='_Q', F='_IGN', var=false, dam=((IGN*(xE+xW+xQ+xHG*1.2)+xBFT))*BFT} --IGNEWQHGBFT
 				
 				for v=1,126 do
-					if GetDistance(enemy)<KSK[v].range and effhealth<KSK[v].dam and MainCFG.Killsteal then Seq(KSK[v].A,KSK[v].B,KSK[v].C,KSK[v].D,KSK[v].E,KSK[v].F,enemy) end
+					if GetDistance(enemy)<KSK[v].range and effhealth<KSK[v].dam and MainCFG.Killsteal then KSK[v].var = true end
+					if KSK[v].var then 
+						Seq(KSK[v].A,KSK[v].B,KSK[v].C,KSK[v].D,KSK[v].E,KSK[v].F,enemy) 
+						if enemy.dead==1 or myHero.dead==1 or GetDistance(enemy)>KSK[v].range then KSK[v].var = false end
+					end
 				end
 				for v=1,126 do
 					if MainCFG.KSNotes then
@@ -643,7 +647,6 @@ function dodgelinepass(pos1, pos2, radius, maxDist)
 end
 
 function Items()
-	print(myHero.InventorySlot3)
 	if locus == false and MainCFG.AutoZonyas and myHero.health < myHero.maxHealth*(MainCFG.Zhonyas_Hourglass_Value/100) then 
 		UseItemOnTarget(3157,myHero)
 		UseItemOnTarget(3090,myHero)
